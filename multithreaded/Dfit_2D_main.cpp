@@ -1,4 +1,22 @@
+#include "omp.h"
 #include "D_M_fit_shape.h"
+#include "M_B_2missPT_fit.h"
+#include "TH2D.h"
+#include "Math/Minimizer.h"
+#include "Math/Factory.h"
+#include "Math/Functor.h"
+#include "TChain.h"
+#include "TString.h"
+#include "TF2.h"
+#include "TMath.h"
+#include <string>
+#include <fstream>
+#include "TCanvas.h"
+#include "Math/ProbFuncMathCore.h"
+
+typedef std::basic_string<char> string;
+typedef std::basic_ifstream<char> ifstream;
+typedef std::basic_ofstream<char> ofstream;
 
 using namespace cpt_b0_analysis;
    double minx = 1800.;
@@ -25,18 +43,29 @@ double chebyshev(const double *x, const double *par){
   return cheb;
 }
 
-void Dfit_2D(int sign){
-
-        std::string minName = "Minuit2";
-        std::string algoName = "";
+int main(int argc, char *argv[]){
+	if(argc !=2){
+	       	std::cout<< " Please state: 'muplus' or 'muminus'." << std::endl;
+		return 1;
+	}
+	if(strcmp(argv[1], "muplus")!=0 && strcmp(argv[1], "mumunus")!=0){
+	       	std::cout<< " Please state: 'muplus' or 'muminus'." << std::endl;
+		return 1;
+	}
+	int sign;
+	if (strcmp(argv[1], "muplus")==0) sign=1; 
+	if (strcmp(argv[1], "muminus")==0) sign=0; 
+	
+        string minName = "Minuit2";
+        string algoName = "";
         ROOT::Math::Minimizer* min =
         ROOT::Math::Factory::CreateMinimizer(minName, algoName);
 
         // set tolerance , etc...
         min->SetMaxFunctionCalls(10000000); // for Minuit/Minuit2
         min->SetMaxIterations(10000);  // for GSL
-        min->SetTolerance(2.50e5);
-        //min->SetTolerance(1.0e-3);
+        //min->SetTolerance(2.50e5);
+        min->SetTolerance(10.);
         min->SetPrintLevel(2);
 
         //min->SetStrategy(2);
@@ -47,10 +76,9 @@ void Dfit_2D(int sign){
 
         // create funciton wrapper for minmizer
         // a IMultiGenFunction type
-
         TChain ch("BlindedTree");
-   //ch.Add("/mnt/home/share/lhcb/CPT_beauty/data2016/selected/selected_data2016MagDown.root");
-   ch.Add("/home/szabelskia/LHCb/data2016/tree_missPT_D_M_MagDown25102023_nomassDmuCut/selected_data2016MagDown.root");
+   ch.Add("/mnt/home/share/lhcb/CPT_beauty/data2016/selected/selected_data2016MagDown.root");
+   //ch.Add("/home/szabelskia/LHCb/data2016/tree_missPT_D_M_MagDown25102023_nomassDmuCut/selected_data2016MagDown.root");
      double D_M, mu_PT, mu_P, mu_eta, K_PT, B_M, missPT;
    bool charge;
 
@@ -68,7 +96,7 @@ void Dfit_2D(int sign){
 
 
    //for (int i=0; i<ch.GetEntries(); ++i){
-   for (int i=0; i<5.0e3; ++i){
+   for (int i=0; i<5e5; ++i){
       ch.GetEntry(i);
       if (mu_PT<500 || mu_P<5000 || mu_eta<2 || mu_eta>4.5) continue;
       double B_MMcorr = B_M +2.0*missPT;
@@ -89,10 +117,10 @@ void Dfit_2D(int sign){
    	TString name[ncontr] = {"signal", "BuDmunu", "BsDsMunu", "B02DpDsm", "sidebands", "Bu2D0Dsm"};
    	for (int ifile=0; ifile<ncontr; ifile++){
 		if (ifile==4) continue;
-        	ifstream infile(Form("D_M_results/res_%s_%d.txt", name[ifile].Data(), sign));
+		string filename((TString::Format("D_M_results/res_%s_%d.txt", name[ifile].Data(), sign)).Data());
+		std::ifstream infile(filename,  std::ios::binary);
            	int k=0;
            	while(infile>>xx[ifile][k]>> dxx[ifile][k]){
-			cout << xx[ifile][k] << endl;
 			xx[4][k]=1.0;
 			dxx[4][k]=0.001;
 			
@@ -107,7 +135,7 @@ void Dfit_2D(int sign){
 	double xx_mcorr[ncontr][nvar_mb];
 	double dxx_mcorr[ncontr][nvar_mb];
 	for (int ifile=0; ifile<ncontr; ifile++){
-                ifstream infile_mb(Form("B_M_results/res_%s_%d.txt", name[ifile].Data(), sign));
+                ifstream infile_mb(TString::Format("B_M_results/res_%s_%d.txt", name[ifile].Data(), sign));
                 int k=0;
                 while(infile_mb>>xx_mcorr[ifile][k]>> dxx_mcorr[ifile][k]){
                         k++;
@@ -143,8 +171,11 @@ void Dfit_2D(int sign){
 
  		double chi2 = 0.0;
 		int count = 0;
-                for (auto &[mdass, mcorr]: vect_2D){
-			if (++count>5.0e4 && !uncorr) break;
+	        #pragma omp parallel for reduction (+:chi2)
+                for (auto &v: vect_2D){
+			//if (++count>5.0e4 && !uncorr) break;
+			double mdass = std::get<0>(v);
+			double mcorr = std::get<1>(v);
 			double likelihood = 0.0;
 			for (int i=0; i<ncontr; i++){
 				double md_like, mb_like;
@@ -164,7 +195,7 @@ void Dfit_2D(int sign){
 		}
 		for (int i=0; i<ncontr; i++){
                         for (int ivar=0; ivar<nvar_mb; ivar++){
-				//cout << min->VariableName(ncontr*nvar_md+i*nvar_mb+ivar) << "  " << xx_mcorr[i][ivar] << "  " << dxx_mcorr[i][ivar] << endl;
+				//std::cout << min->VariableName(ncontr*nvar_md+i*nvar_mb+ivar) << "  " << xx_mcorr[i][ivar] << "  " << dxx_mcorr[i][ivar] << std::endl;
                         	if(dxx_mcorr[i][ivar]!=0)chi2+= (xx_mcorr[i][ivar]-param[ncontr*nvar_md+i*nvar_mb+ivar])*(xx_mcorr[i][ivar]-param[ncontr*nvar_md+i*nvar_mb+ivar])/(dxx_mcorr[i][ivar]*dxx_mcorr[i][ivar]);   // use the results of MC fits
                         }
                 }
@@ -177,14 +208,12 @@ void Dfit_2D(int sign){
 
         for (int i=0; i<ncontr; i++){
 		for (int ivar=0; ivar<nvar_md; ivar++){
-			min->SetVariable(i*nvar_md+ivar, Form("%s_%s", name[i].Data(), varname_md[ivar].Data()), xx[i][ivar], dxx[i][ivar]+1.0e-11);
+			min->SetVariable(i*nvar_md+ivar, (TString::Format("%s_%s", name[i].Data(), varname_md[ivar].Data())).Data(), xx[i][ivar], dxx[i][ivar]+1.0e-11);
 			//min->FixVariable(i*nvar_md+ivar);
 			min->SetVariableLowerLimit(i*nvar_md+ivar, 1e-13);
 			if(ivar==3)min->SetVariableLimits(i*nvar_md+ivar, -1.0, 1.0);
 
-			cout << ivar << endl;
-			if ( ivar==6) min->FixVariable(i*nvar_md+ivar);
-			if (ivar==5) min->FixVariable(i*nvar_md+ivar);
+			if (ivar==5 || ivar==6) min->FixVariable(i*nvar_md+ivar);
 			if (i==4 && ivar!=0 && ivar!=1) min->FixVariable(i*nvar_md+ivar); // combinatorial
 			//if (i==4) min->FixVariable(i*nvar_md+ivar); // combinatorial
 			//if(ivar!=1&&ivar!=0)min->FixVariable(i*nvar_md+ivar);
@@ -200,7 +229,7 @@ void Dfit_2D(int sign){
 
         for (int i=0; i<ncontr; i++){
                 for (int ivar=0; ivar<nvar_mb; ivar++){
-                        min->SetVariable(ncontr*nvar_md+i*nvar_mb+ivar, Form("%s_%s", name[i].Data(), varname_mb[ivar].Data()), xx_mcorr[i][ivar], dxx_mcorr[i][ivar]+1.0e-11);
+                        min->SetVariable(ncontr*nvar_md+i*nvar_mb+ivar, (TString::Format("%s_%s", name[i].Data(), varname_mb[ivar].Data())).Data(), xx_mcorr[i][ivar], dxx_mcorr[i][ivar]+1.0e-11);
 			//min->FixVariable(ncontr*nvar_md+i*nvar_mb+ivar);
                         min->SetVariableLowerLimit(ncontr*nvar_md+i*nvar_mb+ivar, 1e-13);
                         if(ivar==2)min->SetVariableLimits(ncontr*nvar_md+i*nvar_mb+ivar, -1.0, 1.0);
@@ -216,8 +245,8 @@ void Dfit_2D(int sign){
         //double frac_init[ncontr-1] = {0.657945, 0.901491, 0.968305, 0.527389, 0.0034851};
         for (int i=0; i<ncontr-1; i++){
 
-                if (sign==0) min->SetVariable((nvar_md+nvar_mb)*ncontr+i, Form("par_frac%d", i), frac_init[i], 0.01);
-		else min->SetVariable((nvar_md+nvar_mb)*ncontr+i, Form("par_frac%d", i), frac_init_plus[i], 0.01);
+                if (sign==0) min->SetVariable((nvar_md+nvar_mb)*ncontr+i, (TString::Format("par_frac%d", i)).Data(), frac_init[i], 0.01);
+		else min->SetVariable((nvar_md+nvar_mb)*ncontr+i, (TString::Format("par_frac%d", i)).Data(), frac_init_plus[i], 0.01);
 
                 min->SetVariableLimits((nvar_md+nvar_mb)*ncontr+i, -1.0, 1.0);
                 //min->FixVariable((nvar_md+nvar_mb)*ncontr+i);
@@ -226,23 +255,22 @@ void Dfit_2D(int sign){
 	min->SetFunction(f);
 	double CL_normal = ROOT::Math::normal_cdf(1) -  ROOT::Math::normal_cdf(-1);
 
-        min->SetErrorDef(ROOT::Math::chisquared_quantile(CL_normal, min->NFree()));
+        min->SetErrorDef(TMath::ChisquareQuantile(CL_normal, min->NFree()));
 
 	double x_fix[ncontr*(nvar_md+nvar_mb)+ncontr-1];
 	double dx_fix[ncontr*(nvar_md+nvar_mb)+ncontr-1];
-	ifstream input_fix(Form("results_fix_%d.txt", sign));
+	ifstream input_fix(TString::Format("results_fix_%d.txt", sign));
 	int k=0;
 	while (input_fix >> x_fix[k] >> dx_fix[k]) k++; 
 	input_fix.close();
 	uncorr = true;
-	if (k==ncontr*(nvar_md+nvar_mb)+ncontr-1) cout << "TUUUUUUU \n\n";
+	if (k==ncontr*(nvar_md+nvar_mb)+ncontr-1) std::cout << "TUUUUUUU \n\n";
 
-	
+	/*
  	for(int ivar=0; ivar<ncontr*(nvar_md+nvar_mb)+ncontr-1; ivar++){ 
-	//	cout << x_fix[ivar] << "  " << ivar << endl;
-		//min->FixVariable(ivar);
-		//min->SetVariableValue(ivar, x_fix[ivar]);
-	}
+		std::cout << x_fix[ivar] << "  " << ivar << std::endl;
+		min->SetVariableValue(ivar, x_fix[ivar]);
+	}*/
         min->Minimize();
 	bool over[ncontr*(nvar_md+nvar_mb)];
 	for (int i=0; i<ncontr*(nvar_md+nvar_mb); i++){
@@ -250,7 +278,7 @@ void Dfit_2D(int sign){
 		for (int j=0; j<ncontr-1; j++){
 			double cor = min->Correlation(i, ncontr*(nvar_md+nvar_mb)+j);
 			if (abs(cor) < 0.02) {
-				cout << min->VariableName(i) << "  " << cor << endl;
+				std::cout << min->VariableName(i) << "  " << cor << std::endl;
 				
 			}else over[i]= true;
 		}
@@ -262,12 +290,14 @@ void Dfit_2D(int sign){
 
 	//min->Minimize();
 
-	ofstream results(Form("results_%d.txt", sign));
+	ofstream results(TString::Format("results_%d.txt", sign));
 	for (int i=0; i<(nvar_md+nvar_mb)*ncontr+ncontr-1; i++){
-		results<< min->X()[i]<< "  " << min->Errors()[i] << endl;
+		results<< min->X()[i]<< "  " << min->Errors()[i] << std::endl;
 	}
 	results.close();
 	Draw(min->X(), nevents, name, sign);
+
+    return 0;	   
 }
 void Draw(const double *res, double nevents, TString name[], int sign){        
         md_fit md_shape(minx, maxx);
@@ -295,7 +325,7 @@ void Draw(const double *res, double nevents, TString name[], int sign){
 
 
         for(int i=0; i<ncontr; i++){
-		cout << i << "  " << frac [i] << endl;
+		std::cout << i << "  " << frac [i] << std::endl;
 	}
 
 	double integ = 0.0;
@@ -309,13 +339,13 @@ void Draw(const double *res, double nevents, TString name[], int sign){
 				fval_mb	= mb_shape.func_full(&x[1], &param[ncontr*nvar_md+i*nvar_mb]);
 				return nevents*bin_widthx*bin_widthy*frac[i]*fval_md*fval_mb;
 			};
-			func[i] = new TF2(Form("tf1_%d", i), wrap, minx, maxx, miny, maxy, 0);
+			func[i] = new TF2((TString::Format("tf1_%d", i)).Data(), wrap, minx, maxx, miny, maxy, 0);
 			double bin_widthx = (maxx-minx)/double(nbins);
 			double bin_widthy = (maxy-miny)/double(nbins);
 			integ+=func[i]->Integral(minx, maxx, miny, maxy)/bin_widthx/bin_widthy;
-			cout << func[i]->Integral(minx, maxx, miny, maxy) << " int " << i << endl;
+			std::cout << func[i]->Integral(minx, maxx, miny, maxy) << " int " << i << std::endl;
 		}
-		cout << integ << "  " << nevents << endl;
+		std::cout << integ << "  " << nevents << std::endl;
 
 		auto func_sum = [func](double *x, double *par)->double{
 			double sum = 0.0;
@@ -325,7 +355,7 @@ void Draw(const double *res, double nevents, TString name[], int sign){
 			return sum;
 		};
 		TF2 *tf2_sum = new TF2("tf2_sum", func_sum, minx, maxx, miny, maxy, 0);
-		cout  << tf2_sum->Integral(minx, maxx) << endl;
+		std::cout  << tf2_sum->Integral(minx, maxx) << std::endl;
 	TCanvas *c = new TCanvas("c", "", 500, 500);
 
 	hist->SetStats(kFALSE);

@@ -1,0 +1,31 @@
+#compiler definition
+CC=clang++
+
+#flags declaration
+MPICFLAGS= `root-config --cflags --libs` -fopenmp -Wall -O3 
+#MPICFLAGS= -fopenmp  -std=c++20 --include-directory /mnt/opt/spack-0.17/opt/spack/linux-centos7-ivybridge/gcc-8.3.0/root-6.24.06-f2vmdt3rp2x3mqemsppuq6tvxnztd3sf/include
+
+SRCS = Dfit_2D_main.cpp D_M_fit_shape.cpp M_B_2missPT_fit.cpp
+OBJS = $(SRCS:.cpp=.o)
+
+TARGET = fit2D_mass
+
+all: $(TARGET)
+
+
+# Linking
+$(TARGET): $(OBJS)
+	$(CC) $(MPICFLAGS)  -o $@ $^
+
+# Compilation
+%.o: %.cpp
+	$(CC) $(MPICFLAGS) -c $< -o $@
+
+# Clean up
+clean:
+	rm -f $(OBJS) $(TARGET)
+
+# Phony targets
+.PHONY: all clean
+
+

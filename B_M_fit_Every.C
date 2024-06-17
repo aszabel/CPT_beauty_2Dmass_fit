@@ -32,22 +32,22 @@ void B_M_fit_Every(int choice, int sign, bool isUnbinned=true){
    	TChain ch("BlindedTree");
 	switch (choice){
 		case 0:
-   		ch.Add("/mnt/home/share/lhcb/CPT_beauty/MC2016/selected/selectedMagDown_B2Dmunu_signal_taustrip_nomassDmuCut/selected_MCsignal25102023.root");
+   		ch.Add("/home/szabelskia/LHCb/MC2016/nomassDmuCut/selectedMagDown_B2Dmunu_signal_taustrip_nomassDmuCut/selected_MCsignal25102023.root");
 		break;
 		case 1:
-		ch.Add("/mnt/home/share/lhcb/CPT_beauty/MC2016/selected/selectedMagDown_B2Dmunu_Bu2Dmunu_taustrip_nomassDmuCut/selected_BuDmunu.root");
+		ch.Add("/home/szabelskia/LHCb/MC2016/nomassDmuCut/selectedMagDown_B2Dmunu_Bu2Dmunu_taustrip_nomassDmuCut/selected_BuDmunu.root");
 		break;
 		case 2:
-		ch.Add("/mnt/home/share/lhcb/CPT_beauty/MC2016/selected/selectedMagDown_B2Dmunu_Bs2Dsmunu_taustrip_nomassDmuCut/selected_MCBsDsMunu25102023.root");
+		ch.Add("/home/szabelskia/LHCb/MC2016/nomassDmuCut/selectedMagDown_B2Dmunu_Bs2Dsmunu_taustrip_nomassDmuCut/selected_MCBsDsMunu25102023.root");
 		break;
 		case 3:
-		ch.Add("/mnt/home/share/lhcb/CPT_beauty/MC2016/selected/selectedMagDown_B2Dmunu_B02DpDsm_taustrip_nomassDmuCut/selected_B02DpDsm.root");
+		ch.Add("/home/szabelskia/LHCb/MC2016/nomassDmuCut/selectedMagDown_B2Dmunu_B02DpDsm_taustrip_nomassDmuCut/selected_B02DpDsm.root");
 		break;
 		case 4:
-		ch.Add("/mnt/home/share/lhcb/CPT_beauty/data2016/selected_sidebands/selected_sideband2016MagDown.root");
+		ch.Add("/home/szabelskia/LHCb/MC2016/nomassDmuCut/selected_sideband2016MagDown.root");
 		break;
 		case 5:
-		ch.Add("/mnt/home/share/lhcb/CPT_beauty/MC2016/selected/selectedMagDown_B2Dmunu_Bu2D0Dsm_taustrip_nomassDmuCut/selected_MCBu2D0Dsm.root");
+		ch.Add("/home/szabelskia/LHCb/MC2016/nomassDmuCut/selectedMagDown_B2Dmunu_Bu2D0Dsm_taustrip_nomassDmuCut/selected_MCBu2D0Dsm.root");
 		break;
 		default:
 		cout << " Unknown channel" << endl;
