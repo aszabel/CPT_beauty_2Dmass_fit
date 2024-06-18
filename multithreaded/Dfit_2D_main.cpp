@@ -77,8 +77,8 @@ int main(int argc, char *argv[]){
         // create funciton wrapper for minmizer
         // a IMultiGenFunction type
         TChain ch("BlindedTree");
-   ch.Add("/mnt/home/share/lhcb/CPT_beauty/data2016/selected/selected_data2016MagDown.root");
-   //ch.Add("/home/szabelskia/LHCb/data2016/tree_missPT_D_M_MagDown25102023_nomassDmuCut/selected_data2016MagDown.root");
+   //ch.Add("/mnt/home/share/lhcb/CPT_beauty/data2016/selected/selected_data2016MagDown.root");
+   ch.Add("/home/szabelskia/LHCb/data2016/tree_missPT_D_M_MagDown25102023_nomassDmuCut/selected_data2016MagDown.root");
      double D_M, mu_PT, mu_P, mu_eta, K_PT, B_M, missPT;
    bool charge;
 
@@ -96,7 +96,7 @@ int main(int argc, char *argv[]){
 
 
    //for (int i=0; i<ch.GetEntries(); ++i){
-   for (int i=0; i<5e5; ++i){
+   for (int i=0; i<5e3; ++i){
       ch.GetEntry(i);
       if (mu_PT<500 || mu_P<5000 || mu_eta<2 || mu_eta>4.5) continue;
       double B_MMcorr = B_M +2.0*missPT;
@@ -109,8 +109,8 @@ int main(int argc, char *argv[]){
    }
         //double  nevents = double(vect_2D.size());
         double  nevents = double(hist->Integral());
-        md_fit md_shape(minx, maxx);
-	mb_2misspt_fit mb_shape(miny, maxy);
+        md_fit md_shape(minx, maxx, ncontr);
+	mb_2misspt_fit mb_shape(miny, maxy, ncontr);
 
 	double xx[ncontr][nvar_md];
    	double dxx[ncontr][nvar_md];
@@ -167,7 +167,44 @@ int main(int argc, char *argv[]){
                 }
 
 
+		for (int i=0; i<ncontr; i++){
+			if (i==4){
+				md_shape.int_gaus[i] = 1.0;
+				md_shape.int_DCB[i] = 1.0;
+				continue;
+			}
+			double sigma = param[i*nvar_md];
+			double mean = param[i*nvar_md+1];
+			md_shape.int_gaus.push_back(ROOT::Math::normal_cdf(maxx, sigma, mean)-ROOT::Math::normal_cdf(minx, sigma, mean)); 
+			sigma = param[i*nvar_md+2];
+			double n = param[i*nvar_md+5];
+			double alpha = param[i*nvar_md+4];
+			double alpha_h = param[i*nvar_md+6];
 
+			md_shape.int_DCB[i] = TMath::Abs(-ROOT::Math::crystalball_integral(minx, alpha, n, sigma, mean)+ROOT::Math::crystalball_integral(mean, alpha, n, sigma, mean)) + TMath::Abs(-ROOT::Math::crystalball_integral(2.*mean-maxx, alpha_h, n, sigma, mean)+ROOT::Math::crystalball_integral(mean, alpha_h, n, sigma, mean));
+		
+
+			double s = abs(param[ncontr*nvar_md+i*nvar_mb+1]);
+			mean = param[ncontr*nvar_md+i*nvar_mb];
+			double minnB = mean-s;
+                        if (minx>mean-s) minnB = minx;
+                        double maxxB = mean+s;
+                        if (maxx<mean+s) maxxB = maxx;
+
+			mb_shape.int_cos[i] = 1.0/(2.0)*(1.0+(maxxB-mean)/s+TMath::Sin((maxxB-mean)/s*TMath::Pi())/TMath::Pi())-1.0/(2.0)*(1.0+(minnB-mean)/s+TMath::Sin((minnB-mean)/s*TMath::Pi())/TMath::Pi());	
+
+
+			double mean1 = param[ncontr*nvar_md+i*nvar_mb+3];
+			double sigma1 = abs(param[ncontr*nvar_md+i*nvar_mb+4]);
+
+			mb_shape.int_gaus1[i] = ROOT::Math::normal_cdf(maxy, sigma1, mean1)-ROOT::Math::normal_cdf(miny, sigma1, mean1);
+
+
+			double mean2 = param[ncontr*nvar_md+i*nvar_mb+5];
+			double sigma2 = abs(param[ncontr*nvar_md+i*nvar_mb+6]);
+
+			mb_shape.int_gaus2[i] = ROOT::Math::normal_cdf(maxy, sigma2, mean2)-ROOT::Math::normal_cdf(miny, sigma2, mean2);
+		}
 
  		double chi2 = 0.0;
 		int count = 0;
@@ -180,8 +217,8 @@ int main(int argc, char *argv[]){
 			for (int i=0; i<ncontr; i++){
 				double md_like, mb_like;
 				if (i==4) md_like = chebyshev(&mdass, &param[i*nvar_md]);
-				else md_like = md_shape.func_full(&mdass, &param[i*nvar_md]);
-				mb_like = mb_shape.func_full(&mcorr, &param[ncontr*nvar_md+i*nvar_mb]);
+				else md_like = md_shape.func_full(&mdass, &param[i*nvar_md], i);
+				mb_like = mb_shape.func_full(&mcorr, &param[ncontr*nvar_md+i*nvar_mb], i);
 				likelihood+= md_like*mb_like*frac[i];
 			}
                         if(likelihood>0.0) chi2 -= 2.0*log(likelihood);
@@ -300,8 +337,8 @@ int main(int argc, char *argv[]){
     return 0;	   
 }
 void Draw(const double *res, double nevents, TString name[], int sign){        
-        md_fit md_shape(minx, maxx);
-	mb_2misspt_fit mb_shape(miny, maxy);
+        md_fit md_shape(minx, maxx, ncontr);
+	mb_2misspt_fit mb_shape(miny, maxy, ncontr);
 	TF2 *func[ncontr];
 	double frac[ncontr];
         const double *pa = &res[ncontr*(nvar_md+nvar_mb)];
@@ -335,8 +372,8 @@ void Draw(const double *res, double nevents, TString name[], int sign){
 				double bin_widthy = (maxy-miny)/double(nbins);
 				double fval_md, fval_mb;
 				if (i==4) fval_md = chebyshev(x, &param[i*nvar_md]);
-				else fval_md = md_shape.func_full(x, &param[i*nvar_md]);
-				fval_mb	= mb_shape.func_full(&x[1], &param[ncontr*nvar_md+i*nvar_mb]);
+				else fval_md = md_shape.func_full(x, &param[i*nvar_md], i);
+				fval_mb	= mb_shape.func_full(&x[1], &param[ncontr*nvar_md+i*nvar_mb], i);
 				return nevents*bin_widthx*bin_widthy*frac[i]*fval_md*fval_mb;
 			};
 			func[i] = new TF2((TString::Format("tf1_%d", i)).Data(), wrap, minx, maxx, miny, maxy, 0);
