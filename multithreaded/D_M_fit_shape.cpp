@@ -25,9 +25,7 @@ double md_fit::func_full(const double *xx, const double *_par, int icontr){
   		double mean = par[1];
   		double f12 = abs(par[3]);
   		double gaus = ROOT::Math::gaussian_pdf(m_rec, sigma, mean);
-  		//double int_gaus =  ROOT::Math::normal_cdf(maxx, sigma, mean)-ROOT::Math::normal_cdf(minx, sigma, mean);
   		if(int_gaus[icontr]!=0) gaus/=int_gaus[icontr];
-  		//gaus/=int_gaus;
 
   		return f12*gaus;
 	};
@@ -48,7 +46,6 @@ double md_fit::func_full(const double *xx, const double *_par, int icontr){
    		else{
        			result = ROOT::Math::crystalball_function(2.*mean-m_rec, alpha_h, n, sigma, mean);
    		}
-      			//double intDCB = TMath::Abs(-ROOT::Math::crystalball_integral(minx, alpha, n, sigma, mean)+ROOT::Math::crystalball_integral(mean, alpha, n, sigma, mean)) + TMath::Abs(-ROOT::Math::crystalball_integral(2.*mean-maxx, alpha_h, n, sigma, mean)+ROOT::Math::crystalball_integral(mean, alpha_h, n, sigma, mean));
 
    		return (1.0-f12)*result/int_DCB[icontr];
 		};
@@ -58,8 +55,7 @@ double md_fit::func_full(const double *xx, const double *_par, int icontr){
  	        double a1 = par[0];
   		double a2 = par[1];
   		double cheb = 1.0 + a1*m_rec + a2*(2.0*m_rec*m_rec-1.0);
-  		double int_cheb = (1.0-a2)*maxx + 0.5*a1*maxx*maxx+2./3.*a2*maxx*maxx*maxx- (1.0-a2)*minx-0.5*a1*minx*minx-2./3.*a2*minx*minx*minx;
-  		cheb/=int_cheb;
+  		cheb/=int_Cheb;
   		return cheb;
 	};
 

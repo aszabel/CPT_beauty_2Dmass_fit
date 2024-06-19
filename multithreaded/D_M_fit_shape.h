@@ -16,7 +16,7 @@ class md_fit{
 		int ncontr;
 		std::vector<double> int_gaus;
 		std::vector<double> int_DCB;
-		std::vector<double> int_Cheb;
+		double int_Cheb;
 };
 }
 

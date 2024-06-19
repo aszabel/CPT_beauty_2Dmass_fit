@@ -85,8 +85,8 @@ int main(int argc, char *argv[]){
    ch.SetBranchAddress("truecharge", &charge);
 
 
-   for (int i=0; i<ch.GetEntries(); ++i){
-   //for (int i=0; i<5e5; ++i){
+   //for (int i=0; i<ch.GetEntries(); ++i){
+   for (int i=0; i<1e4; ++i){
       ch.GetEntry(i);
       if (mu_PT<500 || mu_P<5000 || mu_eta<2 || mu_eta>4.5) continue;
       double B_MMcorr = B_M +2.0*missPT;
@@ -157,11 +157,6 @@ int main(int argc, char *argv[]){
 
 
 		for (int i=0; i<ncontr; i++){
-			if (i==4){
-				md_shape.int_gaus[i] = 1.0;
-				md_shape.int_DCB[i] = 1.0;
-				continue;
-			}
 			double sigma = param[i*nvar_md];
 			double mean = param[i*nvar_md+1];
 			md_shape.int_gaus.push_back(ROOT::Math::normal_cdf(maxx, sigma, mean)-ROOT::Math::normal_cdf(minx, sigma, mean)); 
@@ -173,18 +168,21 @@ int main(int argc, char *argv[]){
 			md_shape.int_DCB[i] = TMath::Abs(-ROOT::Math::crystalball_integral(minx, alpha, n, sigma, mean)+ROOT::Math::crystalball_integral(mean, alpha, n, sigma, mean)) + TMath::Abs(-ROOT::Math::crystalball_integral(2.*mean-maxx, alpha_h, n, sigma, mean)+ROOT::Math::crystalball_integral(mean, alpha_h, n, sigma, mean));
 		
 
-	                double a1 = par[i*nvar_md+0];
- 	                double a2 = par[i*nvar_md+1];
+			if (i==4){
+	                	double a1 = par[i*nvar_md+0];
+ 	                	double a2 = par[i*nvar_md+1];
 
 
-			md_shape.int_Cheb[i] = (1.0-a2)*maxx + 0.5*a1*maxx*maxx+2./3.*a2*maxx*maxx*maxx- (1.0-a2)*minx-0.5*a1*minx*minx-2./3.*a2*minx*minx*minx;
+				md_shape.int_Cheb = abs((1.0-a2)*maxx + 0.5*a1*maxx*maxx+2./3.*a2*maxx*maxx*maxx- (1.0-a2)*minx-0.5*a1*minx*minx-2./3.*a2*minx*minx*minx);
+
+			}
 
 			double s = abs(param[ncontr*nvar_md+i*nvar_mb+1]);
 			mean = param[ncontr*nvar_md+i*nvar_mb];
 			double minnB = mean-s;
-                        if (minx>mean-s) minnB = minx;
+                        if (minx>mean-s) minnB = miny;
                         double maxxB = mean+s;
-                        if (maxx<mean+s) maxxB = maxx;
+                        if (maxx<mean+s) maxxB = maxy;
 
 			mb_shape.int_cos[i] = 1.0/(2.0)*(1.0+(maxxB-mean)/s+TMath::Sin((maxxB-mean)/s*TMath::Pi())/TMath::Pi())-1.0/(2.0)*(1.0+(minnB-mean)/s+TMath::Sin((minnB-mean)/s*TMath::Pi())/TMath::Pi());	
 
@@ -200,7 +198,6 @@ int main(int argc, char *argv[]){
 
 			mb_shape.int_gaus2[i] = ROOT::Math::normal_cdf(maxy, sigma2, mean2)-ROOT::Math::normal_cdf(miny, sigma2, mean2);
 		}
-
  		double chi2 = 0.0;
 	        #pragma omp parallel for reduction (+:chi2)
                 for (auto &v: vect_2D){
