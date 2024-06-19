@@ -25,11 +25,6 @@ double mb_2misspt_fit::func_full(const double *xx, const double *par, int icontr
                         if (mass>=mean-s && mass<=mean+s){
                                 cos = 1.0/(2.0*s)*(1.0+TMath::Cos((mass-mean)/s*TMath::Pi()));
                         }
-                        double minnB = mean-s;
-                        if (minn>mean-s) minnB = minn;
-                        double maxxB = mean+s;
-                        if (maxx<mean+s) maxxB = maxx;
-                        //double int_cos = 1.0/(2.0)*(1.0+(maxxB-mean)/s+TMath::Sin((maxxB-mean)/s*TMath::Pi())/TMath::Pi())-1.0/(2.0)*(1.0+(minnB-mean)/s+TMath::Sin((minnB-mean)/s*TMath::Pi())/TMath::Pi());
                 	if (int_cos[icontr]!=0.0) cos /=int_cos[icontr];
 
                         return  cos;

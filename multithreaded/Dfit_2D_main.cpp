@@ -32,16 +32,6 @@ using namespace cpt_b0_analysis;
    TH2D *hist;
 
 void Draw(const double *res, double nevents, TString name[], int sign);
-double chebyshev(const double *x, const double *par){
-  double m_rec = x[0];
-  double m_corr = x[1];
-  double a1 = par[0];
-  double a2 = par[1];
-  double cheb = 1.0 + a1*m_rec + a2*(2.0*m_rec*m_rec-1.0);
-  double int_cheb = (1.0-a2)*maxx + 0.5*a1*maxx*maxx+2./3.*a2*maxx*maxx*maxx- (1.0-a2)*minx-0.5*a1*minx*minx-2./3.*a2*minx*minx*minx;
-  cheb/=int_cheb;
-  return cheb;
-}
 
 int main(int argc, char *argv[]){
 	if(argc !=2){
@@ -65,7 +55,7 @@ int main(int argc, char *argv[]){
         min->SetMaxFunctionCalls(10000000); // for Minuit/Minuit2
         min->SetMaxIterations(10000);  // for GSL
         //min->SetTolerance(2.50e5);
-        min->SetTolerance(10.);
+        min->SetTolerance(50.);
         min->SetPrintLevel(2);
 
         //min->SetStrategy(2);
@@ -95,8 +85,8 @@ int main(int argc, char *argv[]){
    ch.SetBranchAddress("truecharge", &charge);
 
 
-   //for (int i=0; i<ch.GetEntries(); ++i){
-   for (int i=0; i<5e3; ++i){
+   for (int i=0; i<ch.GetEntries(); ++i){
+   //for (int i=0; i<5e5; ++i){
       ch.GetEntry(i);
       if (mu_PT<500 || mu_P<5000 || mu_eta<2 || mu_eta>4.5) continue;
       double B_MMcorr = B_M +2.0*missPT;
@@ -108,7 +98,6 @@ int main(int argc, char *argv[]){
       }
    }
         //double  nevents = double(vect_2D.size());
-        double  nevents = double(hist->Integral());
         md_fit md_shape(minx, maxx, ncontr);
 	mb_2misspt_fit mb_shape(miny, maxy, ncontr);
 
@@ -143,7 +132,7 @@ int main(int argc, char *argv[]){
         }
 
 
-        auto fchi2 = [&md_shape, &mb_shape, vect_2D, xx, dxx, xx_mcorr, dxx_mcorr, min](const double *par)->double{
+        auto fchi2 = [&md_shape, &mb_shape, vect_2D, xx, dxx, xx_mcorr, dxx_mcorr](const double *par)->double{
                	const double *pa = &par[ncontr*(nvar_md+nvar_mb)];
 		double frac [ncontr];
 		frac[0] = 1-abs(pa[0]);
@@ -184,6 +173,12 @@ int main(int argc, char *argv[]){
 			md_shape.int_DCB[i] = TMath::Abs(-ROOT::Math::crystalball_integral(minx, alpha, n, sigma, mean)+ROOT::Math::crystalball_integral(mean, alpha, n, sigma, mean)) + TMath::Abs(-ROOT::Math::crystalball_integral(2.*mean-maxx, alpha_h, n, sigma, mean)+ROOT::Math::crystalball_integral(mean, alpha_h, n, sigma, mean));
 		
 
+	                double a1 = par[i*nvar_md+0];
+ 	                double a2 = par[i*nvar_md+1];
+
+
+			md_shape.int_Cheb[i] = (1.0-a2)*maxx + 0.5*a1*maxx*maxx+2./3.*a2*maxx*maxx*maxx- (1.0-a2)*minx-0.5*a1*minx*minx-2./3.*a2*minx*minx*minx;
+
 			double s = abs(param[ncontr*nvar_md+i*nvar_mb+1]);
 			mean = param[ncontr*nvar_md+i*nvar_mb];
 			double minnB = mean-s;
@@ -207,17 +202,14 @@ int main(int argc, char *argv[]){
 		}
 
  		double chi2 = 0.0;
-		int count = 0;
 	        #pragma omp parallel for reduction (+:chi2)
                 for (auto &v: vect_2D){
-			//if (++count>5.0e4 && !uncorr) break;
 			double mdass = std::get<0>(v);
 			double mcorr = std::get<1>(v);
 			double likelihood = 0.0;
 			for (int i=0; i<ncontr; i++){
 				double md_like, mb_like;
-				if (i==4) md_like = chebyshev(&mdass, &param[i*nvar_md]);
-				else md_like = md_shape.func_full(&mdass, &param[i*nvar_md], i);
+				md_like = md_shape.func_full(&mdass, &param[i*nvar_md], i);
 				mb_like = mb_shape.func_full(&mcorr, &param[ncontr*nvar_md+i*nvar_mb], i);
 				likelihood+= md_like*mb_like*frac[i];
 			}
@@ -226,13 +218,11 @@ int main(int argc, char *argv[]){
 		for (int i=0; i<ncontr; i++){
 			if(i==4) continue;
 			for (int ivar=0; ivar<nvar_md; ivar++){
-				//if (ivar==1) continue;
 				if(dxx[i][ivar]!=0)chi2+= (xx[i][ivar]-param[i*nvar_md+ivar])*(xx[i][ivar]-param[i*nvar_md+ivar])/(dxx[i][ivar]*dxx[i][ivar]);   // use the results of MC fits
                 	}
 		}
 		for (int i=0; i<ncontr; i++){
                         for (int ivar=0; ivar<nvar_mb; ivar++){
-				//std::cout << min->VariableName(ncontr*nvar_md+i*nvar_mb+ivar) << "  " << xx_mcorr[i][ivar] << "  " << dxx_mcorr[i][ivar] << std::endl;
                         	if(dxx_mcorr[i][ivar]!=0)chi2+= (xx_mcorr[i][ivar]-param[ncontr*nvar_md+i*nvar_mb+ivar])*(xx_mcorr[i][ivar]-param[ncontr*nvar_md+i*nvar_mb+ivar])/(dxx_mcorr[i][ivar]*dxx_mcorr[i][ivar]);   // use the results of MC fits
                         }
                 }
@@ -332,89 +322,6 @@ int main(int argc, char *argv[]){
 		results<< min->X()[i]<< "  " << min->Errors()[i] << std::endl;
 	}
 	results.close();
-	Draw(min->X(), nevents, name, sign);
 
     return 0;	   
-}
-void Draw(const double *res, double nevents, TString name[], int sign){        
-        md_fit md_shape(minx, maxx, ncontr);
-	mb_2misspt_fit mb_shape(miny, maxy, ncontr);
-	TF2 *func[ncontr];
-	double frac[ncontr];
-        const double *pa = &res[ncontr*(nvar_md+nvar_mb)];
-		frac[0] = 1-abs(pa[0]);
-		frac[1] = abs(pa[0])*(1.0-abs(pa[1]));
-    		frac[2] = abs(pa[0])*abs(pa[1])*(1.0-abs(pa[2]));
-    		frac[3] = abs(pa[0])*abs(pa[1])*abs(pa[2])*(1.0-abs(pa[3]));
-   		frac[4] = abs(pa[0])*abs(pa[1])*abs(pa[2])*abs(pa[3])*(1.0-abs(pa[4]));
-    		frac[5] = abs(pa[0])*abs(pa[1])*abs(pa[2])*abs(pa[3])*abs(pa[4]);
-
-		double param[ncontr*(nvar_md+nvar_mb)];
-		for (int i=0; i<ncontr; i++){
-			for (int ivar=0; ivar<nvar_md; ivar++){
-				param[i*nvar_md+ivar] = res[i*nvar_md+ivar];
-				if (ivar==1 && i!=2 && i!=4)param[i*nvar_md+ivar] = res[1];
-			}
-			for (int ivar=0; ivar<nvar_mb; ivar++){
-                                param[ncontr*nvar_md+i*nvar_mb+ivar] = res[ncontr*nvar_md+i*nvar_mb+ivar];
-                        }
-		}
-
-
-        for(int i=0; i<ncontr; i++){
-		std::cout << i << "  " << frac [i] << std::endl;
-	}
-
-	double integ = 0.0;
-		for (int i=0; i<ncontr; i++){
-			auto wrap = [&md_shape, &mb_shape, nevents, param, i, &frac] (double *x, double *par)->double{
-				double bin_widthx = (maxx-minx)/double(nbins);
-				double bin_widthy = (maxy-miny)/double(nbins);
-				double fval_md, fval_mb;
-				if (i==4) fval_md = chebyshev(x, &param[i*nvar_md]);
-				else fval_md = md_shape.func_full(x, &param[i*nvar_md], i);
-				fval_mb	= mb_shape.func_full(&x[1], &param[ncontr*nvar_md+i*nvar_mb], i);
-				return nevents*bin_widthx*bin_widthy*frac[i]*fval_md*fval_mb;
-			};
-			func[i] = new TF2((TString::Format("tf1_%d", i)).Data(), wrap, minx, maxx, miny, maxy, 0);
-			double bin_widthx = (maxx-minx)/double(nbins);
-			double bin_widthy = (maxy-miny)/double(nbins);
-			integ+=func[i]->Integral(minx, maxx, miny, maxy)/bin_widthx/bin_widthy;
-			std::cout << func[i]->Integral(minx, maxx, miny, maxy) << " int " << i << std::endl;
-		}
-		std::cout << integ << "  " << nevents << std::endl;
-
-		auto func_sum = [func](double *x, double *par)->double{
-			double sum = 0.0;
-			for (int i=0; i<ncontr; i++){
-				sum+= func[i]->Eval(x[0], x[1]);
-			}
-			return sum;
-		};
-		TF2 *tf2_sum = new TF2("tf2_sum", func_sum, minx, maxx, miny, maxy, 0);
-		std::cout  << tf2_sum->Integral(minx, maxx) << std::endl;
-	TCanvas *c = new TCanvas("c", "", 500, 500);
-
-	hist->SetStats(kFALSE);
-	hist->SetMinimum(1.0);
-	hist->DrawClone("ep");
-	tf2_sum->SetLineColor(kRed);
-	tf2_sum->DrawClone("same surf");
-
-	TCanvas *cpull  = new TCanvas("cpull", "", 500, 500);
-        TH2D histpull2D(*hist);
-	histpull2D.SetMinimum();
-        for (int binx=1; binx<=hist->GetNbinsX(); binx++){
-        	for (int biny=1; biny<=hist->GetNbinsY(); biny++){
-                	double err = hist->GetBinError(binx, biny);
-                	if (err==0.0) continue;
-                	double diff  = hist->GetBinContent(binx, biny)-tf2_sum->Eval(hist->GetXaxis()->GetBinCenter(binx), hist->GetYaxis()->GetBinCenter(biny));
-                	histpull2D.SetBinContent(binx, biny, diff/err);
-		}
-        }
-        histpull2D.SetStats(kFALSE);
-        histpull2D.SetFillColor(kBlue);
-        //histpull2D.GetYaxis()->SetLabelSize(0.1);
-        //histpull2D.GetXaxis()->SetLabelSize(0.1);
-        histpull2D.DrawClone("surf");
 }

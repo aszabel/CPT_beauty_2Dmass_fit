@@ -2,7 +2,8 @@
 CC=clang++
 
 #flags declaration
-MPICFLAGS= `root-config --cflags --libs` -fopenmp -Wall -O3 
+CFLAGS= `root-config --cflags --libs` -fopenmp -Wall -O3 
+CFLAGS_COMP= `root-config --cflags` -fopenmp -Wall -O3 
 #MPICFLAGS= -fopenmp  -std=c++20 --include-directory /mnt/opt/spack-0.17/opt/spack/linux-centos7-ivybridge/gcc-8.3.0/root-6.24.06-f2vmdt3rp2x3mqemsppuq6tvxnztd3sf/include
 
 SRCS = Dfit_2D_main.cpp D_M_fit_shape.cpp M_B_2missPT_fit.cpp
@@ -15,11 +16,11 @@ all: $(TARGET)
 
 # Linking
 $(TARGET): $(OBJS)
-	$(CC) $(MPICFLAGS)  -o $@ $^
+	$(CC) $(CFLAGS)  -o $@ $^
 
 # Compilation
 %.o: %.cpp
-	$(CC) $(MPICFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS_COMP) -c $< -o $@
 
 # Clean up
 clean:

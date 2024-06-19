@@ -53,9 +53,8 @@ double md_fit::func_full(const double *xx, const double *_par, int icontr){
    		return (1.0-f12)*result/int_DCB[icontr];
 		};
 
-	auto Deb_pdf = [this, icontr](const double *x, const double *par)->double{
+	auto Deb_pdf = [this](const double *x, const double *par)->double{
 		double m_rec = x[0];
-		double m_corr = x[1];
  	        double a1 = par[0];
   		double a2 = par[1];
   		double cheb = 1.0 + a1*m_rec + a2*(2.0*m_rec*m_rec-1.0);
