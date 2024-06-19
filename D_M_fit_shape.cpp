@@ -9,22 +9,30 @@
 
 namespace cpt_b0_analysis{
 
-md_fit::md_fit(double _minx, double _maxx):minx(_minx), maxx(_maxx){}
+md_fit::md_fit(double _minx, double _maxx, int _ncontr):minx(_minx), maxx(_maxx), ncontr(_ncontr){
+	for (int i=0; i<ncontr; i++){
+		int_gaus.push_back(1.0);
+		int_DCB.push_back(1.0);
+	}
 
-double md_fit::func_full(const double *xx, const double *_par){
-	auto gausPDF = [this](const double *x, const double *par)->double{
+
+}
+
+double md_fit::func_full(const double *xx, const double *_par, int icontr){
+	auto gausPDF = [this, icontr](const double *x, const double *par)->double{
   		double m_rec = x[0];
   		double sigma = par[0];
   		double mean = par[1];
   		double f12 = abs(par[3]);
   		double gaus = ROOT::Math::gaussian_pdf(m_rec, sigma, mean);
-  		double int_gaus =  ROOT::Math::normal_cdf(maxx, sigma, mean)-ROOT::Math::normal_cdf(minx, sigma, mean);
-  		gaus/=int_gaus;
+  		//double int_gaus =  ROOT::Math::normal_cdf(maxx, sigma, mean)-ROOT::Math::normal_cdf(minx, sigma, mean);
+  		if(int_gaus[icontr]!=0) gaus/=int_gaus[icontr];
+  		//gaus/=int_gaus;
 
   		return f12*gaus;
 	};
 
-	auto DoubleSidedCrystalballFunction = [this](const double *x, const double *par)->double{
+	auto DoubleSidedCrystalballFunction = [this, icontr](const double *x, const double *par)->double{
   		double alpha = par[4];
   		double n     = par[5];
   		double mean  = par[1];
@@ -40,10 +48,23 @@ double md_fit::func_full(const double *xx, const double *_par){
    		else{
        			result = ROOT::Math::crystalball_function(2.*mean-m_rec, alpha_h, n, sigma, mean);
    		}
-      			double intDCB = TMath::Abs(-ROOT::Math::crystalball_integral(minx, alpha, n, sigma, mean)+ROOT::Math::crystalball_integral(mean, alpha, n, sigma, mean)) + TMath::Abs(-ROOT::Math::crystalball_integral(2.*mean-maxx, alpha_h, n, sigma, mean)+ROOT::Math::crystalball_integral(mean, alpha_h, n, sigma, mean));
+      			//double intDCB = TMath::Abs(-ROOT::Math::crystalball_integral(minx, alpha, n, sigma, mean)+ROOT::Math::crystalball_integral(mean, alpha, n, sigma, mean)) + TMath::Abs(-ROOT::Math::crystalball_integral(2.*mean-maxx, alpha_h, n, sigma, mean)+ROOT::Math::crystalball_integral(mean, alpha_h, n, sigma, mean));
 
-   		return (1.0-f12)*result/intDCB;
+   		return (1.0-f12)*result/int_DCB[icontr];
 		};
-	return gausPDF(xx, _par)+DoubleSidedCrystalballFunction(xx, _par);
+
+	auto Deb_pdf = [this, icontr](const double *x, const double *par)->double{
+		double m_rec = x[0];
+		double m_corr = x[1];
+ 	        double a1 = par[0];
+  		double a2 = par[1];
+  		double cheb = 1.0 + a1*m_rec + a2*(2.0*m_rec*m_rec-1.0);
+  		double int_cheb = (1.0-a2)*maxx + 0.5*a1*maxx*maxx+2./3.*a2*maxx*maxx*maxx- (1.0-a2)*minx-0.5*a1*minx*minx-2./3.*a2*minx*minx*minx;
+  		cheb/=int_cheb;
+  		return cheb;
+	};
+
+	if (icontr!=4) return gausPDF(xx, _par)+DoubleSidedCrystalballFunction(xx, _par);
+	else return Deb_pdf(xx, _par);
 }
 }
