@@ -1,5 +1,6 @@
 #compiler definition
-CC=clang++
+#CC=clang++
+CC=g++
 
 #flags declaration
 CFLAGS= `root-config --cflags --libs` -fopenmp -Wall -O3 
