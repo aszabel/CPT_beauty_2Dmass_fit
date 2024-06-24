@@ -159,7 +159,7 @@ int main(int argc, char *argv[]){
 		for (int i=0; i<ncontr; i++){
 			double sigma = param[i*nvar_md];
 			double mean = param[i*nvar_md+1];
-			md_shape.int_gaus.push_back(ROOT::Math::normal_cdf(maxx, sigma, mean)-ROOT::Math::normal_cdf(minx, sigma, mean)); 
+			md_shape.int_gaus[i] = ROOT::Math::normal_cdf(maxx, sigma, mean)-ROOT::Math::normal_cdf(minx, sigma, mean); 
 			sigma = param[i*nvar_md+2];
 			double n = param[i*nvar_md+5];
 			double alpha = param[i*nvar_md+4];
