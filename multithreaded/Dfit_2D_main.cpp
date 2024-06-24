@@ -180,9 +180,9 @@ int main(int argc, char *argv[]){
 			double s = abs(param[ncontr*nvar_md+i*nvar_mb+1]);
 			mean = param[ncontr*nvar_md+i*nvar_mb];
 			double minnB = mean-s;
-                        if (minx>mean-s) minnB = miny;
+                        if (miny>mean-s) minnB = miny;
                         double maxxB = mean+s;
-                        if (maxx<mean+s) maxxB = maxy;
+                        if (maxy<mean+s) maxxB = maxy;
 
 			mb_shape.int_cos[i] = 1.0/(2.0)*(1.0+(maxxB-mean)/s+TMath::Sin((maxxB-mean)/s*TMath::Pi())/TMath::Pi())-1.0/(2.0)*(1.0+(minnB-mean)/s+TMath::Sin((minnB-mean)/s*TMath::Pi())/TMath::Pi());	
 
