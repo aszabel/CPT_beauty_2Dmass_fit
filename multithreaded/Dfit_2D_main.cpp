@@ -282,7 +282,7 @@ int main(int argc, char *argv[])
 
 		// Main loop that calculates the chi2
 		double chi2 = 0.0;  // Final result		
-		double vect_chi2[vect_2D.size()];  // Per event results - required to efficiently calculate a Kahan compensated sum
+		double* vect_chi2 = new double[vect_2D.size()];  // Per event results - required to efficiently calculate a Kahan compensated sum
 
 		// Main look - run in parallel using OpenMP
 		#pragma omp parallel for
@@ -325,6 +325,7 @@ int main(int argc, char *argv[])
   			}
   			chi2 = sum + c;
 		}
+		delete vect_chi2;
 		//std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 		//std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
 
