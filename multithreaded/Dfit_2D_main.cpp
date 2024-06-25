@@ -1,8 +1,10 @@
 #include <string>
 #include <fstream>
+#include <iomanip>
 #include "omp.h"
 
 // ROOT includes
+#include "TROOT.h"
 #include "TH2D.h"
 #include "TChain.h"
 #include "TString.h"
@@ -17,6 +19,7 @@
 // CPT_beauty_2Dmass_fit
 #include "D_M_fit_shape.h"
 #include "M_B_2missPT_fit.h"
+#include "FastSum.h"
 
 // TODO is this realy required??
 typedef std::basic_string<char> string;
@@ -24,6 +27,9 @@ typedef std::basic_ifstream<char> ifstream;
 typedef std::basic_ofstream<char> ofstream;
 
 using namespace cpt_b0_analysis;
+
+#include <mutex>
+std::mutex my_mutex;
 
 // TODO move those globals to a config file
 double minx = 1800.;
@@ -35,6 +41,22 @@ const int nvar_mb = 7;
 const int ncontr = 6;
 const int nbins = 40;
 bool uncorr = false;
+//bool avx = false;
+bool avx = true;
+
+/**
+ * @brief Kahan compensated summation based on http://blog.zachbjornson.com/2019/08/11/fast-float-summation.html
+ * 
+ * @param sum Load and store value of the kahan sum
+ * @param c Load and store value of the summation error
+ * @param y Value to add
+ */
+inline static void kadd(double& sum, double& c, double y) {
+  y -= c;
+  auto t = sum + y;
+  c = (t - sum) - y;
+  sum = t;
+}
 
 /**
  * @brief Draw the results of a 2D fit
@@ -56,6 +78,13 @@ bool uncorr = false;
  */
 int main(int argc, char *argv[])
 {
+	// The first, fundamental operation to be performed in order to make ROOT
+	// thread-aware.
+	ROOT::EnableThreadSafety();
+
+	// Increase printout precision
+	//std::cout<<std::setprecision(40);
+
 	if (argc != 2)
 	{
 		std::cout << " Please state: 'muplus' or 'muminus'." << std::endl;
@@ -106,9 +135,9 @@ int main(int argc, char *argv[])
 	ch.SetBranchAddress("K_PT", &K_PT);
 	ch.SetBranchAddress("truecharge", &charge);
 
-	// for (int i=0; i<ch.GetEntries(); ++i){
+	for (int i=0; i<ch.GetEntries(); ++i)
 	// TODO load number of entries from the config file
-	for (int i = 0; i < 1e4; ++i)
+	//for (int i = 0; i < 1e5; ++i)
 	{
 		ch.GetEntry(i);
 		// TODO load cut values from a config file
@@ -200,6 +229,12 @@ int main(int argc, char *argv[])
 				param[ipar] = par[ipar];
 			}
 		}
+		/*
+		for (int i=0; i<ncontr * (nvar_md + nvar_mb); i++) {
+			std::cout<<param[i]<<", ";
+		}
+		std::cout<<pa[0]<<", "<<pa[1]<<", "<<pa[2]<<", "<<pa[3]<<std::endl;
+		*/
 
 		// Calculate normalisation integrals
 		for (int i = 0; i < ncontr; i++)
@@ -246,25 +281,54 @@ int main(int argc, char *argv[])
 		}
 
 		// Main loop that calculates the chi2
-		double chi2 = 0.0;
-		#pragma omp parallel for reduction(+ : chi2)
-		for (auto &v : vect_2D)
+		double chi2 = 0.0;  // Final result		
+		double vect_chi2[vect_2D.size()];  // Per event results - required to efficiently calculate a Kahan compensated sum
+
+		// Main look - run in parallel using OpenMP
+		#pragma omp parallel for
+		for (long unsigned int i=0; i<vect_2D.size(); i++)
 		{
-			double mdass = std::get<0>(v);
-			double mcorr = std::get<1>(v);
+			/*
+			// Use mutex to have sensible printouts from the parallel section
+			{
+				std::lock_guard<std::mutex> guard0(my_mutex);
+				std::cout<<"Chi2 before: "<<chi2_tmp<<std::flush<<std::endl;
+			}
+			*/
+			double mdass = std::get<0>(vect_2D[i]);
+			double mcorr = std::get<1>(vect_2D[i]);
 			double likelihood = 0.0;
-			for (int i = 0; i < ncontr; i++)
+			for (int k = 0; k < ncontr; k++)
 			{
 				double md_like, mb_like;
-				md_like = md_shape.func_full(&mdass, &param[i * nvar_md], i);
-				mb_like = mb_shape.func_full(&mcorr, &param[ncontr * nvar_md + i * nvar_mb], i);
-				likelihood += md_like * mb_like * frac[i];
+				md_like = md_shape.func_full(&mdass, &param[k * nvar_md], k);
+				mb_like = mb_shape.func_full(&mcorr, &param[ncontr * nvar_md + k * nvar_mb], k);
+				likelihood += md_like * mb_like * frac[k];
 			}
 			if (likelihood > 0.0)
-				chi2 -= 2.0 * log(likelihood);
+				vect_chi2[i] = - 2.0 * log(likelihood);
+			/*
+			{
+				std::lock_guard<std::mutex> guard(my_mutex);
+				std::cout<<"Chi2: "<<chi2_tmp<<std::flush<<std::endl;
+			}
+			*/
 		}
 
-		// Add addicional constraints based on the templates from 1D fits
+		//std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+		if (avx) {
+			chi2 = fastAccurate<Method::Kahan, 4>(vect_chi2, (size_t)vect_2D.size());
+		} else {
+			double sum = 0, c = 0;
+  			for (long unsigned int i=0; i<vect_2D.size(); i++) {
+    			kadd(sum, c, vect_chi2[i]);
+  			}
+  			chi2 = sum + c;
+		}
+		//std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+		//std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
+
+		// Add additional constraints based on the templates from 1D fits
 		for (int i = 0; i < ncontr; i++)
 		{
 			if (i == 4)
@@ -284,6 +348,7 @@ int main(int argc, char *argv[])
 			}
 		}
 
+		//std::cerr<<"Chi2: "<<chi2<<std::endl;
 		return chi2;
 	};
 
@@ -370,7 +435,8 @@ int main(int argc, char *argv[])
 	for(int ivar=0; ivar<ncontr*(nvar_md+nvar_mb)+ncontr-1; ivar++){
 		std::cout << x_fix[ivar] << "  " << ivar << std::endl;
 		min->SetVariableValue(ivar, x_fix[ivar]);
-	}*/
+	}
+	*/
 
 	// Start the minimization
 	min->Minimize();
