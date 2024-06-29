@@ -20,6 +20,7 @@
 #include "D_M_fit_shape.h"
 #include "M_B_2missPT_fit.h"
 #include "FastSum.h"
+#include "ChebyshevPDF.h"
 
 // TODO is this realy required??
 typedef std::basic_string<char> string;
@@ -41,40 +42,27 @@ const int nvar_mb = 7;
 const int ncontr = 6;
 const int nbins = 40;
 bool uncorr = false;
-//bool avx = false;
+// bool avx = false;
 bool avx = true;
 
-/**
- * @brief Kahan compensated summation based on http://blog.zachbjornson.com/2019/08/11/fast-float-summation.html
- * 
- * @param sum Load and store value of the kahan sum
- * @param c Load and store value of the summation error
- * @param y Value to add
- */
-inline static void kadd(double& sum, double& c, double y) {
-  y -= c;
-  auto t = sum + y;
-  c = (t - sum) - y;
-  sum = t;
-}
 
 /**
  * @brief Draw the results of a 2D fit
- * 
- * @param res 
- * @param nevents 
- * @param name 
- * @param sign 
+ *
+ * @param res
+ * @param nevents
+ * @param name
+ * @param sign
  */
 // At the moment this is not used
 // void Draw(const double *res, double nevents, TString name[], int sign);
 
 /**
  * @brief A 2D fitter for ..
- * 
- * @param argc 
- * @param argv 
- * @return int 
+ *
+ * @param argc
+ * @param argv
+ * @return int
  */
 int main(int argc, char *argv[])
 {
@@ -83,7 +71,7 @@ int main(int argc, char *argv[])
 	ROOT::EnableThreadSafety();
 
 	// Increase printout precision
-	//std::cout<<std::setprecision(40);
+	// std::cout<<std::setprecision(40);
 
 	if (argc != 2)
 	{
@@ -135,9 +123,9 @@ int main(int argc, char *argv[])
 	ch.SetBranchAddress("K_PT", &K_PT);
 	ch.SetBranchAddress("truecharge", &charge);
 
-	for (int i=0; i<ch.GetEntries(); ++i)
+	// for (int i=0; i<ch.GetEntries(); ++i){
 	// TODO load number of entries from the config file
-	//for (int i = 0; i < 1e5; ++i)
+	for (int i = 0; i < 1e4; ++i)
 	{
 		ch.GetEntry(i);
 		// TODO load cut values from a config file
@@ -157,8 +145,6 @@ int main(int argc, char *argv[])
 	// double  nevents = double(vect_2D.size());
 
 	// TODO define shapes dynamically preferably based on configfile??
-	md_fit md_shape(minx, maxx, ncontr);
-	mb_2misspt_fit mb_shape(miny, maxy, ncontr);
 
 	// Initial fit parameter values taken from 1D fits to MC and Side Bands
 	double xx[ncontr][nvar_md];
@@ -179,7 +165,7 @@ int main(int argc, char *argv[])
 			k++;
 		}
 	}
-	
+
 	// B mass fit
 	double xx_mcorr[ncontr][nvar_mb];
 	double dxx_mcorr[ncontr][nvar_mb];
@@ -193,9 +179,23 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	PDFInterface *PDFs[ncontr * 2];
+	PDFs[0] = new DoubleSidedCrystalballPlusGaussPDF();
+	PDFs[1] = new DoubleSidedCrystalballPlusGaussPDF();
+	PDFs[2] = new DoubleSidedCrystalballPlusGaussPDF();
+	PDFs[3] = new DoubleSidedCrystalballPlusGaussPDF();
+	PDFs[4] = new ChebyshevPDF();
+	PDFs[5] = new DoubleSidedCrystalballPlusGaussPDF();
+	PDFs[6] = new RaisedCosinePlusGaussPDF();
+	PDFs[7] = new RaisedCosinePlusGaussPDF();
+	PDFs[8] = new RaisedCosinePlusGaussPDF();
+	PDFs[9] = new RaisedCosinePlusGaussPDF();
+	PDFs[10] = new RaisedCosinePlusGaussPDF();
+	PDFs[11] = new RaisedCosinePlusGaussPDF();
+
 	// Caclulate chi2
 	// TODO consider changing this to a full function
-	auto fchi2 = [&md_shape, &mb_shape, vect_2D, xx, dxx, xx_mcorr, dxx_mcorr](const double *par) -> double
+	auto fchi2 = [PDFs, vect_2D, xx, dxx, xx_mcorr, dxx_mcorr](const double *par) -> double
 	{
 		// Get the pointer in parameters array that corresponds to location just after shape parameters - number of events ????
 		const double *pa = &par[ncontr * (nvar_md + nvar_mb)];
@@ -229,105 +229,59 @@ int main(int argc, char *argv[])
 				param[ipar] = par[ipar];
 			}
 		}
-		/*
-		for (int i=0; i<ncontr * (nvar_md + nvar_mb); i++) {
-			std::cout<<param[i]<<", ";
-		}
-		std::cout<<pa[0]<<", "<<pa[1]<<", "<<pa[2]<<", "<<pa[3]<<std::endl;
-		*/
 
 		// Calculate normalisation integrals
 		for (int i = 0; i < ncontr; i++)
 		{
-			// TODO move to proper class
-			double sigma = param[i * nvar_md];
-			double mean = param[i * nvar_md + 1];
-			md_shape.int_gaus.push_back(ROOT::Math::normal_cdf(maxx, sigma, mean) - ROOT::Math::normal_cdf(minx, sigma, mean));
-			sigma = param[i * nvar_md + 2];
-			double n = param[i * nvar_md + 5];
-			double alpha = param[i * nvar_md + 4];
-			double alpha_h = param[i * nvar_md + 6];
-
-			md_shape.int_DCB[i] = TMath::Abs(-ROOT::Math::crystalball_integral(minx, alpha, n, sigma, mean) + ROOT::Math::crystalball_integral(mean, alpha, n, sigma, mean)) + TMath::Abs(-ROOT::Math::crystalball_integral(2. * mean - maxx, alpha_h, n, sigma, mean) + ROOT::Math::crystalball_integral(mean, alpha_h, n, sigma, mean));
-
-			if (i == 4)
-			{
-				double a1 = par[i * nvar_md + 0];
-				double a2 = par[i * nvar_md + 1];
-
-				md_shape.int_Cheb = abs((1.0 - a2) * maxx + 0.5 * a1 * maxx * maxx + 2. / 3. * a2 * maxx * maxx * maxx - (1.0 - a2) * minx - 0.5 * a1 * minx * minx - 2. / 3. * a2 * minx * minx * minx);
-			}
-
-			double s = abs(param[ncontr * nvar_md + i * nvar_mb + 1]);
-			mean = param[ncontr * nvar_md + i * nvar_mb];
-			double minnB = mean - s;
-			if (minx > mean - s)
-				minnB = miny;
-			double maxxB = mean + s;
-			if (maxx < mean + s)
-				maxxB = maxy;
-
-			mb_shape.int_cos[i] = 1.0 / (2.0) * (1.0 + (maxxB - mean) / s + TMath::Sin((maxxB - mean) / s * TMath::Pi()) / TMath::Pi()) - 1.0 / (2.0) * (1.0 + (minnB - mean) / s + TMath::Sin((minnB - mean) / s * TMath::Pi()) / TMath::Pi());
-
-			double mean1 = param[ncontr * nvar_md + i * nvar_mb + 3];
-			double sigma1 = abs(param[ncontr * nvar_md + i * nvar_mb + 4]);
-
-			mb_shape.int_gaus1[i] = ROOT::Math::normal_cdf(maxy, sigma1, mean1) - ROOT::Math::normal_cdf(miny, sigma1, mean1);
-
-			double mean2 = param[ncontr * nvar_md + i * nvar_mb + 5];
-			double sigma2 = abs(param[ncontr * nvar_md + i * nvar_mb + 6]);
-
-			mb_shape.int_gaus2[i] = ROOT::Math::normal_cdf(maxy, sigma2, mean2) - ROOT::Math::normal_cdf(miny, sigma2, mean2);
+			PDFs[i]->CalcIntegral(&param[i * nvar_md], minx, maxx);
+			PDFs[ncontr + i]->CalcIntegral(&param[ncontr * nvar_md + i * nvar_mb], miny, maxy);
 		}
 
 		// Main loop that calculates the chi2
-		double chi2 = 0.0;  // Final result		
+		double chi2 = 0.0;
 		double* vect_chi2 = new double[vect_2D.size()];  // Per event results - required to efficiently calculate a Kahan compensated sum
 
-		// Main look - run in parallel using OpenMP
+		// Main loop that calculates the chi2 - run in parallel using OpenMP
 		#pragma omp parallel for
-		for (long unsigned int i=0; i<vect_2D.size(); i++)
+		for (long int e = 0; e < vect_2D.size(); e++)
 		{
-			/*
-			// Use mutex to have sensible printouts from the parallel section
-			{
-				std::lock_guard<std::mutex> guard0(my_mutex);
-				std::cout<<"Chi2 before: "<<chi2_tmp<<std::flush<<std::endl;
-			}
-			*/
-			double mdass = std::get<0>(vect_2D[i]);
-			double mcorr = std::get<1>(vect_2D[i]);
+			double mdass = std::get<0>(vect_2D[e]);
+			double mcorr = std::get<1>(vect_2D[e]);
 			double likelihood = 0.0;
-			for (int k = 0; k < ncontr; k++)
+			for (int i = 0; i < ncontr; i++)
 			{
 				double md_like, mb_like;
-				md_like = md_shape.func_full(&mdass, &param[k * nvar_md], k);
-				mb_like = mb_shape.func_full(&mcorr, &param[ncontr * nvar_md + k * nvar_mb], k);
-				likelihood += md_like * mb_like * frac[k];
+				md_like = PDFs[i]->EvalPDF(&mdass, &param[i * nvar_md]);
+				mb_like = PDFs[ncontr + i]->EvalPDF(&mcorr, &param[ncontr * nvar_md + i * nvar_mb]);
+				likelihood += md_like * mb_like * frac[i];
 			}
 			if (likelihood > 0.0)
-				vect_chi2[i] = - 2.0 * log(likelihood);
+				vect_chi2[e] = -2.0 * log(likelihood);
 			/*
 			{
 				std::lock_guard<std::mutex> guard(my_mutex);
-				std::cout<<"Chi2: "<<chi2_tmp<<std::flush<<std::endl;
+				std::cout<<"Chi2: "<<likelihood<<std::flush<<std::endl;
 			}
 			*/
 		}
 
-		//std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-		if (avx) {
+		// std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+		if (avx)
+		{
 			chi2 = fastAccurate<Method::Kahan, 4>(vect_chi2, (size_t)vect_2D.size());
-		} else {
+		}
+		else
+		{
 			double sum = 0, c = 0;
-  			for (long unsigned int i=0; i<vect_2D.size(); i++) {
-    			kadd(sum, c, vect_chi2[i]);
-  			}
-  			chi2 = sum + c;
+			for (long unsigned int i = 0; i < vect_2D.size(); i++)
+			{
+				ksum(sum, c, vect_chi2[i]);
+			}
+			chi2 = sum + c;
 		}
 		delete vect_chi2;
-		//std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-		//std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
+		// std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+		// std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
 
 		// Add additional constraints based on the templates from 1D fits
 		for (int i = 0; i < ncontr; i++)
@@ -349,7 +303,7 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		//std::cerr<<"Chi2: "<<chi2<<std::endl;
+		// std::cerr<<"Chi2: "<<chi2<<std::endl;
 		return chi2;
 	};
 
@@ -462,7 +416,7 @@ int main(int argc, char *argv[])
 
 	// Q: Fix parameters for the sFit ?????
 	// TODO think of a way to define it separately via config file or a header
-	// Q: What do we fix here ?? 
+	// Q: What do we fix here ??
 	std::vector<int> vect_fix = {5, 8, 12, 15, 19, 22, 26, 29, 30, 31, 32, 33, 34, 36, 40, 57, 62};
 	for (int i = 0; i < ncontr * (nvar_md + nvar_mb) + ncontr - 1; i++)
 		min->SetVariableValue(i, x_fix[i]);

@@ -10,26 +10,22 @@
 namespace cpt_b0_analysis
 {
 
-	md_fit::md_fit(double _minx, double _maxx, int _ncontr) : minx(_minx), maxx(_maxx), ncontr(_ncontr)
+	DoubleSidedCrystalballPlusGaussPDF::DoubleSidedCrystalballPlusGaussPDF()
 	{
-		for (int i = 0; i < ncontr; i++)
-		{
-			int_gaus.push_back(1.0);
-			int_DCB.push_back(1.0);
-		}
+		IntGaus = 1.0;
+		IntDCB = 1.0;
 	}
-
-	double md_fit::func_full(const double *xx, const double *_par, int icontr)
+	double DoubleSidedCrystalballPlusGaussPDF::EvalPDF(const double *xx, const double *_par)
 	{
-		auto gausPDF = [this, icontr](const double *x, const double *par) -> double
+		auto gausPDF = [this](const double *x, const double *par) -> double
 		{
 			double m_rec = x[0];
 			double sigma = par[0];
 			double mean = par[1];
 			double f12 = abs(par[3]);
 			double gaus = ROOT::Math::gaussian_pdf(m_rec, sigma, mean);
-			if (int_gaus[icontr] != 0)
-				gaus /= int_gaus[icontr];
+			if (IntGaus != 0)
+				gaus /= IntGaus;
 
 			return f12 * gaus;
 		};
@@ -44,6 +40,15 @@ namespace cpt_b0_analysis
 			double alpha_h = abs(par[6]);
 			double m_rec = x[0];
 			double result;
+	auto DoubleSidedCrystalballFunction = [this](const double *x, const double *par)->double{
+  		double alpha = par[4];
+  		double n     = par[5];
+  		double mean  = par[1];
+  		double sigma = par[2];
+  		double f12 = abs(par[3]);
+  		double alpha_h = abs(par[6]);
+  		double m_rec=x[0];
+  		double result;
 
 			if (m_rec < mean)
 			{
@@ -55,6 +60,8 @@ namespace cpt_b0_analysis
 			}
 
 			return (1.0 - f12) * result / int_DCB[icontr];
+		if (IntDCB!=0) result/=IntDCB;
+   		return (1.0-f12)*result;
 		};
 
 		auto Deb_pdf = [this](const double *x, const double *par) -> double
@@ -72,4 +79,21 @@ namespace cpt_b0_analysis
 		else
 			return Deb_pdf(xx, _par);
 	}
+	return gausPDF(xx, _par)+DoubleSidedCrystalballFunction(xx, _par);
+}
+void DoubleSidedCrystalballPlusGaussPDF::CalcIntegral(const double *par, double min, double max){
+        double sigma = par[0];
+        double mean = par[1];
+ 
+	IntGaus = ROOT::Math::normal_cdf(max, sigma, mean)-ROOT::Math::normal_cdf(min, sigma, mean);
+
+        double alpha = par[4];
+        double n     = par[5];
+        mean  = par[1];
+        sigma = par[2];
+        double alpha_h = abs(par[6]);
+
+	IntDCB = TMath::Abs(-ROOT::Math::crystalball_integral(min, alpha, n, sigma, mean)+ROOT::Math::crystalball_integral(mean, alpha, n, sigma, mean)) + TMath::Abs(-ROOT::Math::crystalball_integral(2.*mean-max, alpha_h, n, sigma, mean)+ROOT::Math::crystalball_integral(mean, alpha_h, n, sigma, mean));
+}
+
 }
