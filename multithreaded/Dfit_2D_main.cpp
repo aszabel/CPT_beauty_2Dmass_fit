@@ -178,23 +178,25 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	PDFInterface *PDFs[ncontr * 2];
-	PDFs[0] = new DoubleSidedCrystalballPlusGaussPDF();
-	PDFs[1] = new DoubleSidedCrystalballPlusGaussPDF();
-	PDFs[2] = new DoubleSidedCrystalballPlusGaussPDF();
-	PDFs[3] = new DoubleSidedCrystalballPlusGaussPDF();
-	PDFs[4] = new ChebyshevPDF();
-	PDFs[5] = new DoubleSidedCrystalballPlusGaussPDF();
-	PDFs[6] = new RaisedCosinePlusGaussPDF();
-	PDFs[7] = new RaisedCosinePlusGaussPDF();
-	PDFs[8] = new RaisedCosinePlusGaussPDF();
-	PDFs[9] = new RaisedCosinePlusGaussPDF();
-	PDFs[10] = new RaisedCosinePlusGaussPDF();
-	PDFs[11] = new RaisedCosinePlusGaussPDF();
+	PDFInterface *D_PDFs[ncontr];
+	D_PDFs[0] = new DoubleSidedCrystalballPlusGaussPDF();
+	D_PDFs[1] = new DoubleSidedCrystalballPlusGaussPDF();
+	D_PDFs[2] = new DoubleSidedCrystalballPlusGaussPDF();
+	D_PDFs[3] = new DoubleSidedCrystalballPlusGaussPDF();
+	D_PDFs[4] = new ChebyshevPDF();
+	D_PDFs[5] = new DoubleSidedCrystalballPlusGaussPDF();
+
+	PDFInterface *B_PDFs[ncontr];
+	B_PDFs[0] = new RaisedCosinePlusGaussPDF();
+	B_PDFs[1] = new RaisedCosinePlusGaussPDF();
+	B_PDFs[2] = new RaisedCosinePlusGaussPDF();
+	B_PDFs[3] = new RaisedCosinePlusGaussPDF();
+	B_PDFs[4] = new RaisedCosinePlusGaussPDF();
+	B_PDFs[5] = new RaisedCosinePlusGaussPDF();
 
 	// Caclulate chi2
 	// TODO consider changing this to a full function
-	auto fchi2 = [PDFs, vect_2D, xx, dxx, xx_mcorr, dxx_mcorr](const double *par) -> double
+	auto fchi2 = [D_PDFs, B_PDFs, vect_2D, xx, dxx, xx_mcorr, dxx_mcorr](const double *par) -> double
 	{
 		// Get the pointer in parameters array that corresponds to location just after shape parameters - number of events ????
 		const double *pa = &par[ncontr * (nvar_md + nvar_mb)];
@@ -215,6 +217,7 @@ int main(int argc, char *argv[])
 			{
 				param[i * nvar_md + ivar] = par[i * nvar_md + ivar];
 				// TODO find a better way ...
+				// Define this in a json config
 				if (ivar == 1 && i != 2 && i != 4)
 					param[i * nvar_md + ivar] = par[1];
 			}
@@ -232,8 +235,8 @@ int main(int argc, char *argv[])
 		// Calculate normalisation integrals
 		for (int i = 0; i < ncontr; i++)
 		{
-			PDFs[i]->CalcIntegral(&param[i * nvar_md], minx, maxx);
-			PDFs[ncontr + i]->CalcIntegral(&param[ncontr * nvar_md + i * nvar_mb], miny, maxy);
+			D_PDFs[i]->CalcIntegral(&param[i * nvar_md], minx, maxx);
+			B_PDFs[i]->CalcIntegral(&param[ncontr * nvar_md + i * nvar_mb], miny, maxy);
 		}
 
 		// Main loop that calculates the chi2
@@ -250,8 +253,8 @@ int main(int argc, char *argv[])
 			for (int i = 0; i < ncontr; i++)
 			{
 				double md_like, mb_like;
-				md_like = PDFs[i]->EvalPDF(&mdass, &param[i * nvar_md]);
-				mb_like = PDFs[ncontr + i]->EvalPDF(&mcorr, &param[ncontr * nvar_md + i * nvar_mb]);
+				md_like = D_PDFs[i]->EvalPDF(&mdass, &param[i * nvar_md]);
+				mb_like = B_PDFs[i]->EvalPDF(&mcorr, &param[ncontr * nvar_md + i * nvar_mb]);
 				likelihood += md_like * mb_like * frac[i];
 			}
 			if (likelihood > 0.0)
@@ -285,6 +288,7 @@ int main(int argc, char *argv[])
 		// Add additional constraints based on the templates from 1D fits
 		for (int i = 0; i < ncontr; i++)
 		{
+			// TODO set dxx for D comb background to 0 and remove this
 			if (i == 4)
 				continue;
 			for (int ivar = 0; ivar < nvar_md; ivar++)
