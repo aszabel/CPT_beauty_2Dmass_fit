@@ -45,7 +45,6 @@ bool uncorr = false;
 // bool avx = false;
 bool avx = true;
 
-
 /**
  * @brief Draw the results of a 2D fit
  *
@@ -239,10 +238,10 @@ int main(int argc, char *argv[])
 
 		// Main loop that calculates the chi2
 		double chi2 = 0.0;
-		double* vect_chi2 = new double[vect_2D.size()];  // Per event results - required to efficiently calculate a Kahan compensated sum
+		double *vect_chi2 = new double[vect_2D.size()]; // Per event results - required to efficiently calculate a Kahan compensated sum
 
-		// Main loop that calculates the chi2 - run in parallel using OpenMP
-		#pragma omp parallel for
+// Main loop that calculates the chi2 - run in parallel using OpenMP
+#pragma omp parallel for
 		for (long int e = 0; e < vect_2D.size(); e++)
 		{
 			double mdass = std::get<0>(vect_2D[e]);
