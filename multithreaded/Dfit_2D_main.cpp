@@ -2,7 +2,7 @@
 #include <fstream>
 #include <iomanip>
 #include "omp.h"
-#include <nlohmann/json.hpp>
+#include "json.hpp"
 
 // ROOT includes
 #include "TROOT.h"
@@ -79,14 +79,15 @@ int main(int argc, char *argv[])
 		std::cerr << "Usage: fit2D_mass config.json" << std::endl;
 		return 1;
 	}
-	std::ifstream f(argv[1]);
-	json config = json::parse(f);
+	std::ifstream config_file(argv[1]);
+	json config = json::parse(config_file);
+	config_file.close();
 
 	int sign;
 	if (config.contains("sign")) {
-		if (strcmp(config["sign"], "muplus") == 0)
+		if (config["sign"].template get<std::string>() == std::string("muplus"))
 			sign = 1;
-		else if (strcmp(config["sign"], "muminus") == 0)
+		else if (config["sign"].template get<std::string>() == std::string("muminus"))
 			sign = 0;
 		else {
 			std::cout << "Invalid config file: allowed values for the 'sign' key are 'muplus' or 'muminus'." << std::endl;
@@ -303,7 +304,7 @@ int main(int argc, char *argv[])
 			}
 			chi2 = sum + c;
 		}
-		delete vect_chi2;
+		delete [] vect_chi2;
 		// std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 		// std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
 
