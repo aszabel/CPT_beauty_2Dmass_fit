@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iomanip>
 #include "omp.h"
+#include <nlohmann/json.hpp>
 
 // ROOT includes
 #include "TROOT.h"
@@ -27,6 +28,7 @@ typedef std::basic_string<char> string;
 typedef std::basic_ifstream<char> ifstream;
 typedef std::basic_ofstream<char> ofstream;
 
+using json = nlohmann::json;
 using namespace cpt_b0_analysis;
 
 #include <mutex>
@@ -74,9 +76,28 @@ int main(int argc, char *argv[])
 
 	if (argc != 2)
 	{
-		std::cout << " Please state: 'muplus' or 'muminus'." << std::endl;
+		std::cerr << "Usage: fit2D_mass config.json" << std::endl;
 		return 1;
 	}
+	std::ifstream f(argv[1]);
+	json config = json::parse(f);
+
+	int sign;
+	if (config.contains("sign")) {
+		if (strcmp(config["sign"], "muplus") == 0)
+			sign = 1;
+		else if (strcmp(config["sign"], "muminus") == 0)
+			sign = 0;
+		else {
+			std::cout << "Invalid config file: allowed values for the 'sign' key are 'muplus' or 'muminus'." << std::endl;
+			return 1;
+		}
+	} else {
+		std::cerr << "Invalid config file: missing 'sign' key." << std::endl;
+		return 1;
+	}
+
+	/*
 	if (strcmp(argv[1], "muplus") != 0 && strcmp(argv[1], "muminus") != 0)
 	{
 		std::cout << " Please state: 'muplus' or 'muminus'." << std::endl;
@@ -87,6 +108,7 @@ int main(int argc, char *argv[])
 		sign = 1;
 	if (strcmp(argv[1], "muminus") == 0)
 		sign = 0;
+	*/
 
 	string minName = "Minuit2";
 	string algoName = "";
