@@ -1,7 +1,7 @@
 {
   "sign":"muminus",
   "input_file": "/mnt/home/share/lhcb/CPT_beauty/data2016/selected/selected_data2016MagDown.root",
-  "local_input_file": "/home/szabelskia/LHCb/data2016/tree_missPT_D_M_MagDown25102023_nomassDmuCut/selected_data2016MagDown.root",
+  "_local_input_file": "/home/szabelskia/LHCb/data2016/tree_missPT_D_M_MagDown25102023_nomassDmuCut/selected_data2016MagDown.root",
 
   "nentries": -1,
   "event_fraction_for_correlation": 0.1,
@@ -11,5 +11,13 @@
 
   "muPTmin": 500,
   "muPmin": 5000,
-  "eta_cut": [2, 4.5]
+  "eta_cut": [2, 4.5],
+
+  	"_GLOBAL": "Here glonal bariables are set",
+   "DM_range": [1800, 1940],
+   "BMcorr_range": [2700, 8300],
+   "nvar_md": 7,
+   "nvar_mb": 7,
+   "ncontr": 6,
+   "nbins": 40
 }
