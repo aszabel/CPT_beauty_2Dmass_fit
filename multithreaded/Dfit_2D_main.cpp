@@ -70,6 +70,11 @@ typedef double (*FuncType)(const double*);
 std::function<double(const double*)> wrap_chi2(PDFInterface *D_PDFs[], PDFInterface *B_PDFs[], std::vector<std::pair<double, double>> vect_2D, double xx[ncontr][nvar_md], double dxx[ncontr][nvar_md], double xx_mcorr[ncontr][nvar_mb], double dxx_mcorr[ncontr][nvar_mb], double entries_frac);
 
 
+inline bool exists0 (const std::string& name) {
+    ifstream f(name.c_str());
+    return f.good();
+}
+
 int main(int argc, char *argv[])
 {
 	// The first, fundamental operation to be performed in order to make ROOT
@@ -102,20 +107,101 @@ int main(int argc, char *argv[])
 		std::cerr << "Invalid config file: missing 'sign' key." << std::endl;
 		return 1;
 	}
+	double event_fraction_for_correlation= 0.0;
+	if (config.contains("event_fraction_for_correlation")){
+		event_fraction_for_correlation = config["event_fraction_for_correlation"];
+		if (event_fraction_for_correlation <0 || event_fraction_for_correlation > 1){
+			std::cout << "Invalid config file: 'event_fraction_for_correlation' must be in range [0, 1]." << std::endl;
+			return 1;
+		}
+	}else{
+		std::cerr << "Invalid config file: missing 'event_fraction_for_correlation' key." << std::endl;
+                return 1;
+        }       
 
-	/*
-	if (strcmp(argv[1], "muplus") != 0 && strcmp(argv[1], "muminus") != 0)
-	{
-		std::cout << " Please state: 'muplus' or 'muminus'." << std::endl;
-		return 1;
-	}
-	int sign;
-	if (strcmp(argv[1], "muplus") == 0)
-		sign = 1;
-	if (strcmp(argv[1], "muminus") == 0)
-		sign = 0;
-	*/
+	double event_fraction_final = 0.0;
+	if (config.contains("event_fraction_final")){
+		event_fraction_final = config["event_fraction_final"];
+		if (event_fraction_final <0 || event_fraction_final > 1){
+			std::cout << "Invalid config file: 'event_fraction_final' must be in range [0, 1]." << std::endl;
+			return 1;
+		}
+	}else{
+                std::cerr << "Invalid config file: missing 'event_fraction_final' key." << std::endl;
+                return 1;
+        }
 
+	double tolerance = 0.1;
+        if (config.contains("tolerance")){
+                tolerance = config["tolerance"];
+                if (event_fraction_final <0){
+                        std::cout << "Invalid config file: 'event_fraction_final' must be positive." << std::endl;
+                        return 1;
+                }
+        }else{
+                std::cerr << "Invalid config file: missing 'tolerance' key." << std::endl;
+                return 1;
+        }
+
+	double muPTmin = 0.0;
+	if (config.contains("muPTmin")){
+                muPTmin = config["muPTmin"];
+                if (muPTmin <0){
+                        std::cout << "Invalid config file: 'muPTmin' must be positive." << std::endl;
+                        return 1;
+                }
+        }else{
+                std::cerr << "Invalid config file: missing 'muPTmin' key." << std::endl;
+                return 1;
+        }
+
+	double muPmin = 0.0;
+        if (config.contains("muPmin")){
+                muPmin = config["muPmin"];
+                if (muPmin <0){
+                        std::cout << "Invalid config file: 'muPmin' must be positive." << std::endl;
+                        return 1;
+                }
+        }else{
+                std::cerr << "Invalid config file: missing 'muPmin' key." << std::endl;
+                return 1;
+        }
+
+	double eta_min = 0.0;
+	double eta_max = 0.0;
+	if (config.contains("eta_cut")){
+                auto eta_cut= config["eta_cut"];
+		eta_min = eta_cut[0];
+		eta_max = eta_cut[1];
+                if (eta_min <0.0 || eta_max <0.0 || eta_min>eta_max){
+                        std::cout << "Invalid config file: interval 'eta_cut' must be positive." << std::endl;
+                        return 1;
+                }
+        }else{
+                std::cerr << "Invalid config file: missing 'muPmin' key." << std::endl;
+                return 1;
+        }
+
+        long int nentries = 0;
+        if (config.contains("muPmin")){
+                nentries = config["nentries"];
+        }else{
+                std::cerr << "Invalid config file: missing 'nentries' key." << std::endl;
+                return 1;
+        }
+
+	std::string input_file = "";
+        if (config.contains("input_file")) {
+		input_file = config["input_file"].template get<std::string>();
+		if (!exists0(input_file)){
+                        std::cout << "Invalid config file: File " << input_file << " does not exist." << std::endl;
+                        return 1;
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'input_file' key." << std::endl;
+                return 1;
+        }
+	
 	string minName = "Minuit2";
 	string algoName = "";
 	ROOT::Math::Minimizer *min =
@@ -126,16 +212,15 @@ int main(int argc, char *argv[])
 	min->SetMaxFunctionCalls(10000000); // for Minuit/Minuit2
 	min->SetMaxIterations(10000);		// for GSL
 	// min->SetTolerance(2.50e5);
-	min->SetTolerance(50.);
-	min->SetPrintLevel(2);
+	min->SetTolerance(tolerance);
+	min->SetPrintLevel(1);
 	// min->SetStrategy(2);
 	// min->SetPrecision(0.00001);
 
 	// Load data set
 	TChain ch("BlindedTree");
 	// TODO load the data filename from config file
-	ch.Add("/mnt/home/share/lhcb/CPT_beauty/data2016/selected/selected_data2016MagDown.root");
-	//ch.Add("/home/szabelskia/LHCb/data2016/tree_missPT_D_M_MagDown25102023_nomassDmuCut/selected_data2016MagDown.root");
+	ch.Add(input_file.c_str());
 	double D_M, mu_PT, mu_P, mu_eta, K_PT, B_M, missPT;
 	bool charge;
 
@@ -150,12 +235,16 @@ int main(int argc, char *argv[])
 	ch.SetBranchAddress("K_PT", &K_PT);
 	ch.SetBranchAddress("truecharge", &charge);
 
-	for (int i=0; i<ch.GetEntries(); ++i){
-	// TODO load number of entries from the config file
-	//for (int i = 0; i < 5e4; ++i){
+	if (nentries < 0) nentries = ch.GetEntries(); 
+	if (nentries > ch.GetEntries()){
+		std::cerr << "The value of 'nentries' exceeds the number of events in the file." << std::endl;
+                return 1;
+        }
+	
+	std::cout << nentries << std::endl;
+	for (int i=0; i<nentries; ++i){
 		ch.GetEntry(i);
-		// TODO load cut values from a config file
-		if (mu_PT < 500 || mu_P < 5000 || mu_eta < 2 || mu_eta > 4.5)
+		if (mu_PT < muPTmin || mu_P < muPmin || mu_eta < eta_min || mu_eta > eta_max)
 			continue;
 		double B_MMcorr = B_M + 2.0 * missPT;
 		if (B_MMcorr < miny || B_MMcorr > maxy)
@@ -305,9 +394,9 @@ int main(int argc, char *argv[])
 		k++;
 	input_fix.close();
 	// Start the minimization
-	double entries_frac = 0.01;
 	// Define a fit function for Minuit
-	auto fchi2 = wrap_chi2(D_PDFs, B_PDFs, vect_2D, xx, dxx, xx_mcorr, dxx_mcorr, entries_frac);
+	std::cout << event_fraction_for_correlation << std::endl;
+	auto fchi2 = wrap_chi2(D_PDFs, B_PDFs, vect_2D, xx, dxx, xx_mcorr, dxx_mcorr, event_fraction_for_correlation);
 	ROOT::Math::Functor f(fchi2, (nvar_md + nvar_mb) * ncontr + ncontr - 1);
 	min->SetFunction(f);
 	min->Minimize();
@@ -329,9 +418,8 @@ int main(int argc, char *argv[])
 	for (int ivar=0; ivar<(nvar_md+nvar_mb)*ncontr+ncontr-1; ivar++)
 		min->SetVariableValue(ivar, starting_point[ivar]);
 
-	entries_frac=0.1;
 	// Define a fit function for Minuit
-	auto fchi2_2 = wrap_chi2(D_PDFs, B_PDFs, vect_2D, xx, dxx, xx_mcorr, dxx_mcorr, entries_frac);
+	auto fchi2_2 = wrap_chi2(D_PDFs, B_PDFs, vect_2D, xx, dxx, xx_mcorr, dxx_mcorr, event_fraction_for_correlation);
 	ROOT::Math::Functor f2(fchi2_2, (nvar_md + nvar_mb) * ncontr + ncontr - 1);
 	min->SetFunction(f2);
 	min->Minimize();
@@ -347,7 +435,9 @@ int main(int argc, char *argv[])
 	return 0;
 }
 std::function<double(const double*)> wrap_chi2(PDFInterface *D_PDFs[], PDFInterface *B_PDFs[], std::vector<std::pair<double, double>> vect_2D, double xx[ncontr][nvar_md], double dxx[ncontr][nvar_md], double xx_mcorr[ncontr][nvar_mb], double dxx_mcorr[ncontr][nvar_mb], double entries_frac){
-	auto fchi2 = [D_PDFs, B_PDFs, vect_2D, xx, dxx, xx_mcorr, dxx_mcorr, entries_frac](const double *par) -> double
+
+	long int emax = ceil(entries_frac*vect_2D.size());
+	auto fchi2 = [D_PDFs, B_PDFs, vect_2D, xx, dxx, xx_mcorr, dxx_mcorr, emax](const double *par) -> double
 	{
 		// Get the pointer in parameters array that corresponds to location just after shape parameters - number of events ????
 		const double *pa = &par[ncontr * (nvar_md + nvar_mb)];
@@ -394,7 +484,6 @@ std::function<double(const double*)> wrap_chi2(PDFInterface *D_PDFs[], PDFInterf
 		double chi2 = 0.0;
 		double *vect_chi2 = new double[vect_2D.size()]; // Per event results - required to efficiently calculate a Kahan compensated sum
 
-		long int emax = ceil(entries_frac*vect_2D.size());
 // Main loop that calculates the chi2 - run in parallel using OpenMP
 #pragma omp parallel for
 		for (long int e = 0; e < emax; e++)
