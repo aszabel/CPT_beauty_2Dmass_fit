@@ -1,17 +1,17 @@
 {
   "sign":"muminus",
-  "input_file": "/mnt/home/share/lhcb/CPT_beauty/data2016/selected/selected_data2016MagDown.root",
-  "_local_input_file": "/home/szabelskia/LHCb/data2016/tree_missPT_D_M_MagDown25102023_nomassDmuCut/selected_data2016MagDown.root",
+  "cis_input_file": "/mnt/home/share/lhcb/CPT_beauty/data2016/selected/selected_data2016MagDown.root",
+  "input_file": "/home/szabelskia/LHCb/data2016/tree_missPT_D_M_MagDown25102023_nomassDmuCut/selected_data2016MagDown.root",
 
-  "nentries": -1,
+  "nentries": 5.0e5,
   "event_fraction_for_correlation": 0.1,
   "event_fraction_final": 1.0,
 
   "tolerance": 50.0,
 
-  "muPTmin": 500,
-  "muPmin": 5000,
-  "eta_cut": [2, 4.5],
+  "muPTmin": 500.0,
+  "muPmin": 5000.0,
+  "eta_cut": [2.0, 4.5],
 
   	"_GLOBAL": "Here glonal bariables are set",
    "DM_range": [1800, 1940],
@@ -19,5 +19,8 @@
    "nvar_md": 7,
    "nvar_mb": 7,
    "ncontr": 6,
-   "nbins": 40
+   "nbins": 40,
+
+   "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
+   "BMshapes": ["RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus"] 
 }

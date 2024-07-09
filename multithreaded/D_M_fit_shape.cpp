@@ -15,6 +15,10 @@ namespace cpt_b0_analysis
 		IntGaus = 1.0;
 		IntDCB = 1.0;
 	}
+	DoubleSidedCrystalballPlusGaussPDF::DoubleSidedCrystalballPlusGaussPDF(const DoubleSidedCrystalballPlusGaussPDF& D_PDF){
+		IntGaus = D_PDF.IntGaus;
+		IntDCB = D_PDF.IntDCB;
+	}
 	double DoubleSidedCrystalballPlusGaussPDF::EvalPDF(const double *xx, const double *_par)
 	{
 		auto gausPDF = [this](const double *x, const double *par) -> double

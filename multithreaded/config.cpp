@@ -5,6 +5,7 @@
 #include <iostream>
 
 using json = nlohmann::json;
+using namespace cpt_b0_analysis;
 
 
 int Config::sign = -1;
@@ -31,8 +32,51 @@ int Config::nvar_mb = 7;
 int Config::ncontr = 6;
 int Config::nbins = 40;
 
+std::vector<int> Config::intshapesDM = {};
+std::vector<int> Config::intshapesBMcorr = {};
 
+std::vector<std::string> Config::DMshapes;
+std::vector<std::string> Config::BMshapes;
 
+std::vector<std::unique_ptr<PDFInterface>> Config::getVectorPDFs(const std::string& domain) {
+	std::vector<std::unique_ptr<PDFInterface>> vPDFs;
+	std::cout << domain << std::endl;
+	if (domain == std::string("Dmass")){
+		std::cout << intshapesDM.size() << " size\n";
+		for (auto intshape: intshapesDM){
+				std::cout << intshape << "TUTAJ" << std::endl;
+                	switch (intshape){
+                        	case 0:
+                                	vPDFs.push_back(std::make_unique<DoubleSidedCrystalballPlusGaussPDF>());
+                                	break;
+                        	case 1:
+                                	vPDFs.push_back(std::make_unique<ChebyshevPDF>());
+                                	break;
+                        	default:
+                                	std::cerr << "Error while DM_pdf dynamic declaration. Check if shapes from config file refer to the shapes defined in the code." << std::endl;
+                                	return std::vector<std::unique_ptr<PDFInterface>>{};
+                	}
+		}
+
+	}else if (domain == std::string("Bmass")){
+	        for (auto intshape: intshapesBMcorr){
+			std::cout << intshape << " tam " <<std::endl;
+        	        switch (intshape){
+                        	case 0:
+                                	vPDFs.push_back(std::make_unique<RaisedCosinePlusGaussPDF>());
+                                	break;
+                        	default:
+                                	std::cerr << "Error while BM_pdf dynamic declaration. Check if shapes from config file refer to the shapes defined in the code." << std::endl;
+                                return std::vector<std::unique_ptr<PDFInterface>>{};
+                	}
+        	}
+
+	}else{
+		std::cerr << "Error wrong domaine in getVectorPDFs(domain) chose 'Dmass' or 'Bmass'" << std::endl;
+		return std::vector<std::unique_ptr<PDFInterface>>{};
+	}	
+    	return vPDFs;
+}
 
 int Config::load(const std::string& filename) {
 	std::ifstream config_file(filename);
@@ -181,5 +225,60 @@ int Config::load(const std::string& filename) {
                 std::cerr << "Invalid config file: missing 'nbins' key." << std::endl;
                 return 1;
         }
+	if (config.contains("DMshapes")) {
+                DMshapes = config["DMshapes"].template get<std::vector<std::string>>();
+                if (int(DMshapes.size())!=ncontr){
+                        std::cout << "Invalid config file: Number of given DM pdfs does not match ncontr. " << std::endl;
+                        return 1;
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'DMshapes' key." << std::endl;
+                return 1;
+        }
+	if (config.contains("BMshapes")) {
+                BMshapes = config["BMshapes"].template get<std::vector<std::string>>();
+                if (int(BMshapes.size())!=ncontr){
+                        std::cout << "Invalid config file: Number of given BM pdfs does not match ncontr. " << std::endl;
+                        return 1;
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'BMshapes' key." << std::endl;
+                return 1;
+        }
+	
+	//mapping string values of shape vector onto integer values to use switch afterwards
+        const std::unordered_map<std::string, const int> dictionaryDM ={
+                {"DCBplusGaus", 0},
+                {"Chebyshev", 1}
+        };
+
+        const std::unordered_map<std::string, const int> dictionaryBMcorr ={
+
+                {"RCplusGaus", 0}
+        };
+	int iii=0;
+	for (auto shape: DMshapes){
+                if (dictionaryDM.find(shape) != dictionaryDM.end()) {
+                        intshapesDM.push_back(dictionaryDM.at(shape));
+			std::cout << shape << intshapesDM[iii++] << std::endl;
+
+                } else {
+                        std::cerr << "Shape '" << shape << "' not found." << std::endl;
+                        return 1;
+                }
+        }
+        std::cout << BMshapes.size() << std::endl;
+        for (auto shape: BMshapes){
+                if (dictionaryBMcorr.find(shape) != dictionaryBMcorr.end()) {
+                        intshapesBMcorr.push_back(dictionaryBMcorr.at(shape));
+
+                } else {
+                        std::cerr << "Shape '" << shape << "' not found." << std::endl;
+                        return 1;
+                }
+        }
+
+
 	return 0;
 }
+

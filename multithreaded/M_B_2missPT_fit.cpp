@@ -16,6 +16,12 @@ namespace cpt_b0_analysis
 		IntGaus1 = 1.0;
 		IntGaus2 = 1.0;
 	}
+	RaisedCosinePlusGaussPDF::RaisedCosinePlusGaussPDF(const RaisedCosinePlusGaussPDF& B_PDF): PDFInterface(B_PDF){
+                IntCos = B_PDF.IntCos;
+                IntGaus1 = B_PDF.IntGaus1;
+                IntGaus2 = B_PDF.IntGaus2;
+	}
+
 	double RaisedCosinePlusGaussPDF::EvalPDF(const double *xx, const double *par)
 	{
 		auto raised_cosine = [this](const double *x, const double *par) -> double

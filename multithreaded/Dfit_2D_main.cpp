@@ -25,6 +25,7 @@
 #include "ChebyshevPDF.h"
 
 #include <functional>
+#include <memory>
 // TODO is this realy required??
 typedef std::basic_string<char> string;
 typedef std::basic_ifstream<char> ifstream;
@@ -36,17 +37,6 @@ using namespace cpt_b0_analysis;
 #include <mutex>
 std::mutex my_mutex;
 
-// TODO move those globals to a config file
-/*double minDM = 1800.;
-double maxDM = 1940.;
-
-double minBMcorr = 2700.;
-double maxBMcorr = 8300.;
-const int nvar_md;
-const int nvar_mb;
-const int ncontr;
-const int nbins;
-*/
 // bool avx = false;
 bool avx = true;
 
@@ -68,14 +58,9 @@ bool avx = true;
  * @param argv
  * @return int
  */
-typedef double (*FuncType)(const double*);
-std::function<double(const double*)> wrap_chi2(PDFInterface *D_PDFs[], PDFInterface *B_PDFs[], std::vector<std::pair<double, double>> vect_2D, double **xx, double **dxx, double **xx_mcorr, double **dxx_mcorr, double entries_frac);
+std::function<double(const double*)> wrap_chi2(const std::vector<PDFInterface*>& D_PDFs_get, const std::vector<PDFInterface*>& B_PDFs_get, std::vector<std::pair<double, double>> vect_2D, double **xx, double **dxx, double **xx_mcorr, double **dxx_mcorr, double entries_frac);
 
 
-inline bool exists0 (const std::string& name) {
-    ifstream f(name.c_str());
-    return f.good();
-}
 
 int main(int argc, char *argv[])
 {
@@ -121,9 +106,9 @@ int main(int argc, char *argv[])
         double maxDM = Config::maxDM;
         double minBMcorr = Config::minBMcorr;
         double maxBMcorr = Config::maxBMcorr;
-        const int nvar_md = Config::nvar_md;
-        const int nvar_mb = Config::nvar_mb;
-        const int ncontr = Config::ncontr;
+        const int nvar_md = 7;//Config::nvar_md;
+        const int nvar_mb = 7;///usr/bin/../lib/gcc/x86_64-linux-gnu/11/../../../../include/c++/11/bits/stl_uninitialized.hConfig::nvar_mb;
+        const int ncontr = 6;//Config::ncontr;
         const int nbins = Config::nbins;
 
 
@@ -184,9 +169,7 @@ int main(int argc, char *argv[])
 			hist->Fill(D_M, B_MMcorr);
 		}
 	}
-	// double  nevents = double(vect_2D.size());
 
-	// TODO define shapes dynamically preferably based on configfile??
 
 	// Initial fit parameter values taken from 1D fits to MC and Side Bands
 	double ** xx = new double * [ncontr];
@@ -197,7 +180,7 @@ int main(int argc, char *argv[])
 		dxx[i] = new double[nvar_md];
 	// TODO define this in a header with some global params that describe the fit??
 	TString name[ncontr] = {"signal", "BuDmunu", "BsDsMunu", "B02DpDsm", "sidebands", "Bu2D0Dsm"};
-	// Read results of 2D fits that are stored as simple text files
+	// Read results of 1D fits that are stored as simple text files
 	// Each line corresponds to a single parameter
 	// First column defines parameter value
 	// Second column defines parameter uncertainty
@@ -229,26 +212,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	PDFInterface *D_PDFs[ncontr];
-	D_PDFs[0] = new DoubleSidedCrystalballPlusGaussPDF();
-	D_PDFs[1] = new DoubleSidedCrystalballPlusGaussPDF();
-	D_PDFs[2] = new DoubleSidedCrystalballPlusGaussPDF();
-	D_PDFs[3] = new DoubleSidedCrystalballPlusGaussPDF();
-	D_PDFs[4] = new ChebyshevPDF();
-	D_PDFs[5] = new DoubleSidedCrystalballPlusGaussPDF();
-
-	PDFInterface *B_PDFs[ncontr];
-	B_PDFs[0] = new RaisedCosinePlusGaussPDF();
-	B_PDFs[1] = new RaisedCosinePlusGaussPDF();
-	B_PDFs[2] = new RaisedCosinePlusGaussPDF();
-	B_PDFs[3] = new RaisedCosinePlusGaussPDF();
-	B_PDFs[4] = new RaisedCosinePlusGaussPDF();
-	B_PDFs[5] = new RaisedCosinePlusGaussPDF();
-
-
-
-	// Caclulate chi2
-	// TODO consider changing this to a full function
 	
 
 	// Define Minuit fit variables for M_D
@@ -289,7 +252,7 @@ int main(int argc, char *argv[])
 		{
 			min->SetVariable(ncontr * nvar_md + i * nvar_mb + ivar, (TString::Format("%s_%s", name[i].Data(), varname_mb[ivar].Data())).Data(), xx_mcorr[i][ivar], dxx_mcorr[i][ivar] + 1.0e-11);
 			starting_point[ncontr * nvar_md + i * nvar_mb + ivar] = xx_mcorr[i][ivar];
-			// min->FixVariable(ncontr*nvar_md+i*nvar_mb+ivar);
+			min->FixVariable(ncontr*nvar_md+i*nvar_mb+ivar);
 			min->SetVariableLowerLimit(ncontr * nvar_md + i * nvar_mb + ivar, 1e-13);
 			if (ivar == 2)
 				min->SetVariableLimits(ncontr * nvar_md + i * nvar_mb + ivar, -1.0, 1.0);
@@ -330,7 +293,41 @@ int main(int argc, char *argv[])
 	input_fix.close();
 	// Start the minimization
 	// Define a fit function for Minuit
-	auto fchi2 = wrap_chi2(D_PDFs, B_PDFs, vect_2D, xx, dxx, xx_mcorr, dxx_mcorr, event_fraction_for_correlation);
+	const auto& D_PDFs = Config::getVectorPDFs("Dmass");
+	if (D_PDFs.size()!=ncontr){
+		std::cout<< " NO D_PDFs \n";
+		return 1;//std::function<double(const double*)>{};
+	}
+	for (int i=0; i<ncontr; ++i){
+		auto pdf = D_PDFs[i].get();
+		std::cout << pdf << std::endl;
+
+		if (!pdf){
+			std::cout<< "Nullptr passed as pdf\n";
+			return 1;//std::function<double(const double*)>{};
+		}
+	}
+		
+	const auto& B_PDFs = Config::getVectorPDFs("Bmass");
+        if (B_PDFs.size()!=ncontr){
+                std::cout<< " NO B_PDFs \n";    
+                return 1;//std::function<double(const double*)>{};
+        }
+        for (int i=0; i<ncontr; ++i){
+                auto pdf = B_PDFs[i].get();
+		std::cout << pdf << std::endl;
+                if (!pdf){
+                        std::cout<< "Nullptr passed as pdf\n";
+                        return 1;//std::function<double(const double*)>{};
+                }
+        }
+	std::vector<PDFInterface *> D_PDFs_get;
+	std::vector<PDFInterface *> B_PDFs_get;
+	for (int i=0; i<ncontr; ++i){
+		D_PDFs_get.push_back(D_PDFs[i].get());
+		B_PDFs_get.push_back(B_PDFs[i].get());
+	}
+	auto fchi2 = wrap_chi2(D_PDFs_get, B_PDFs_get, vect_2D, xx, dxx, xx_mcorr, dxx_mcorr, event_fraction_for_correlation);
 	ROOT::Math::Functor f(fchi2, (nvar_md + nvar_mb) * ncontr + ncontr - 1);
 	min->SetFunction(f);
 	min->Minimize();
@@ -353,7 +350,7 @@ int main(int argc, char *argv[])
 		min->SetVariableValue(ivar, starting_point[ivar]);
 
 	// Define a fit function for Minuit
-	auto fchi2_2 = wrap_chi2(D_PDFs, B_PDFs, vect_2D, xx, dxx, xx_mcorr, dxx_mcorr, event_fraction_final);
+	auto fchi2_2 = wrap_chi2(D_PDFs_get, B_PDFs_get, vect_2D, xx, dxx, xx_mcorr, dxx_mcorr, event_fraction_final);
 	ROOT::Math::Functor f2(fchi2_2, (nvar_md + nvar_mb) * ncontr + ncontr - 1);
 	min->SetFunction(f2);
 	min->Minimize();
@@ -365,28 +362,38 @@ int main(int argc, char *argv[])
 		results << min->X()[i] << "  " << min->Errors()[i] << std::endl;
 	}
 	results.close();
-
 	return 0;
 }
-std::function<double(const double*)> wrap_chi2(PDFInterface *D_PDFs[], PDFInterface *B_PDFs[], std::vector<std::pair<double, double>> vect_2D, double **xx, double **dxx, double **xx_mcorr, double **dxx_mcorr, double entries_frac){
+std::function<double(const double*)> wrap_chi2(const std::vector<PDFInterface*>& D_PDFs_get, const std::vector<PDFInterface*>& B_PDFs_get, std::vector<std::pair<double, double>> vect_2D, double **xx, double **dxx, double **xx_mcorr, double **dxx_mcorr, double entries_frac){
+
+        
+	
+        const int ncontr = Config::ncontr;
+
+	
+	
+
+
+	double minDM = Config::minDM;
+        double maxDM = Config::maxDM;
+        double minBMcorr = Config::minBMcorr;
+        double maxBMcorr = Config::maxBMcorr;
+        const int nvar_md = Config::nvar_md;
+        const int nvar_mb = Config::nvar_mb;
+
+
+
 
 	long int emax = ceil(entries_frac*vect_2D.size());
-	std::cout << emax << " emax " << vect_2D.size() << " vect2Dsize\n";
-	auto fchi2 = [D_PDFs, B_PDFs, vect_2D, xx, dxx, xx_mcorr, dxx_mcorr, emax](const double *par) -> double
+	auto fchi2 = [D_PDFs_get, B_PDFs_get, vect_2D, xx, dxx, xx_mcorr, dxx_mcorr, emax, ncontr, minDM, maxDM, minBMcorr, maxBMcorr, nvar_md, nvar_mb](const double *par) -> double 
 	{
-		double minDM = Config::minDM;
-        	double maxDM = Config::maxDM;
-        	double minBMcorr = Config::minBMcorr;
-        	double maxBMcorr = Config::maxBMcorr;
-        	const int nvar_md = Config::nvar_md;
-        	const int nvar_mb = Config::nvar_mb;
-        	const int ncontr = Config::ncontr;
 
-
-		// Get the pointer in parameters array that corresponds to location just after shape parameters - number of events ????
+	// Caclulate chi2
+			// Get the pointer in parameters array that correspond to fraction defining parameters????
 		const double *pa = &par[ncontr * (nvar_md + nvar_mb)];
 		// Calculate fractions
 		// Q: Why do we recalculate fractions? What does the minuti minimize - what is stored in `pa` ???
+		// The parameters pa[] define the fractions, we have 6 fractions but 5 independent parameters. The parametrisation is arbitrary
 		double frac[ncontr];
 		frac[0] = 1 - abs(pa[0]);
 		frac[1] = abs(pa[0]) * (1.0 - abs(pa[1]));
@@ -406,22 +413,22 @@ std::function<double(const double*)> wrap_chi2(PDFInterface *D_PDFs[], PDFInterf
 				if (ivar == 1 && i != 2 && i != 4)
 					param[i * nvar_md + ivar] = par[1];
 			}
-		}
-		// Q: Second set of params ???? Number of events ???
-		for (int i = 0; i < ncontr; i++)
-		{
 			for (int ivar = 0; ivar < nvar_mb; ivar++)
 			{
 				int ipar = ncontr * nvar_md + i * nvar_mb + ivar;
 				param[ipar] = par[ipar];
 			}
 		}
-
+		/*
+		for (int i=0; i<ncontr; ++i){
+			std::cout<<D_PDFs[i].get() << "  " << B_PDFs[i].get() << std::endl;
+		}
+		*/
 		// Calculate normalisation integrals
 		for (int i = 0; i < ncontr; i++)
 		{
-			D_PDFs[i]->CalcIntegral(&param[i * nvar_md], minDM, maxDM);
-			B_PDFs[i]->CalcIntegral(&param[ncontr * nvar_md + i * nvar_mb], minBMcorr, maxBMcorr);
+			D_PDFs_get[i]->CalcIntegral(&param[i * nvar_md], minDM, maxDM);
+			B_PDFs_get[i]->CalcIntegral(&param[ncontr * nvar_md + i * nvar_mb], minBMcorr, maxBMcorr);
 		}
 
 		// Main loop that calculates the chi2
@@ -438,8 +445,8 @@ std::function<double(const double*)> wrap_chi2(PDFInterface *D_PDFs[], PDFInterf
 			for (int i = 0; i < ncontr; i++)
 			{
 				double md_like, mb_like;
-				md_like = D_PDFs[i]->EvalPDF(&mdass, &param[i * nvar_md]);
-				mb_like = B_PDFs[i]->EvalPDF(&mcorr, &param[ncontr * nvar_md + i * nvar_mb]);
+				md_like = D_PDFs_get[i]->EvalPDF(&mdass, &param[i * nvar_md]);
+				mb_like = B_PDFs_get[i]->EvalPDF(&mcorr, &param[ncontr * nvar_md + i * nvar_mb]);
 				likelihood += md_like * mb_like * frac[i];
 			}
 			if (likelihood > 0.0)
@@ -474,8 +481,6 @@ std::function<double(const double*)> wrap_chi2(PDFInterface *D_PDFs[], PDFInterf
 		for (int i = 0; i < ncontr; i++)
 		{
 			// TODO set dxx for D comb background to 0 and remove this
-			if (i == 4)
-				continue;
 			for (int ivar = 0; ivar < nvar_md; ivar++)
 			{
 				if (dxx[i][ivar] != 0)

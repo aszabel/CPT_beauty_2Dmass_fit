@@ -10,6 +10,7 @@ namespace cpt_b0_analysis
 	{
 	public:
 		RaisedCosinePlusGaussPDF();
+		RaisedCosinePlusGaussPDF(const RaisedCosinePlusGaussPDF &other);
 		~RaisedCosinePlusGaussPDF() {};
 
 		void CalcIntegral(const double *par, double min, double max);
