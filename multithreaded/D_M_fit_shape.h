@@ -10,7 +10,8 @@ namespace cpt_b0_analysis
 	{
 	public:
 		DoubleSidedCrystalballPlusGaussPDF();
-		DoubleSidedCrystalballPlusGaussPDF(const DoubleSidedCrystalballPlusGaussPDF& D_PDF);
+		DoubleSidedCrystalballPlusGaussPDF(const DoubleSidedCrystalballPlusGaussPDF& other)=default;
+		DoubleSidedCrystalballPlusGaussPDF(DoubleSidedCrystalballPlusGaussPDF&&)=default;
 		~DoubleSidedCrystalballPlusGaussPDF() {};
 
 		void CalcIntegral(const double *par, double min, double max);

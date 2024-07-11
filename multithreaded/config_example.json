@@ -3,11 +3,12 @@
   "cis_input_file": "/mnt/home/share/lhcb/CPT_beauty/data2016/selected/selected_data2016MagDown.root",
   "input_file": "/home/szabelskia/LHCb/data2016/tree_missPT_D_M_MagDown25102023_nomassDmuCut/selected_data2016MagDown.root",
 
-  "nentries": 5.0e5,
-  "event_fraction_for_correlation": 0.1,
+  "nentries": -1,
+  "event_fraction_for_correlation": 0.002,
   "event_fraction_final": 1.0,
 
-  "tolerance": 50.0,
+  "tolerance": 500.0,
+  "correl_margin": 0.01,
 
   "muPTmin": 500.0,
   "muPmin": 5000.0,
@@ -22,5 +23,7 @@
    "nbins": 40,
 
    "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
-   "BMshapes": ["RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus"] 
+   "BMshapes": ["RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus"],
+
+   "fixVect" : ["signal_n", "signal_alpha_h", "BuDmunu_mean", "BuDmunu_f12", "BuDmunu_n", "BuDmunu_alpha_h", "BsDsMunu_sigma", "BsDsMunu_mean", "BsDsMunu_n", "BsDsMunu_alpha_h", "B02DpDsm_mean", "B02DpDsm_alpha", "B02DpDsm_n", "B02DpDsm_alpha_h", "sidebands_sigma", "sidebands_mean", "sidebands_sigmaCB", "sidebands_f12", "sidebands_alpha", "sidebands_n", "sidebands_alpha_h", "Bu2D0Dsm_mean", "Bu2D0Dsm_sigmaCB", "Bu2D0Dsm_alpha", "Bu2D0Dsm_n", "Bu2D0Dsm_alpha_h", "BsDsMunu_f12_gaus"]
 }

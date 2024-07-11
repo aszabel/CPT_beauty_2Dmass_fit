@@ -12,8 +12,6 @@ int Config::sign = -1;
 std::string Config::input_file = "";
 
 int Config::nentries = -1;
-double Config::event_fraction_for_correlation = 1.0;
-double Config::event_fraction_final = 1.0;
 
 double Config::tolerance = 50.;
 
@@ -35,8 +33,10 @@ int Config::nbins = 40;
 std::vector<int> Config::intshapesDM = {};
 std::vector<int> Config::intshapesBMcorr = {};
 
-std::vector<std::string> Config::DMshapes;
-std::vector<std::string> Config::BMshapes;
+std::vector<std::string> Config::DMshapes = {};
+std::vector<std::string> Config::BMshapes = {};
+
+std::vector<std::string> Config::fixVect = {};
 
 std::vector<std::unique_ptr<PDFInterface>> Config::getVectorPDFs(const std::string& domain) {
 	std::vector<std::unique_ptr<PDFInterface>> vPDFs;
@@ -97,38 +97,18 @@ int Config::load(const std::string& filename) {
                 return 1;
         }
 
-	if (config.contains("event_fraction_for_correlation")){
-                event_fraction_for_correlation = config["event_fraction_for_correlation"];
-                if (event_fraction_for_correlation <0 || event_fraction_for_correlation > 1){
-                        std::cout << "Invalid config file: 'event_fraction_for_correlation' must be in range [0, 1]." << std::endl;
-                        return 1;
-                }
-        }else{
-                std::cerr << "Invalid config file: missing 'event_fraction_for_correlation' key." << std::endl;
-                return 1;
-        }
-
-        if (config.contains("event_fraction_final")){
-                event_fraction_final = config["event_fraction_final"];
-                if (event_fraction_final <0 || event_fraction_final > 1){
-                        std::cout << "Invalid config file: 'event_fraction_final' must be in range [0, 1]." << std::endl;
-                        return 1;
-                }
-        }else{
-                std::cerr << "Invalid config file: missing 'event_fraction_final' key." << std::endl;
-                return 1;
-        }
 
         if (config.contains("tolerance")){
                 tolerance = config["tolerance"];
-                if (event_fraction_final <0){
-                        std::cout << "Invalid config file: 'event_fraction_final' must be positive." << std::endl;
+                if (tolerance <0.){
+                        std::cout << "Invalid config file: 'tolerance' must be positive." << std::endl;
                         return 1;
                 }
         }else{
                 std::cerr << "Invalid config file: missing 'tolerance' key." << std::endl;
                 return 1;
         }
+
 
         if (config.contains("muPmin")){
                 muPmin = config["muPmin"];
@@ -278,7 +258,12 @@ int Config::load(const std::string& filename) {
                 }
         }
 
-
+	if (config.contains("fixVect")) {
+                fixVect = config["fixVect"].template get<std::vector<std::string>>();
+        } else {
+                std::cerr << "Invalid config file: missing 'fixVect' key." << std::endl;
+                return 1;
+        }
 	return 0;
 }
 

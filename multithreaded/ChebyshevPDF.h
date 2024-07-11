@@ -9,6 +9,8 @@ namespace cpt_b0_analysis
 	{
 	public:
 		ChebyshevPDF();
+		ChebyshevPDF(const ChebyshevPDF&) = default;
+		ChebyshevPDF(ChebyshevPDF&&) = default;
 		~ChebyshevPDF() {};
 
 		void CalcIntegral(const double *par, double min, double max);

@@ -30,8 +30,6 @@ public:
     	static std::string input_file;
 
     	static int nentries;
-    	static double event_fraction_for_correlation;
-    	static double  event_fraction_final;
 
     	static double tolerance;
 
@@ -52,6 +50,8 @@ public:
 
 	static std::vector<std::string> DMshapes;
 	static std::vector<std::string> BMshapes;
+
+	static std::vector<std::string> fixVect;
 
 private:
     	Config() = default;

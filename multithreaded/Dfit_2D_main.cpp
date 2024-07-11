@@ -58,7 +58,7 @@ bool avx = true;
  * @param argv
  * @return int
  */
-std::function<double(const double*)> wrap_chi2(const std::vector<PDFInterface*>& D_PDFs_get, const std::vector<PDFInterface*>& B_PDFs_get, std::vector<std::pair<double, double>> vect_2D, double **xx, double **dxx, double **xx_mcorr, double **dxx_mcorr, double entries_frac);
+std::function<double(const double*)> wrap_chi2(const std::vector<PDFInterface*>& D_PDFs_get, const std::vector<PDFInterface*>& B_PDFs_get, std::vector<std::pair<double, double>> vect_2D, double **xx, double **dxx, double **xx_mcorr, double **dxx_mcorr);
 
 
 
@@ -91,8 +91,6 @@ int main(int argc, char *argv[])
         std::string input_file = Config::input_file;
 
         int nentries = Config::nentries;
-        double event_fraction_for_correlation = Config::event_fraction_for_correlation;
-        double event_fraction_final  = Config::event_fraction_final;
 
         double tolerance = Config::tolerance;
 
@@ -110,6 +108,7 @@ int main(int argc, char *argv[])
         const int nvar_mb = 7;///usr/bin/../lib/gcc/x86_64-linux-gnu/11/../../../../include/c++/11/bits/stl_uninitialized.hConfig::nvar_mb;
         const int ncontr = 6;//Config::ncontr;
         const int nbins = Config::nbins;
+	std::vector<std::string> fixVect = Config::fixVect;
 
 
 
@@ -124,9 +123,8 @@ int main(int argc, char *argv[])
 	// TODO load those values from a config file
 	min->SetMaxFunctionCalls(10000000); // for Minuit/Minuit2
 	min->SetMaxIterations(10000);		// for GSL
-	// min->SetTolerance(2.50e5);
 	min->SetTolerance(tolerance);
-	min->SetPrintLevel(1);
+	min->SetPrintLevel(2);
 	// min->SetStrategy(2);
 	// min->SetPrecision(0.00001);
 
@@ -225,7 +223,7 @@ int main(int argc, char *argv[])
 			min->SetVariable(i * nvar_md + ivar, (TString::Format("%s_%s", name[i].Data(), varname_md[ivar].Data())).Data(), xx[i][ivar], dxx[i][ivar] + 1.0e-11);
 			starting_point[i * nvar_md + ivar] = xx[i][ivar];
 			// min->FixVariable(i*nvar_md+ivar);
-			min->SetVariableLowerLimit(i * nvar_md + ivar, 1e-13);
+			//min->SetVariableLowerLimit(i * nvar_md + ivar, 1e-13);
 			// TODO load limits and fix values from a config file
 			if (ivar == 3)
 				min->SetVariableLimits(i * nvar_md + ivar, -1.0, 1.0);
@@ -252,8 +250,8 @@ int main(int argc, char *argv[])
 		{
 			min->SetVariable(ncontr * nvar_md + i * nvar_mb + ivar, (TString::Format("%s_%s", name[i].Data(), varname_mb[ivar].Data())).Data(), xx_mcorr[i][ivar], dxx_mcorr[i][ivar] + 1.0e-11);
 			starting_point[ncontr * nvar_md + i * nvar_mb + ivar] = xx_mcorr[i][ivar];
-			min->FixVariable(ncontr*nvar_md+i*nvar_mb+ivar);
-			min->SetVariableLowerLimit(ncontr * nvar_md + i * nvar_mb + ivar, 1e-13);
+			//min->FixVariable(ncontr*nvar_md+i*nvar_mb+ivar);
+			//min->SetVariableLowerLimit(ncontr * nvar_md + i * nvar_mb + ivar, 1e-13);
 			if (ivar == 2)
 				min->SetVariableLimits(ncontr * nvar_md + i * nvar_mb + ivar, -1.0, 1.0);
 		}
@@ -327,32 +325,20 @@ int main(int argc, char *argv[])
 		D_PDFs_get.push_back(D_PDFs[i].get());
 		B_PDFs_get.push_back(B_PDFs[i].get());
 	}
-	auto fchi2 = wrap_chi2(D_PDFs_get, B_PDFs_get, vect_2D, xx, dxx, xx_mcorr, dxx_mcorr, event_fraction_for_correlation);
-	ROOT::Math::Functor f(fchi2, (nvar_md + nvar_mb) * ncontr + ncontr - 1);
-	min->SetFunction(f);
-	min->Minimize();
-
-	// Verify the parameter correlations
-	for (int i = 0; i < ncontr * (nvar_md + nvar_mb); i++)
-	{
-		double mincorr = 1000.;
-		for (int j = 0; j < ncontr - 1; j++)
-		{
-			double cor = min->Correlation(i, ncontr * (nvar_md + nvar_mb) + j);
-			if (abs(cor)<abs(mincorr)) 
-				mincorr=cor;
-		}
-		if (abs(mincorr) < 0.02)
-			min->FixVariable(i);
-	}
-
+	//staring point for stability checks
 	for (int ivar=0; ivar<(nvar_md+nvar_mb)*ncontr+ncontr-1; ivar++)
 		min->SetVariableValue(ivar, starting_point[ivar]);
 
+	//list of fixed variables form config
+	for (const auto& fix: fixVect){
+		min->FixVariable(min->VariableIndex(fix));
+		//std::cout << fix << "  " << min->VariableIndex(fix) << std::endl;
+	}
+
 	// Define a fit function for Minuit
-	auto fchi2_2 = wrap_chi2(D_PDFs_get, B_PDFs_get, vect_2D, xx, dxx, xx_mcorr, dxx_mcorr, event_fraction_final);
-	ROOT::Math::Functor f2(fchi2_2, (nvar_md + nvar_mb) * ncontr + ncontr - 1);
-	min->SetFunction(f2);
+	auto fchi2 = wrap_chi2(D_PDFs_get, B_PDFs_get, vect_2D, xx, dxx, xx_mcorr, dxx_mcorr);
+	ROOT::Math::Functor f(fchi2, (nvar_md + nvar_mb) * ncontr + ncontr - 1);
+	min->SetFunction(f);
 	min->Minimize();
 
 	// Print the fit results
@@ -364,7 +350,7 @@ int main(int argc, char *argv[])
 	results.close();
 	return 0;
 }
-std::function<double(const double*)> wrap_chi2(const std::vector<PDFInterface*>& D_PDFs_get, const std::vector<PDFInterface*>& B_PDFs_get, std::vector<std::pair<double, double>> vect_2D, double **xx, double **dxx, double **xx_mcorr, double **dxx_mcorr, double entries_frac){
+std::function<double(const double*)> wrap_chi2(const std::vector<PDFInterface*>& D_PDFs_get, const std::vector<PDFInterface*>& B_PDFs_get, std::vector<std::pair<double, double>> vect_2D, double **xx, double **dxx, double **xx_mcorr, double **dxx_mcorr){
 
         
 	
@@ -384,7 +370,8 @@ std::function<double(const double*)> wrap_chi2(const std::vector<PDFInterface*>&
 
 
 
-	long int emax = ceil(entries_frac*vect_2D.size());
+	long int emax = vect_2D.size();
+	std::cout << emax << "emax \n";
 	auto fchi2 = [D_PDFs_get, B_PDFs_get, vect_2D, xx, dxx, xx_mcorr, dxx_mcorr, emax, ncontr, minDM, maxDM, minBMcorr, maxBMcorr, nvar_md, nvar_mb](const double *par) -> double 
 	{
 
