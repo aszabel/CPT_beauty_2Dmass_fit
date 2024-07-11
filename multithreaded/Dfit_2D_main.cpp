@@ -26,10 +26,6 @@
 
 #include <functional>
 #include <memory>
-// TODO is this realy required??
-typedef std::basic_string<char> string;
-typedef std::basic_ifstream<char> ifstream;
-typedef std::basic_ofstream<char> ofstream;
 
 using json = nlohmann::json;
 using namespace cpt_b0_analysis;
@@ -58,7 +54,7 @@ bool avx = true;
  * @param argv
  * @return int
  */
-std::function<double(const double*)> wrap_chi2(const std::vector<PDFInterface*>& D_PDFs_get, const std::vector<PDFInterface*>& B_PDFs_get, std::vector<std::pair<double, double>> vect_2D, double **xx, double **dxx, double **xx_mcorr, double **dxx_mcorr);
+std::function<double(const double*)> wrap_chi2(const std::vector<PDFInterface*>& D_PDFs_get, const std::vector<PDFInterface*>& B_PDFs_get, std::vector<std::pair<double, double>> vect_2D, const std::vector<std::vector<double>>& MC_MD, const std::vector<std::vector<double>>& dMC_MD, const std::vector<std::vector<double>>& MC_MB, const std::vector<std::vector<double>>& dMC_MB);
 
 
 
@@ -111,11 +107,14 @@ int main(int argc, char *argv[])
 	std::vector<std::string> fixVect = Config::fixVect;
 
 
-
+	const std::vector<std::vector<double>>& MC_MD = Config::MC_MD;
+	const std::vector<std::vector<double>>& dMC_MD = Config::dMC_MD;
+	const std::vector<std::vector<double>>& MC_MB = Config::MC_MB;
+	const std::vector<std::vector<double>>& dMC_MB = Config::dMC_MB;
 
 	
-	string minName = "Minuit2";
-	string algoName = "";
+	std::string minName = "Minuit2";
+	std::string algoName = "";
 	ROOT::Math::Minimizer *min =
 		ROOT::Math::Factory::CreateMinimizer(minName, algoName);
 
@@ -170,58 +169,21 @@ int main(int argc, char *argv[])
 
 
 	// Initial fit parameter values taken from 1D fits to MC and Side Bands
-	double ** xx = new double * [ncontr];
-	for (int i=0; i<ncontr ; i++)
-		xx[i] = new double[nvar_md];
-	double ** dxx = new double * [ncontr];
-	for (int i=0; i<ncontr ; i++)
-		dxx[i] = new double[nvar_md];
-	// TODO define this in a header with some global params that describe the fit??
-	TString name[ncontr] = {"signal", "BuDmunu", "BsDsMunu", "B02DpDsm", "sidebands", "Bu2D0Dsm"};
-	// Read results of 1D fits that are stored as simple text files
-	// Each line corresponds to a single parameter
-	// First column defines parameter value
-	// Second column defines parameter uncertainty
-	// D mass fit
-	for (int ifile = 0; ifile < ncontr; ifile++)
-	{
-		std::ifstream infile(TString::Format("D_M_results/res_%s_%d.txt", name[ifile].Data(), sign));
-		int k = 0;
-		while (infile >> xx[ifile][k] >> dxx[ifile][k])
-		{
-			k++;
-		}
-	}
 
-	// B mass fit
-	double ** xx_mcorr = new double * [ncontr];
-	for (int i=0; i<ncontr ; i++)
-		xx_mcorr[i] = new double[nvar_mb];
-	double ** dxx_mcorr = new double * [ncontr];
-	for (int i=0; i<ncontr ; i++)
-		dxx_mcorr[i] = new double[nvar_mb];
-	for (int ifile = 0; ifile < ncontr; ifile++)
-	{
-		ifstream infile_mb(TString::Format("B_M_results/res_%s_%d.txt", name[ifile].Data(), sign));
-		int k = 0;
-		while (infile_mb >> xx_mcorr[ifile][k] >> dxx_mcorr[ifile][k])
-		{
-			k++;
-		}
-	}
-
-	
+		
 
 	// Define Minuit fit variables for M_D
-	TString varname_md[nvar_md] = {"sigma", "mean", "sigmaCB", "f12", "alpha", "n", "alpha_h"};
+
+	const auto& contrName = Config::contrName;
+	const auto& varname_md = Config::varname_md;
 
 	double starting_point[(nvar_md+nvar_mb)*ncontr+ncontr-1];
 	for (int i = 0; i < ncontr; i++)
 	{
 		for (int ivar = 0; ivar < nvar_md; ivar++)
 		{
-			min->SetVariable(i * nvar_md + ivar, (TString::Format("%s_%s", name[i].Data(), varname_md[ivar].Data())).Data(), xx[i][ivar], dxx[i][ivar] + 1.0e-11);
-			starting_point[i * nvar_md + ivar] = xx[i][ivar];
+			min->SetVariable(i * nvar_md + ivar, (TString::Format("%s_%s", contrName[i].c_str(), varname_md[ivar].c_str())).Data(), MC_MD[i][ivar], dMC_MD[i][ivar] + 1.0e-11);
+			starting_point[i * nvar_md + ivar] = MC_MD[i][ivar];
 			// min->FixVariable(i*nvar_md+ivar);
 			//min->SetVariableLowerLimit(i * nvar_md + ivar, 1e-13);
 			// TODO load limits and fix values from a config file
@@ -229,8 +191,7 @@ int main(int argc, char *argv[])
 				min->SetVariableLimits(i * nvar_md + ivar, -1.0, 1.0);
 
 			if (ivar == 5 || ivar == 6)
-			#include <functional>
-	min->FixVariable(i * nvar_md + ivar);
+				min->FixVariable(i * nvar_md + ivar);
 			if (i == 4 && ivar != 0 && ivar != 1)
 				min->FixVariable(i * nvar_md + ivar); // combinatorial
 			// if (i==4) min->FixVariable(i*nvar_md+ivar); // combinatorial
@@ -240,16 +201,16 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	// Define Minuit fit variables for M_D
-	TString varname_mb[nvar_mb] = {"mean_rc", "sigma_rc", "f12_gaus", "mean1_gaus", "sigma1_gaus", "mean2_gaus", "sigma2_gaus"};
+	// Define Minuit fit variables for M_B
+	const auto & varname_mb = Config::varname_mb;
 
 	for (int i = 0; i < ncontr; i++)
 	{
 		// TODO load limits and fixed value from the config file
 		for (int ivar = 0; ivar < nvar_mb; ivar++)
 		{
-			min->SetVariable(ncontr * nvar_md + i * nvar_mb + ivar, (TString::Format("%s_%s", name[i].Data(), varname_mb[ivar].Data())).Data(), xx_mcorr[i][ivar], dxx_mcorr[i][ivar] + 1.0e-11);
-			starting_point[ncontr * nvar_md + i * nvar_mb + ivar] = xx_mcorr[i][ivar];
+			min->SetVariable(ncontr * nvar_md + i * nvar_mb + ivar, (TString::Format("%s_%s", contrName[i].c_str(), varname_mb[ivar].c_str())).Data(), MC_MB[i][ivar], dMC_MB[i][ivar] + 1.0e-11);
+			starting_point[ncontr * nvar_md + i * nvar_mb + ivar] = MC_MB[i][ivar];
 			//min->FixVariable(ncontr*nvar_md+i*nvar_mb+ivar);
 			//min->SetVariableLowerLimit(ncontr * nvar_md + i * nvar_mb + ivar, 1e-13);
 			if (ivar == 2)
@@ -258,39 +219,20 @@ int main(int argc, char *argv[])
 	}
 
 	// Set initial fraction values
-	// TODO load this from a config file
-	double frac_init[ncontr - 1] = {0.468636, 0.736568, 0.973902, 0.949009, -0.00476566};
-	double frac_init_plus[ncontr - 1] = {0.578309, 0.816153, 0.519927, 0.627151, 0.0151929};
+	const auto&fracInit = Config::fracInit;
 
 	for (int i = 0; i < ncontr - 1; i++)
 	{
-
-		if (sign == 0){
-			min->SetVariable((nvar_md + nvar_mb) * ncontr + i, (TString::Format("par_frac%d", i)).Data(), frac_init[i], 0.01);
-			starting_point[(nvar_md + nvar_mb) * ncontr + i] = frac_init[i];
-		}
-		else{
-			min->SetVariable((nvar_md + nvar_mb) * ncontr + i, (TString::Format("par_frac%d", i)).Data(), frac_init_plus[i], 0.01);
-			starting_point[(nvar_md + nvar_mb) * ncontr + i] = frac_init_plus[i];
-		}
-		min->SetVariableLimits((nvar_md + nvar_mb) * ncontr + i, -1.0, 1.0);
+		min->SetVariable((nvar_md + nvar_mb) * ncontr + i, (TString::Format("par_frac%d", i)).Data(), fracInit[i], 0.01);
+		starting_point[(nvar_md + nvar_mb) * ncontr + i] = fracInit[i];
 	}
 
 
 	// Q: Define ??????
+	// Define the error setimation parameter in minuit for 1 sigma and ncontr -1 free parameters
 	double CL_normal = ROOT::Math::normal_cdf(1) - ROOT::Math::normal_cdf(-1); //1 sigma ~68%
-	min->SetErrorDef(TMath::ChisquareQuantile(CL_normal, 5));// 5 free fraction parameters
+	min->SetErrorDef(TMath::ChisquareQuantile(CL_normal, ncontr-1));// ncontr-1 free fraction parameters, other parameters have gaussian contraints base on MC fits.
 
-	// Q: Load values of fixed parameters ?????
-	double x_fix[ncontr * (nvar_md + nvar_mb) + ncontr - 1];
-	double dx_fix[ncontr * (nvar_md + nvar_mb) + ncontr - 1];
-	ifstream input_fix(TString::Format("results_fix_%d.txt", sign));
-	int k = 0;
-	while (input_fix >> x_fix[k] >> dx_fix[k])
-		k++;
-	input_fix.close();
-	// Start the minimization
-	// Define a fit function for Minuit
 	const auto& D_PDFs = Config::getVectorPDFs("Dmass");
 	if (D_PDFs.size()!=ncontr){
 		std::cout<< " NO D_PDFs \n";
@@ -335,14 +277,15 @@ int main(int argc, char *argv[])
 		//std::cout << fix << "  " << min->VariableIndex(fix) << std::endl;
 	}
 
+	// Start the minimization
 	// Define a fit function for Minuit
-	auto fchi2 = wrap_chi2(D_PDFs_get, B_PDFs_get, vect_2D, xx, dxx, xx_mcorr, dxx_mcorr);
+	auto fchi2 = wrap_chi2(D_PDFs_get, B_PDFs_get, vect_2D, MC_MD, dMC_MD, MC_MB, dMC_MB);
 	ROOT::Math::Functor f(fchi2, (nvar_md + nvar_mb) * ncontr + ncontr - 1);
 	min->SetFunction(f);
 	min->Minimize();
 
 	// Print the fit results
-	ofstream results(TString::Format("results_%d.txt", sign));
+	std::ofstream results(TString::Format("results_%d.txt", sign));
 	for (int i = 0; i < (nvar_md + nvar_mb) * ncontr + ncontr - 1; i++)
 	{
 		results << min->X()[i] << "  " << min->Errors()[i] << std::endl;
@@ -350,7 +293,7 @@ int main(int argc, char *argv[])
 	results.close();
 	return 0;
 }
-std::function<double(const double*)> wrap_chi2(const std::vector<PDFInterface*>& D_PDFs_get, const std::vector<PDFInterface*>& B_PDFs_get, std::vector<std::pair<double, double>> vect_2D, double **xx, double **dxx, double **xx_mcorr, double **dxx_mcorr){
+std::function<double(const double*)> wrap_chi2(const std::vector<PDFInterface*>& D_PDFs_get, const std::vector<PDFInterface*>& B_PDFs_get, std::vector<std::pair<double, double>> vect_2D, const std::vector<std::vector<double>>& MC_MD, const std::vector<std::vector<double>>& dMC_MD, const std::vector<std::vector<double>>& MC_MB, const std::vector<std::vector<double>>& dMC_MB){
 
         
 	
@@ -372,7 +315,7 @@ std::function<double(const double*)> wrap_chi2(const std::vector<PDFInterface*>&
 
 	long int emax = vect_2D.size();
 	std::cout << emax << "emax \n";
-	auto fchi2 = [D_PDFs_get, B_PDFs_get, vect_2D, xx, dxx, xx_mcorr, dxx_mcorr, emax, ncontr, minDM, maxDM, minBMcorr, maxBMcorr, nvar_md, nvar_mb](const double *par) -> double 
+	auto fchi2 = [D_PDFs_get, B_PDFs_get, vect_2D, MC_MD, dMC_MD, MC_MB, dMC_MB, emax, ncontr, minDM, maxDM, minBMcorr, maxBMcorr, nvar_md, nvar_mb](const double *par) -> double 
 	{
 
 	// Caclulate chi2
@@ -470,16 +413,16 @@ std::function<double(const double*)> wrap_chi2(const std::vector<PDFInterface*>&
 			// TODO set dxx for D comb background to 0 and remove this
 			for (int ivar = 0; ivar < nvar_md; ivar++)
 			{
-				if (dxx[i][ivar] != 0)
-					chi2 += (xx[i][ivar] - param[i * nvar_md + ivar]) * (xx[i][ivar] - param[i * nvar_md + ivar]) / (dxx[i][ivar] * dxx[i][ivar]); // use the results of MC fits
+				if (dMC_MD[i][ivar] != 0)
+					chi2 += (MC_MD[i][ivar] - param[i * nvar_md + ivar]) * (MC_MD[i][ivar] - param[i * nvar_md + ivar]) / (dMC_MD[i][ivar] * dMC_MD[i][ivar]); // use the results of MC fits
 			}
 		}
 		for (int i = 0; i < ncontr; i++)
 		{
 			for (int ivar = 0; ivar < nvar_mb; ivar++)
 			{
-				if (dxx_mcorr[i][ivar] != 0)
-					chi2 += (xx_mcorr[i][ivar] - param[ncontr * nvar_md + i * nvar_mb + ivar]) * (xx_mcorr[i][ivar] - param[ncontr * nvar_md + i * nvar_mb + ivar]) / (dxx_mcorr[i][ivar] * dxx_mcorr[i][ivar]); // use the results of MC fits
+				if (dMC_MB[i][ivar] != 0)
+					chi2 += (MC_MB[i][ivar] - param[ncontr * nvar_md + i * nvar_mb + ivar]) * (MC_MB[i][ivar] - param[ncontr * nvar_md + i * nvar_mb + ivar]) / (dMC_MB[i][ivar] * dMC_MB[i][ivar]); // use the results of MC fits
 			}
 		}
 

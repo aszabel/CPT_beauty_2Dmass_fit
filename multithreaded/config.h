@@ -19,11 +19,8 @@ class Config {
 public:
 	static int load(const std::string& filename);
 
-	static inline bool exists0 (const std::string& name) {
-		std::ifstream f(name.c_str());
-    		return f.good();
-    	}
-	
+
+        static void read_MC(std::vector<std::vector<double>>& xx, std::vector<std::vector<double>>& dxx, std::string MC_directory, int nvar);	
 	static std::vector<std::unique_ptr<PDFInterface>> getVectorPDFs(const std::string& domain);
 
     	static int sign;
@@ -52,6 +49,16 @@ public:
 	static std::vector<std::string> BMshapes;
 
 	static std::vector<std::string> fixVect;
+	static std::vector<double> fracInit;
+
+	static std::vector<std::string> contrName;
+	static std::vector<std::string> varname_md;
+	static std::vector<std::string> varname_mb;
+
+	static std::vector<std::vector<double>> MC_MD;
+	static std::vector<std::vector<double>> dMC_MD;
+	static std::vector<std::vector<double>> MC_MB;
+	static std::vector<std::vector<double>> dMC_MB;
 
 private:
     	Config() = default;

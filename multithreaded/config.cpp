@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <sys/stat.h>
 
 using json = nlohmann::json;
 using namespace cpt_b0_analysis;
@@ -37,7 +38,16 @@ std::vector<std::string> Config::DMshapes = {};
 std::vector<std::string> Config::BMshapes = {};
 
 std::vector<std::string> Config::fixVect = {};
+std::vector<double> Config::fracInit = {};
 
+std::vector<std::string> Config::contrName = {};
+std::vector<std::string> Config::varname_md = {};
+std::vector<std::string> Config::varname_mb = {};
+
+std::vector<std::vector<double>> Config::MC_MD={};
+std::vector<std::vector<double>> Config::dMC_MD={};
+std::vector<std::vector<double>> Config::MC_MB={};
+std::vector<std::vector<double>> Config::dMC_MB = {};
 std::vector<std::unique_ptr<PDFInterface>> Config::getVectorPDFs(const std::string& domain) {
 	std::vector<std::unique_ptr<PDFInterface>> vPDFs;
 	std::cout << domain << std::endl;
@@ -77,6 +87,36 @@ std::vector<std::unique_ptr<PDFInterface>> Config::getVectorPDFs(const std::stri
 	}	
     	return vPDFs;
 }
+void Config::read_MC(std::vector<std::vector<double>>& xx, std::vector<std::vector<double>>& dxx, std::string MC_directory, int nvar){
+// Read results of 1D fits that are stored as simple text files
+        // Each line corresponds to a single parameter
+        // First column defines parameter value
+        // Second column defines parameter uncertainty
+        // D mass fit
+	xx.reserve(ncontr);
+	dxx.reserve(ncontr);
+        for (int ifile = 0; ifile < ncontr; ifile++)
+        {
+		const int nbuffer = 100;
+		char name[nbuffer];
+		snprintf(name, nbuffer, "%s/res_%s_%d.txt", MC_directory.c_str(), contrName[ifile].c_str(), sign);
+                std::ifstream infile(name);
+		double _x, _dx;
+		std::vector<double> tmp_x = {};
+		std::vector<double> tmp_dx = {};
+                while (infile >> _x >> _dx ){
+			tmp_x.push_back(_x);
+			tmp_dx.push_back(_dx);
+		}
+
+  		xx.emplace_back(std::move(tmp_x));
+  		dxx.emplace_back(std::move(tmp_dx));
+		if (int(xx[ifile].size())!=nvar || int(dxx[ifile].size())!=nvar){
+			std::cerr << " Wrong number of parameters in the MC result file " << name << std::endl;
+        	}
+	}
+}
+
 
 int Config::load(const std::string& filename) {
 	std::ifstream config_file(filename);
@@ -141,9 +181,10 @@ int Config::load(const std::string& filename) {
                 return 1;
         }
 
+	struct stat sb;
         if (config.contains("input_file")) {
                 input_file = config["input_file"].template get<std::string>();
-                if (!Config::exists0(input_file)){
+                if (stat(input_file.c_str(), &sb)!=0){
                         std::cout << "Invalid config file: File " << input_file << " does not exist." << std::endl;
                         return 1;
                 }
@@ -264,6 +305,78 @@ int Config::load(const std::string& filename) {
                 std::cerr << "Invalid config file: missing 'fixVect' key." << std::endl;
                 return 1;
         }
+
+	
+	if (config.contains("fracInit")) {
+                fracInit = config["fracInit"].template get<std::vector<double>>();
+		if( int(fracInit.size())!=ncontr-1){
+			std::cerr << "Invalid config file: vector 'fracInit' should have " << ncontr-1 << " elements.";
+		        return 1;	
+		}
+        } else {
+                std::cerr << "Invalid config file: missing 'fracInit' key." << std::endl;
+                return 1;
+        }
+        if (config.contains("contrName")) {
+                contrName = config["contrName"].template get<std::vector<std::string>>();
+		if( int(contrName.size())!=ncontr){
+			std::cerr << "Invalid config file: vector 'contrName' should have " << ncontr << " elements.";
+		        return 1;	
+		}
+        } else {
+                std::cerr << "Invalid config file: missing 'contrName' key." << std::endl;
+                return 1;
+        }
+	if (config.contains("varname_md")) {
+                varname_md = config["varname_md"].template get<std::vector<std::string>>();
+                if( int(varname_md.size())!=nvar_md){
+                        std::cerr << "Invalid config file: vector 'varname_md' should have " << nvar_md << " elements.";
+                        return 1;
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'varname_md' key." << std::endl;
+                return 1;
+        }
+	if (config.contains("varname_mb")) {
+                varname_mb = config["varname_mb"].template get<std::vector<std::string>>();
+                if( int(varname_mb.size())!=nvar_mb){
+                        std::cerr << "Invalid config file: vector 'varname_mb' should have " << nvar_mb<< " elements.";
+                        return 1;
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'varname_mb' key." << std::endl;
+                return 1;
+        }
+
+	std::string MC_directory_MD;
+        if (config.contains("MC_directory_MD")) {
+                MC_directory_MD = config["MC_directory_MD"].template get<std::string>();
+                if (stat(MC_directory_MD.c_str(), &sb)!=0){
+                        std::cout << "Invalid config file: Directory " << MC_directory_MD << " does not exist." << std::endl;
+                        return 1;
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'input_file' key." << std::endl;
+                return 1;
+        }
+	std::string MC_directory_MB;
+        if (config.contains("MC_directory_MB")) {
+                MC_directory_MB= config["MC_directory_MB"].template get<std::string>();
+                if (stat(MC_directory_MB.c_str(), &sb)!=0){
+                        std::cout << "Invalid config file: Directory " << MC_directory_MB << " does not exist." << std::endl;
+                        return 1;
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'input_file' key." << std::endl;
+                return 1;
+        }
+
+	// Initial fit parameter values taken from 1D fits to MC and Side Bands
+	read_MC(MC_MD, dMC_MD, MC_directory_MD, nvar_md);
+	read_MC(MC_MB, dMC_MB, MC_directory_MB, nvar_mb);
+
+
+
 	return 0;
 }
 
