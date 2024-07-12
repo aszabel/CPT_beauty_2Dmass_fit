@@ -7,12 +7,10 @@
 
 // ROOT includes
 #include "TROOT.h"
-#include "TH2D.h"
 #include "TChain.h"
 #include "TString.h"
-#include "TF2.h"
 #include "TMath.h"
-#include "TCanvas.h"
+#include "TRandom.h"
 #include "Math/Minimizer.h"
 #include "Math/Factory.h"
 #include "Math/Functor.h"
@@ -26,6 +24,7 @@
 
 #include <functional>
 #include <memory>
+#include <tuple>
 
 using json = nlohmann::json;
 using namespace cpt_b0_analysis;
@@ -54,7 +53,7 @@ bool avx = true;
  * @param argv
  * @return int
  */
-std::function<double(const double*)> wrap_chi2(const std::vector<PDFInterface*>& D_PDFs_get, const std::vector<PDFInterface*>& B_PDFs_get, std::vector<std::pair<double, double>> vect_2D, const std::vector<std::vector<double>>& MC_MD, const std::vector<std::vector<double>>& dMC_MD, const std::vector<std::vector<double>>& MC_MB, const std::vector<std::vector<double>>& dMC_MB);
+std::function<double(const double*)> wrap_chi2(const std::vector<PDFInterface*>& D_PDFs_get, const std::vector<PDFInterface*>& B_PDFs_get, std::vector<std::pair<double, double>> vect_2D, const std::vector<std::vector<double>>& MC_MD, const std::vector<std::vector<double>>& dMC_MD, const std::vector<std::vector<double>>& MC_MB, const std::vector<std::vector<double>>& dMC_MB, const std::vector<std::pair<int, int>>& replaceIndexVect);
 
 
 
@@ -100,10 +99,9 @@ int main(int argc, char *argv[])
         double maxDM = Config::maxDM;
         double minBMcorr = Config::minBMcorr;
         double maxBMcorr = Config::maxBMcorr;
-        const int nvar_md = 7;//Config::nvar_md;
-        const int nvar_mb = 7;///usr/bin/../lib/gcc/x86_64-linux-gnu/11/../../../../include/c++/11/bits/stl_uninitialized.hConfig::nvar_mb;
-        const int ncontr = 6;//Config::ncontr;
-        const int nbins = Config::nbins;
+        const int nvar_md = Config::nvar_md;
+        const int nvar_mb = Config::nvar_mb;
+        const int ncontr = Config::ncontr;
 	std::vector<std::string> fixVect = Config::fixVect;
 
 
@@ -119,23 +117,18 @@ int main(int argc, char *argv[])
 		ROOT::Math::Factory::CreateMinimizer(minName, algoName);
 
 	// Set tolerance , etc...
-	// TODO load those values from a config file
-	min->SetMaxFunctionCalls(10000000); // for Minuit/Minuit2
-	min->SetMaxIterations(10000);		// for GSL
+	min->SetMaxFunctionCalls(Config::functionCalls); // for Minuit/Minuit2
 	min->SetTolerance(tolerance);
-	min->SetPrintLevel(2);
+	min->SetPrintLevel(Config::printLevel);
 	// min->SetStrategy(2);
-	// min->SetPrecision(0.00001);
 
 	// Load data set
-	TChain ch("BlindedTree");
-	// TODO load the data filename from config file
+	TChain ch((Config::chainName).c_str());
 	ch.Add(input_file.c_str());
 	double D_M, mu_PT, mu_P, mu_eta, K_PT, B_M, missPT;
 	bool charge;
 
 	std::vector<std::pair<double, double>> vect_2D;
-	TH2D *hist = new TH2D("hist", "", nbins, minDM, maxDM, nbins, minBMcorr, maxBMcorr);
 	ch.SetBranchAddress("B_M", &B_M);
 	ch.SetBranchAddress("missPT", &missPT);
 	ch.SetBranchAddress("D_M", &D_M);
@@ -163,7 +156,6 @@ int main(int argc, char *argv[])
 		if (int(charge) == sign)
 		{
 			vect_2D.push_back(std::make_pair(D_M, B_MMcorr));
-			hist->Fill(D_M, B_MMcorr);
 		}
 	}
 
@@ -184,20 +176,7 @@ int main(int argc, char *argv[])
 		{
 			min->SetVariable(i * nvar_md + ivar, (TString::Format("%s_%s", contrName[i].c_str(), varname_md[ivar].c_str())).Data(), MC_MD[i][ivar], dMC_MD[i][ivar] + 1.0e-11);
 			starting_point[i * nvar_md + ivar] = MC_MD[i][ivar];
-			// min->FixVariable(i*nvar_md+ivar);
-			//min->SetVariableLowerLimit(i * nvar_md + ivar, 1e-13);
-			// TODO load limits and fix values from a config file
-			if (ivar == 3)
-				min->SetVariableLimits(i * nvar_md + ivar, -1.0, 1.0);
 
-			if (ivar == 5 || ivar == 6)
-				min->FixVariable(i * nvar_md + ivar);
-			if (i == 4 && ivar != 0 && ivar != 1)
-				min->FixVariable(i * nvar_md + ivar); // combinatorial
-			// if (i==4) min->FixVariable(i*nvar_md+ivar); // combinatorial
-			// if(ivar!=1&&ivar!=0)min->FixVariable(i*nvar_md+ivar);
-			if (i != 0 && ivar == 1)
-				min->FixVariable(i * nvar_md + ivar);
 		}
 	}
 
@@ -211,12 +190,20 @@ int main(int argc, char *argv[])
 		{
 			min->SetVariable(ncontr * nvar_md + i * nvar_mb + ivar, (TString::Format("%s_%s", contrName[i].c_str(), varname_mb[ivar].c_str())).Data(), MC_MB[i][ivar], dMC_MB[i][ivar] + 1.0e-11);
 			starting_point[ncontr * nvar_md + i * nvar_mb + ivar] = MC_MB[i][ivar];
-			//min->FixVariable(ncontr*nvar_md+i*nvar_mb+ivar);
-			//min->SetVariableLowerLimit(ncontr * nvar_md + i * nvar_mb + ivar, 1e-13);
-			if (ivar == 2)
-				min->SetVariableLimits(ncontr * nvar_md + i * nvar_mb + ivar, -1.0, 1.0);
 		}
 	}
+
+	//Set Limits on variables
+	const std::vector<std::tuple<std::string, double, double>>& varLimitsVect = Config::varLimitsVect;
+        for (const auto& varLimits: varLimitsVect){
+		int index_var = min->VariableIndex(std::get<0>(varLimits));
+                if (index_var == -1 ){
+                	std::cerr<< "Error in substituting parameters param " << std::get<0>(varLimits) << " not found.\n";
+			return 1;
+                }
+		min->SetVariableLimits(index_var, std::get<1>(varLimits), std::get<2>(varLimits));
+	}
+
 
 	// Set initial fraction values
 	const auto&fracInit = Config::fracInit;
@@ -228,7 +215,6 @@ int main(int argc, char *argv[])
 	}
 
 
-	// Q: Define ??????
 	// Define the error setimation parameter in minuit for 1 sigma and ncontr -1 free parameters
 	double CL_normal = ROOT::Math::normal_cdf(1) - ROOT::Math::normal_cdf(-1); //1 sigma ~68%
 	min->SetErrorDef(TMath::ChisquareQuantile(CL_normal, ncontr-1));// ncontr-1 free fraction parameters, other parameters have gaussian contraints base on MC fits.
@@ -236,29 +222,27 @@ int main(int argc, char *argv[])
 	const auto& D_PDFs = Config::getVectorPDFs("Dmass");
 	if (D_PDFs.size()!=ncontr){
 		std::cout<< " NO D_PDFs \n";
-		return 1;//std::function<double(const double*)>{};
+		return 1;
 	}
 	for (int i=0; i<ncontr; ++i){
 		auto pdf = D_PDFs[i].get();
-		std::cout << pdf << std::endl;
 
 		if (!pdf){
 			std::cout<< "Nullptr passed as pdf\n";
-			return 1;//std::function<double(const double*)>{};
+			return 1;
 		}
 	}
 		
 	const auto& B_PDFs = Config::getVectorPDFs("Bmass");
         if (B_PDFs.size()!=ncontr){
                 std::cout<< " NO B_PDFs \n";    
-                return 1;//std::function<double(const double*)>{};
+                return 1;
         }
         for (int i=0; i<ncontr; ++i){
                 auto pdf = B_PDFs[i].get();
-		std::cout << pdf << std::endl;
                 if (!pdf){
                         std::cout<< "Nullptr passed as pdf\n";
-                        return 1;//std::function<double(const double*)>{};
+                        return 1;
                 }
         }
 	std::vector<PDFInterface *> D_PDFs_get;
@@ -267,9 +251,18 @@ int main(int argc, char *argv[])
 		D_PDFs_get.push_back(D_PDFs[i].get());
 		B_PDFs_get.push_back(B_PDFs[i].get());
 	}
+
+	int randSeed = Config::randSeed;
+	TRandom rand;
+	if (randSeed >-1)
+		rand.SetSeed(randSeed);
 	//staring point for stability checks
-	for (int ivar=0; ivar<(nvar_md+nvar_mb)*ncontr+ncontr-1; ivar++)
-		min->SetVariableValue(ivar, starting_point[ivar]);
+	double random = 0.0;
+	for (int ivar=0; ivar<(nvar_md+nvar_mb)*ncontr+ncontr-1; ivar++){
+		if (randSeed > -1)
+			random = rand.Uniform(-1.0, 1.0);
+		min->SetVariableValue(ivar, starting_point[ivar]*(1.0+0.01*random));
+	}
 
 	//list of fixed variables form config
 	for (const auto& fix: fixVect){
@@ -277,15 +270,34 @@ int main(int argc, char *argv[])
 		//std::cout << fix << "  " << min->VariableIndex(fix) << std::endl;
 	}
 
+	std::vector<std::pair<int, int>> replaceIndexVect = {};
+        const auto& replace_var = Config::replace_var;
+                for (const auto& rep_var: replace_var){
+                        int index_replaced = min->VariableIndex(rep_var.first);
+                        int index_substitute = min->VariableIndex(rep_var.second);
+                        if (index_replaced == -1 ){
+                                std::cerr<< "Error in substituting parameters param " << rep_var.first << " not found.\n";
+				return 1;
+                        }
+                        if (index_substitute == -1 ){
+                                std::cerr<< "Error in substituting parameters param " << rep_var.second << " not found.\n";
+				return 1;
+                        }
+		replaceIndexVect.push_back(std::make_pair(index_replaced, index_substitute));
+		}
+
+
+
 	// Start the minimization
 	// Define a fit function for Minuit
-	auto fchi2 = wrap_chi2(D_PDFs_get, B_PDFs_get, vect_2D, MC_MD, dMC_MD, MC_MB, dMC_MB);
+	auto fchi2 = wrap_chi2(D_PDFs_get, B_PDFs_get, vect_2D, MC_MD, dMC_MD, MC_MB, dMC_MB, replaceIndexVect);
 	ROOT::Math::Functor f(fchi2, (nvar_md + nvar_mb) * ncontr + ncontr - 1);
 	min->SetFunction(f);
 	min->Minimize();
 
 	// Print the fit results
 	std::ofstream results(TString::Format("results_%d.txt", sign));
+	results << min->Status() << std::endl;
 	for (int i = 0; i < (nvar_md + nvar_mb) * ncontr + ncontr - 1; i++)
 	{
 		results << min->X()[i] << "  " << min->Errors()[i] << std::endl;
@@ -293,7 +305,7 @@ int main(int argc, char *argv[])
 	results.close();
 	return 0;
 }
-std::function<double(const double*)> wrap_chi2(const std::vector<PDFInterface*>& D_PDFs_get, const std::vector<PDFInterface*>& B_PDFs_get, std::vector<std::pair<double, double>> vect_2D, const std::vector<std::vector<double>>& MC_MD, const std::vector<std::vector<double>>& dMC_MD, const std::vector<std::vector<double>>& MC_MB, const std::vector<std::vector<double>>& dMC_MB){
+std::function<double(const double*)> wrap_chi2(const std::vector<PDFInterface*>& D_PDFs_get, const std::vector<PDFInterface*>& B_PDFs_get, std::vector<std::pair<double, double>> vect_2D, const std::vector<std::vector<double>>& MC_MD, const std::vector<std::vector<double>>& dMC_MD, const std::vector<std::vector<double>>& MC_MB, const std::vector<std::vector<double>>& dMC_MB, const std::vector<std::pair<int, int>>& replaceIndexVect){
 
         
 	
@@ -314,9 +326,10 @@ std::function<double(const double*)> wrap_chi2(const std::vector<PDFInterface*>&
 
 
 	long int emax = vect_2D.size();
-	std::cout << emax << "emax \n";
-	auto fchi2 = [D_PDFs_get, B_PDFs_get, vect_2D, MC_MD, dMC_MD, MC_MB, dMC_MB, emax, ncontr, minDM, maxDM, minBMcorr, maxBMcorr, nvar_md, nvar_mb](const double *par) -> double 
+	std::cout << emax << " yield of the sample \n";
+	auto fchi2 = [D_PDFs_get, B_PDFs_get, vect_2D, MC_MD, dMC_MD, MC_MB, dMC_MB, emax, ncontr, minDM, maxDM, minBMcorr, maxBMcorr, nvar_md, nvar_mb, replaceIndexVect](const double *par) -> double 
 	{
+
 
 	// Caclulate chi2
 			// Get the pointer in parameters array that correspond to fraction defining parameters????
@@ -333,27 +346,14 @@ std::function<double(const double*)> wrap_chi2(const std::vector<PDFInterface*>&
 		frac[5] = abs(pa[0]) * abs(pa[1]) * abs(pa[2]) * abs(pa[3]) * abs(pa[4]);
 		// Extract the parameters and add some constraints
 		double param[ncontr * (nvar_md + nvar_mb)];
-		for (int i = 0; i < ncontr; i++)
+		for (int ivar = 0; ivar < (nvar_md+nvar_mb)*ncontr; ivar++)
 		{
-			for (int ivar = 0; ivar < nvar_md; ivar++)
-			{
-				param[i * nvar_md + ivar] = par[i * nvar_md + ivar];
-				// TODO find a better way ...
-				// Define this in a json config
-				if (ivar == 1 && i != 2 && i != 4)
-					param[i * nvar_md + ivar] = par[1];
-			}
-			for (int ivar = 0; ivar < nvar_mb; ivar++)
-			{
-				int ipar = ncontr * nvar_md + i * nvar_mb + ivar;
-				param[ipar] = par[ipar];
-			}
+			param[ivar] = par[ivar];
 		}
-		/*
-		for (int i=0; i<ncontr; ++i){
-			std::cout<<D_PDFs[i].get() << "  " << B_PDFs[i].get() << std::endl;
-		}
-		*/
+		for (const auto& irep_var: replaceIndexVect){
+			param[irep_var.first] = par[irep_var.second];
+		}	
+		
 		// Calculate normalisation integrals
 		for (int i = 0; i < ncontr; i++)
 		{

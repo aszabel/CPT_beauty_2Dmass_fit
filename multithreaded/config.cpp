@@ -11,10 +11,14 @@ using namespace cpt_b0_analysis;
 
 int Config::sign = -1;
 std::string Config::input_file = "";
+std::string Config::chainName = "";
 
 int Config::nentries = -1;
 
 double Config::tolerance = 50.;
+int Config::functionCalls = 1e7;
+int Config::printLevel = 1;
+int Config::randSeed = -1;
 
 double Config::muPTmin = 500.;
 double Config::muPmin = 5000.;
@@ -29,7 +33,6 @@ double Config::maxBMcorr = 8300.;
 int Config::nvar_md = 7;
 int Config::nvar_mb = 7;
 int Config::ncontr = 6;
-int Config::nbins = 40;
 
 std::vector<int> Config::intshapesDM = {};
 std::vector<int> Config::intshapesBMcorr = {};
@@ -43,6 +46,8 @@ std::vector<double> Config::fracInit = {};
 std::vector<std::string> Config::contrName = {};
 std::vector<std::string> Config::varname_md = {};
 std::vector<std::string> Config::varname_mb = {};
+std::vector<std::pair<std::string, std::string>> Config::replace_var = {};
+std::vector<std::tuple<std::string, double, double>> Config::varLimitsVect = {};
 
 std::vector<std::vector<double>> Config::MC_MD={};
 std::vector<std::vector<double>> Config::dMC_MD={};
@@ -50,11 +55,8 @@ std::vector<std::vector<double>> Config::MC_MB={};
 std::vector<std::vector<double>> Config::dMC_MB = {};
 std::vector<std::unique_ptr<PDFInterface>> Config::getVectorPDFs(const std::string& domain) {
 	std::vector<std::unique_ptr<PDFInterface>> vPDFs;
-	std::cout << domain << std::endl;
 	if (domain == std::string("Dmass")){
-		std::cout << intshapesDM.size() << " size\n";
 		for (auto intshape: intshapesDM){
-				std::cout << intshape << "TUTAJ" << std::endl;
                 	switch (intshape){
                         	case 0:
                                 	vPDFs.push_back(std::make_unique<DoubleSidedCrystalballPlusGaussPDF>());
@@ -70,7 +72,6 @@ std::vector<std::unique_ptr<PDFInterface>> Config::getVectorPDFs(const std::stri
 
 	}else if (domain == std::string("Bmass")){
 	        for (auto intshape: intshapesBMcorr){
-			std::cout << intshape << " tam " <<std::endl;
         	        switch (intshape){
                         	case 0:
                                 	vPDFs.push_back(std::make_unique<RaisedCosinePlusGaussPDF>());
@@ -129,7 +130,7 @@ int Config::load(const std::string& filename) {
                 else if (config["sign"].template get<std::string>() == std::string("muminus"))
                         sign = 0;
                 else {
-                        std::cout << "Invalid config file: allowed values for the 'sign' key are 'muplus' or 'muminus'." << std::endl;
+                        std::cerr << "Invalid config file: allowed values for the 'sign' key are 'muplus' or 'muminus'." << std::endl;
                         return 1;
                 }
         } else {
@@ -137,11 +138,18 @@ int Config::load(const std::string& filename) {
                 return 1;
         }
 
+	if (config.contains("chainName")) {
+                chainName  = config["chainName"].template get<std::string>();
+        } else {
+                std::cerr << "Invalid config file: missing 'chainName' key." << std::endl;
+                return 1;
+        }
+
 
         if (config.contains("tolerance")){
                 tolerance = config["tolerance"];
                 if (tolerance <0.){
-                        std::cout << "Invalid config file: 'tolerance' must be positive." << std::endl;
+                        std::cerr << "Invalid config file: 'tolerance' must be positive." << std::endl;
                         return 1;
                 }
         }else{
@@ -150,10 +158,45 @@ int Config::load(const std::string& filename) {
         }
 
 
+        if (config.contains("functionCalls")){
+                functionCalls = config["functionCalls"];
+                if (functionCalls <0.){
+                        std::cerr << "Invalid config file: 'functionCalls' must be a positive integer." << std::endl;
+                        return 1;
+                }
+        }else{
+                std::cerr << "Invalid config file: missing 'functionCalls' key." << std::endl;
+                return 1;
+        }
+
+
+        if (config.contains("printLevel")){
+                printLevel = config["printLevel"];
+                if (printLevel<0 || printLevel>3){
+                        std::cerr << "Invalid config file: 'printLevel' must be 0, 1, 2 or 3" << std::endl;
+                        return 1;
+                }
+        }else{
+                std::cerr << "Invalid config file: missing 'printLevel' key." << std::endl;
+                return 1;
+        }
+
+	if (config.contains("randSeed")){
+                randSeed = config["randSeed"];
+                if (randSeed<-1){
+                        std::cerr << "Invalid config file: 'randSeed' must be -1, 0 or a positive integer." << std::endl; //when -1 then no randomization
+                        return 1;
+                }
+        }else{
+                std::cerr << "Invalid config file: missing 'randSeed' key." << std::endl;
+                return 1;
+        }
+
+
         if (config.contains("muPmin")){
                 muPmin = config["muPmin"];
                 if (muPmin <0){
-                        std::cout << "Invalid config file: 'muPmin' must be positive." << std::endl;
+                        std::cerr << "Invalid config file: 'muPmin' must be positive." << std::endl;
                         return 1;
                 }
         }else{
@@ -166,7 +209,7 @@ int Config::load(const std::string& filename) {
                 eta_min = eta_cut[0];
                 eta_max = eta_cut[1];
                 if (eta_min <0.0 || eta_max <0.0 || eta_min>eta_max){
-                        std::cout << "Invalid config file: interval 'eta_cut' must be positive." << std::endl;
+                        std::cerr << "Invalid config file: interval 'eta_cut' must be positive." << std::endl;
                         return 1;
                 }
         }else{
@@ -185,7 +228,7 @@ int Config::load(const std::string& filename) {
         if (config.contains("input_file")) {
                 input_file = config["input_file"].template get<std::string>();
                 if (stat(input_file.c_str(), &sb)!=0){
-                        std::cout << "Invalid config file: File " << input_file << " does not exist." << std::endl;
+                        std::cerr << "Invalid config file: File " << input_file << " does not exist." << std::endl;
                         return 1;
                 }
         } else {
@@ -197,7 +240,7 @@ int Config::load(const std::string& filename) {
                 minDM = DM_range[0];
                 maxDM = DM_range[1];
                 if (minDM <0.0 || maxDM <0.0 || minDM>maxDM){
-                        std::cout << "Invalid config file: interval 'DM_range' must be positive." << std::endl;
+                        std::cerr << "Invalid config file: interval 'DM_range' must be positive." << std::endl;
                         return 1;
                 }
         }else{
@@ -209,7 +252,7 @@ int Config::load(const std::string& filename) {
                 minBMcorr = BMcorr_range[0];
                 maxBMcorr = BMcorr_range[1];
                 if (minBMcorr <0.0 || maxBMcorr <0.0 || minBMcorr>maxBMcorr){
-                        std::cout << "Invalid config file: interval 'BMcorr_range' must be positive." << std::endl;
+                        std::cerr << "Invalid config file: interval 'BMcorr_range' must be positive." << std::endl;
                         return 1;
                 }
         }else{
@@ -219,7 +262,7 @@ int Config::load(const std::string& filename) {
         if (config.contains("nvar_md")){
                 nvar_md = config["nvar_md"];
                 if (nvar_md<0){
-                        std::cout << "Invalid config file: 'nvar_md' must be positive." << std::endl;
+                        std::cerr << "Invalid config file: 'nvar_md' must be positive." << std::endl;
                         return 1;
                 }
         }else{
@@ -229,27 +272,17 @@ int Config::load(const std::string& filename) {
          if (config.contains("nvar_mb")){
                 nvar_mb = config["nvar_mb"];
                 if (nvar_mb<0){
-                        std::cout << "Invalid config file: 'nvar_mb' must be positive." << std::endl;
+                        std::cerr << "Invalid config file: 'nvar_mb' must be positive." << std::endl;
                         return 1;
                 }
         }else{
                 std::cerr << "Invalid config file: missing 'nvar_mb' key." << std::endl;
                 return 1;
         }
-        if (config.contains("nbins")){
-                nbins = config["nbins"];
-                if (nbins<0){
-                        std::cout << "Invalid config file: 'nbins' must be positive." << std::endl;
-                        return 1;
-                }
-        }else{
-                std::cerr << "Invalid config file: missing 'nbins' key." << std::endl;
-                return 1;
-        }
 	if (config.contains("DMshapes")) {
                 DMshapes = config["DMshapes"].template get<std::vector<std::string>>();
                 if (int(DMshapes.size())!=ncontr){
-                        std::cout << "Invalid config file: Number of given DM pdfs does not match ncontr. " << std::endl;
+                        std::cerr << "Invalid config file: Number of given DM pdfs does not match ncontr. " << std::endl;
                         return 1;
                 }
         } else {
@@ -259,7 +292,7 @@ int Config::load(const std::string& filename) {
 	if (config.contains("BMshapes")) {
                 BMshapes = config["BMshapes"].template get<std::vector<std::string>>();
                 if (int(BMshapes.size())!=ncontr){
-                        std::cout << "Invalid config file: Number of given BM pdfs does not match ncontr. " << std::endl;
+                        std::cerr << "Invalid config file: Number of given BM pdfs does not match ncontr. " << std::endl;
                         return 1;
                 }
         } else {
@@ -277,18 +310,15 @@ int Config::load(const std::string& filename) {
 
                 {"RCplusGaus", 0}
         };
-	int iii=0;
 	for (auto shape: DMshapes){
                 if (dictionaryDM.find(shape) != dictionaryDM.end()) {
                         intshapesDM.push_back(dictionaryDM.at(shape));
-			std::cout << shape << intshapesDM[iii++] << std::endl;
 
                 } else {
                         std::cerr << "Shape '" << shape << "' not found." << std::endl;
                         return 1;
                 }
         }
-        std::cout << BMshapes.size() << std::endl;
         for (auto shape: BMshapes){
                 if (dictionaryBMcorr.find(shape) != dictionaryBMcorr.end()) {
                         intshapesBMcorr.push_back(dictionaryBMcorr.at(shape));
@@ -352,7 +382,7 @@ int Config::load(const std::string& filename) {
         if (config.contains("MC_directory_MD")) {
                 MC_directory_MD = config["MC_directory_MD"].template get<std::string>();
                 if (stat(MC_directory_MD.c_str(), &sb)!=0){
-                        std::cout << "Invalid config file: Directory " << MC_directory_MD << " does not exist." << std::endl;
+                        std::cerr << "Invalid config file: Directory " << MC_directory_MD << " does not exist." << std::endl;
                         return 1;
                 }
         } else {
@@ -363,7 +393,7 @@ int Config::load(const std::string& filename) {
         if (config.contains("MC_directory_MB")) {
                 MC_directory_MB= config["MC_directory_MB"].template get<std::string>();
                 if (stat(MC_directory_MB.c_str(), &sb)!=0){
-                        std::cout << "Invalid config file: Directory " << MC_directory_MB << " does not exist." << std::endl;
+                        std::cerr << "Invalid config file: Directory " << MC_directory_MB << " does not exist." << std::endl;
                         return 1;
                 }
         } else {
@@ -374,6 +404,24 @@ int Config::load(const std::string& filename) {
 	// Initial fit parameter values taken from 1D fits to MC and Side Bands
 	read_MC(MC_MD, dMC_MD, MC_directory_MD, nvar_md);
 	read_MC(MC_MB, dMC_MB, MC_directory_MB, nvar_mb);
+
+	if (config.contains("replace_var")) {
+                replace_var = config["replace_var"].template get<std::vector<std::pair<std::string, std::string>>>();
+		for (const auto& rep_var: replace_var){
+			fixVect.push_back(rep_var.first);
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'replace_var' key." << std::endl;
+                return 1;
+        }
+
+	if (config.contains("varLimitsVect")) {
+                varLimitsVect = config["varLimitsVect"].template get<std::vector<std::tuple<std::string, double, double>>>();
+        } else {
+                std::cerr << "Invalid config file: missing 'varLimitsVect' key." << std::endl;
+                return 1;
+        }
+
 
 
 

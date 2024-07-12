@@ -29,7 +29,11 @@ public:
     	static int nentries;
 
     	static double tolerance;
+    	static int functionCalls;
+    	static int printLevel;
+	static int randSeed;
 
+	static std::string chainName;
     	static double muPTmin;
     	static double muPmin;
     	static double eta_min;
@@ -43,7 +47,6 @@ public:
     	static int nvar_md;
     	static int nvar_mb;
     	static int ncontr;
-    	static int nbins;
 
 	static std::vector<std::string> DMshapes;
 	static std::vector<std::string> BMshapes;
@@ -54,6 +57,8 @@ public:
 	static std::vector<std::string> contrName;
 	static std::vector<std::string> varname_md;
 	static std::vector<std::string> varname_mb;
+	static std::vector<std::pair<std::string, std::string>> replace_var;
+	static std::vector<std::tuple<std::string, double, double>> varLimitsVect;
 
 	static std::vector<std::vector<double>> MC_MD;
 	static std::vector<std::vector<double>> dMC_MD;
