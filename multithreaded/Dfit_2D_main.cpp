@@ -185,7 +185,6 @@ int main(int argc, char *argv[])
 
 	for (int i = 0; i < ncontr; i++)
 	{
-		// TODO load limits and fixed value from the config file
 		for (int ivar = 0; ivar < nvar_mb; ivar++)
 		{
 			min->SetVariable(ncontr * nvar_md + i * nvar_mb + ivar, (TString::Format("%s_%s", contrName[i].c_str(), varname_mb[ivar].c_str())).Data(), MC_MB[i][ivar], dMC_MB[i][ivar] + 1.0e-11);
@@ -206,9 +205,15 @@ int main(int argc, char *argv[])
 
 
 	// Set initial fraction values
-	const auto&fracInit = Config::fracInit;
+	const auto& fracInit = Config::fracInit;
+	//auto fracInit = Config::fracInit;
+	//double sum = 0.0;
+	//for (auto frac: fracInit)
+	//	sum += frac;
+	//fracInit.push_back(1.0-sum);
 
 	for (int i = 0; i < ncontr - 1; i++)
+	//for (int i = 0; i < ncontr; i++)
 	{
 		min->SetVariable((nvar_md + nvar_mb) * ncontr + i, (TString::Format("par_frac%d", i)).Data(), fracInit[i], 0.01);
 		starting_point[(nvar_md + nvar_mb) * ncontr + i] = fracInit[i];
@@ -220,7 +225,7 @@ int main(int argc, char *argv[])
 	min->SetErrorDef(TMath::ChisquareQuantile(CL_normal, ncontr-1));// ncontr-1 free fraction parameters, other parameters have gaussian contraints base on MC fits.
 
 	const auto& D_PDFs = Config::getVectorPDFs("Dmass");
-	if (D_PDFs.size()!=ncontr){
+	if (int(D_PDFs.size())!=ncontr){
 		std::cout<< " NO D_PDFs \n";
 		return 1;
 	}
@@ -234,7 +239,7 @@ int main(int argc, char *argv[])
 	}
 		
 	const auto& B_PDFs = Config::getVectorPDFs("Bmass");
-        if (B_PDFs.size()!=ncontr){
+        if (int(B_PDFs.size())!=ncontr){
                 std::cout<< " NO B_PDFs \n";    
                 return 1;
         }
@@ -251,24 +256,25 @@ int main(int argc, char *argv[])
 		D_PDFs_get.push_back(D_PDFs[i].get());
 		B_PDFs_get.push_back(B_PDFs[i].get());
 	}
-
-	int randSeed = Config::randSeed;
-	TRandom rand;
-	if (randSeed >-1)
-		rand.SetSeed(randSeed);
-	//staring point for stability checks
-	double random = 0.0;
-	for (int ivar=0; ivar<(nvar_md+nvar_mb)*ncontr+ncontr-1; ivar++){
-		if (randSeed > -1)
-			random = rand.Uniform(-1.0, 1.0);
-		min->SetVariableValue(ivar, starting_point[ivar]*(1.0+0.01*random));
-	}
-
 	//list of fixed variables form config
 	for (const auto& fix: fixVect){
 		min->FixVariable(min->VariableIndex(fix));
 		//std::cout << fix << "  " << min->VariableIndex(fix) << std::endl;
 	}
+	int randSeed = Config::randSeed;
+	TRandom rand;
+	if (randSeed >-1)
+		rand.SetSeed(randSeed);
+	//staring point for stability checks
+	for (int ivar=0; ivar<(nvar_md+nvar_mb)*ncontr+ncontr-1; ivar++){
+	//for (int ivar=0; ivar<(nvar_md+nvar_mb)*ncontr+ncontr; ivar++){
+		double random = 0.0;
+		if (randSeed > -1 && !min->IsFixedVariable(ivar))
+			random = rand.Uniform(-1.0, 1.0);
+		min->SetVariableValue(ivar, starting_point[ivar]*(1.0+0.01*random));
+	}
+
+	
 
 	std::vector<std::pair<int, int>> replaceIndexVect = {};
         const auto& replace_var = Config::replace_var;
@@ -292,13 +298,15 @@ int main(int argc, char *argv[])
 	// Define a fit function for Minuit
 	auto fchi2 = wrap_chi2(D_PDFs_get, B_PDFs_get, vect_2D, MC_MD, dMC_MD, MC_MB, dMC_MB, replaceIndexVect);
 	ROOT::Math::Functor f(fchi2, (nvar_md + nvar_mb) * ncontr + ncontr - 1);
+	//ROOT::Math::Functor f(fchi2, (nvar_md + nvar_mb) * ncontr + ncontr);
 	min->SetFunction(f);
 	min->Minimize();
 
 	// Print the fit results
 	std::ofstream results(TString::Format("results_%d.txt", sign));
-	results << min->Status() << std::endl;
+	results << min->Status() << "  " << min->MinValue() << std::endl;
 	for (int i = 0; i < (nvar_md + nvar_mb) * ncontr + ncontr - 1; i++)
+	//for (int i = 0; i < (nvar_md + nvar_mb) * ncontr + ncontr; i++)
 	{
 		results << min->X()[i] << "  " << min->Errors()[i] << std::endl;
 	}
@@ -338,12 +346,13 @@ std::function<double(const double*)> wrap_chi2(const std::vector<PDFInterface*>&
 		// Q: Why do we recalculate fractions? What does the minuti minimize - what is stored in `pa` ???
 		// The parameters pa[] define the fractions, we have 6 fractions but 5 independent parameters. The parametrisation is arbitrary
 		double frac[ncontr];
-		frac[0] = 1 - abs(pa[0]);
-		frac[1] = abs(pa[0]) * (1.0 - abs(pa[1]));
-		frac[2] = abs(pa[0]) * abs(pa[1]) * (1.0 - abs(pa[2]));
-		frac[3] = abs(pa[0]) * abs(pa[1]) * abs(pa[2]) * (1.0 - abs(pa[3]));
-		frac[4] = abs(pa[0]) * abs(pa[1]) * abs(pa[2]) * abs(pa[3]) * (1.0 - abs(pa[4]));
-		frac[5] = abs(pa[0]) * abs(pa[1]) * abs(pa[2]) * abs(pa[3]) * abs(pa[4]);
+		double sum_frac = 0.0;
+		for (int i=0; i<ncontr-1; i++){
+			frac[i] = abs(pa[i]);
+			sum_frac +=frac[i];
+		}
+		frac[ncontr-1] = 1.0-sum_frac;
+	
 		// Extract the parameters and add some constraints
 		double param[ncontr * (nvar_md + nvar_mb)];
 		for (int ivar = 0; ivar < (nvar_md+nvar_mb)*ncontr; ivar++)
@@ -427,6 +436,8 @@ std::function<double(const double*)> wrap_chi2(const std::vector<PDFInterface*>&
 		}
 
 		// std::cerr<<"Chi2: "<<chi2<<std::endl;
+		if (frac[ncontr -1]>1.0) chi2 += 1.0e6*(frac[ncontr-1]-1.0)*(frac[ncontr-1]-1.0);
+		if (frac[ncontr -1]<-0.0) chi2 += 1.0e6*(frac[ncontr-1])*(frac[ncontr-1]);
 		return chi2;
 	};
 	return fchi2;

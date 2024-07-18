@@ -1,4 +1,4 @@
 #!/bin/bash
 
-  ./fit2D_mass muplus
+  time ./fit2D_mass $1
 

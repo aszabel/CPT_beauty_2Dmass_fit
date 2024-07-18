@@ -9,7 +9,7 @@
 
   "nentries": -1,
 
-  "tolerance": 500.0,
+  "tolerance": 10000.0,
   "functionCalls": 1e7,
   "printLevel": 2,
   "randSeed": -1,
@@ -37,5 +37,7 @@
 
    "varLimitsVect": [["signal_f12", -1.0, 1.0], ["BuDmunu_f12", -1.0, 1.0], ["BsDsMunu_f12", -1.0, 1.0], ["B02DpDsm_f12", -1.0, 1.0], ["Bu2D0Dsm_f12", -1.0, 1.0], ["signal_f12_gaus", -1.0, 1.0], ["BuDmunu_f12_gaus", -1.0, 1.0], ["BsDsMunu_f12_gaus", -1.0, 1.0], ["B02DpDsm_f12_gaus", -1.0, 1.0], ["sidebands_f12_gaus", -1.0, 1.0], ["Bu2D0Dsm_f12_gaus", -1.0, 1.0]],
 
-   "fracInit": [0.468636, 0.736568, 0.973902, 0.949009, -0.00476566]
+   "_old_fracInit": [0.531364, 0.123454, 0.00900857, 0.0171418, 0.317511],
+   "fracInit": [0.544221, 0.128957, 0.0182142, 0.0354018, 0.238786]
+
 }
