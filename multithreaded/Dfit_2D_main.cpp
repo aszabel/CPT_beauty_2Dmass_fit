@@ -370,26 +370,50 @@ std::function<double(const double*)> wrap_chi2(const std::vector<PDFInterface*>&
 			B_PDFs_get[i]->CalcIntegral(&param[ncontr * nvar_md + i * nvar_mb], minBMcorr, maxBMcorr);
 		}
 
+		double likelihood = 1.0;
+		for (int i = 0; i < ncontr; i++)
+		{
+			// TODO set dxx for D comb background to 0 and remove this
+			for (int ivar = 0; ivar < nvar_md; ivar++)
+			{
+				if (i == 4) continue;
+				if (dMC_MD[i][ivar] != 0){
+					 double tmp = (MC_MD[i][ivar] - param[i * nvar_md + ivar]) * (MC_MD[i][ivar] - param[i * nvar_md + ivar]) / (2.0*(dMC_MD[i][ivar] * dMC_MD[i][ivar])); // use the results of MC fits
+					likelihood *= std::exp(-tmp)/(sqrt(2.0*TMath::Pi())*dMC_MD[i][ivar]);
+				}
+			}
+		}
+		for (int i = 0; i < ncontr; i++)
+		{
+			for (int ivar = 0; ivar < nvar_mb; ivar++)
+			{
+				if (dMC_MB[i][ivar] != 0){
+					double tmp = (MC_MB[i][ivar] - param[ncontr * nvar_md + i * nvar_mb + ivar]) * (MC_MB[i][ivar] - param[ncontr * nvar_md + i * nvar_mb + ivar]) /(2.0* (dMC_MB[i][ivar] * dMC_MB[i][ivar])); // use the results of MC fits																							    		    	
+
+					likelihood *= std::exp(-tmp)/(sqrt(2.0*TMath::Pi())*dMC_MB[i][ivar]);
+				}
+			}
+		}
+	
 		// Main loop that calculates the chi2
 		double chi2 = 0.0;
 		double *vect_chi2 = new double[vect_2D.size()]; // Per event results - required to efficiently calculate a Kahan compensated sum
-
 // Main loop that calculates the chi2 - run in parallel using OpenMP
 #pragma omp parallel for
 		for (long int e = 0; e < emax; e++)
 		{
 			double mdass = std::get<0>(vect_2D[e]);
 			double mcorr = std::get<1>(vect_2D[e]);
-			double likelihood = 0.0;
+			double likelihood_event = 0.0;
 			for (int i = 0; i < ncontr; i++)
 			{
 				double md_like, mb_like;
 				md_like = D_PDFs_get[i]->EvalPDF(&mdass, &param[i * nvar_md]);
 				mb_like = B_PDFs_get[i]->EvalPDF(&mcorr, &param[ncontr * nvar_md + i * nvar_mb]);
-				likelihood += md_like * mb_like * frac[i];
+				likelihood_event += md_like * mb_like * frac[i];
 			}
 			if (likelihood > 0.0)
-				vect_chi2[e] = -2.0 * log(likelihood);
+				vect_chi2[e] = -log(likelihood*likelihood_event);
 			/*
 			{
 				std::lock_guard<std::mutex> guard(my_mutex);
@@ -416,24 +440,7 @@ std::function<double(const double*)> wrap_chi2(const std::vector<PDFInterface*>&
 		// std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 		// std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
 
-		// Add additional constraints based on the templates from 1D fits
-		for (int i = 0; i < ncontr; i++)
-		{
-			// TODO set dxx for D comb background to 0 and remove this
-			for (int ivar = 0; ivar < nvar_md; ivar++)
-			{
-				if (dMC_MD[i][ivar] != 0)
-					chi2 += (MC_MD[i][ivar] - param[i * nvar_md + ivar]) * (MC_MD[i][ivar] - param[i * nvar_md + ivar]) / (dMC_MD[i][ivar] * dMC_MD[i][ivar]); // use the results of MC fits
-			}
-		}
-		for (int i = 0; i < ncontr; i++)
-		{
-			for (int ivar = 0; ivar < nvar_mb; ivar++)
-			{
-				if (dMC_MB[i][ivar] != 0)
-					chi2 += (MC_MB[i][ivar] - param[ncontr * nvar_md + i * nvar_mb + ivar]) * (MC_MB[i][ivar] - param[ncontr * nvar_md + i * nvar_mb + ivar]) / (dMC_MB[i][ivar] * dMC_MB[i][ivar]); // use the results of MC fits
-			}
-		}
+		// Add additional constraints based on the templates from 1D fits 
 
 		// std::cerr<<"Chi2: "<<chi2<<std::endl;
 		if (frac[ncontr -1]>1.0) chi2 += 1.0e6*(frac[ncontr-1]-1.0)*(frac[ncontr-1]-1.0);
