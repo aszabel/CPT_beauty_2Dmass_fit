@@ -1,0 +1,6 @@
+*.o
+*.log
+*.so
+*.d
+*.pcm
+/.vscode
