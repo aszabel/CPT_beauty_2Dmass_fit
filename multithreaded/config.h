@@ -15,13 +15,23 @@
 
 using namespace cpt_b0_analysis;
 
+//mapping string values of shape vector onto integer values to use switch afterwards
+const std::unordered_map<std::string, const int> dictionaryDM ={
+	{"DCBplusGaus", 0},
+	{"Chebyshev", 1}
+};
+
+const std::unordered_map<std::string, const int> dictionaryBMcorr ={
+	{"RCplusGaus", 0}
+};
+
 class Config {
 public:
 	static int load(const std::string& filename);
 
 
         static void read_MC(std::vector<std::vector<double>>& xx, std::vector<std::vector<double>>& dxx, std::string MC_directory, int nvar);	
-	static std::vector<std::unique_ptr<PDFInterface>> getVectorPDFs(const std::string& domain);
+	static std::vector<std::shared_ptr<PDFInterface>> getVectorPDFs(const std::string& domain);
 
     	static int sign;
     	static std::string input_file;
@@ -50,6 +60,8 @@ public:
 
 	static std::vector<std::string> DMshapes;
 	static std::vector<std::string> BMshapes;
+	static std::vector <int> intshapesDM;
+	static std::vector <int> intshapesBMcorr;
 
 	static std::vector<std::string> fixVect;
 	static std::vector<double> fracInit;
@@ -66,10 +78,8 @@ public:
 	static std::vector<std::vector<double>> dMC_MB;
 
 private:
-    	Config() = default;
-	static std::vector <int> intshapesDM;
-        static std::vector <int> intshapesBMcorr;
-
+	Config() = default;
 };
 
 #endif // CONFIG_H
+/* vim:set shiftwidth=8 softtabstop=8 tabstop=8 noexpandtab: */

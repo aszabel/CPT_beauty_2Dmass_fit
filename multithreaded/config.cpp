@@ -53,20 +53,20 @@ std::vector<std::vector<double>> Config::MC_MD={};
 std::vector<std::vector<double>> Config::dMC_MD={};
 std::vector<std::vector<double>> Config::MC_MB={};
 std::vector<std::vector<double>> Config::dMC_MB = {};
-std::vector<std::unique_ptr<PDFInterface>> Config::getVectorPDFs(const std::string& domain) {
-	std::vector<std::unique_ptr<PDFInterface>> vPDFs;
+std::vector<std::shared_ptr<PDFInterface>> Config::getVectorPDFs(const std::string& domain) {
+	std::vector<std::shared_ptr<PDFInterface>> vPDFs;
 	if (domain == std::string("Dmass")){
 		for (auto intshape: intshapesDM){
                 	switch (intshape){
                         	case 0:
-                                	vPDFs.push_back(std::make_unique<DoubleSidedCrystalballPlusGaussPDF>());
+                                	vPDFs.push_back(std::make_shared<DoubleSidedCrystalballPlusGaussPDF>());
                                 	break;
                         	case 1:
-                                	vPDFs.push_back(std::make_unique<ChebyshevPDF>());
+                                	vPDFs.push_back(std::make_shared<ChebyshevPDF>());
                                 	break;
                         	default:
                                 	std::cerr << "Error while DM_pdf dynamic declaration. Check if shapes from config file refer to the shapes defined in the code." << std::endl;
-                                	return std::vector<std::unique_ptr<PDFInterface>>{};
+                                	return std::vector<std::shared_ptr<PDFInterface>>{};
                 	}
 		}
 
@@ -74,17 +74,17 @@ std::vector<std::unique_ptr<PDFInterface>> Config::getVectorPDFs(const std::stri
 	        for (auto intshape: intshapesBMcorr){
         	        switch (intshape){
                         	case 0:
-                                	vPDFs.push_back(std::make_unique<RaisedCosinePlusGaussPDF>());
+                                	vPDFs.push_back(std::make_shared<RaisedCosinePlusGaussPDF>());
                                 	break;
                         	default:
                                 	std::cerr << "Error while BM_pdf dynamic declaration. Check if shapes from config file refer to the shapes defined in the code." << std::endl;
-                                return std::vector<std::unique_ptr<PDFInterface>>{};
+                                return std::vector<std::shared_ptr<PDFInterface>>{};
                 	}
         	}
 
 	}else{
 		std::cerr << "Error wrong domaine in getVectorPDFs(domain) chose 'Dmass' or 'Bmass'" << std::endl;
-		return std::vector<std::unique_ptr<PDFInterface>>{};
+		return std::vector<std::shared_ptr<PDFInterface>>{};
 	}	
     	return vPDFs;
 }
@@ -299,17 +299,7 @@ int Config::load(const std::string& filename) {
                 std::cerr << "Invalid config file: missing 'BMshapes' key." << std::endl;
                 return 1;
         }
-	
-	//mapping string values of shape vector onto integer values to use switch afterwards
-        const std::unordered_map<std::string, const int> dictionaryDM ={
-                {"DCBplusGaus", 0},
-                {"Chebyshev", 1}
-        };
 
-        const std::unordered_map<std::string, const int> dictionaryBMcorr ={
-
-                {"RCplusGaus", 0}
-        };
 	for (auto shape: DMshapes){
                 if (dictionaryDM.find(shape) != dictionaryDM.end()) {
                         intshapesDM.push_back(dictionaryDM.at(shape));
