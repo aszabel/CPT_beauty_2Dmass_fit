@@ -162,16 +162,16 @@ int main(int argc, char *argv[])
 	}
 
 	//Set Limits on variables
-	const std::vector<std::tuple<std::string, double, double>>& varLimitsVect = Config::varLimitsVect;
-        for (const auto& varLimits: varLimitsVect){
-		int index_var = min->VariableIndex(std::get<0>(varLimits));
+        for (auto it =Config::varLimitsMap.begin(); it!=Config::varLimitsMap.end(); ++it)
+        {
+                int index_var = min->VariableIndex(it->first);
                 if (index_var == -1 ){
-                	std::cerr<< "Error in substituting parameters param " << std::get<0>(varLimits) << " not found.\n";
-			return 1;
+                        std::cerr<< "Error in limiting parameters: param " << it->first << " not found.\n";
+                        return 1;
                 }
-		min->SetVariableLimits(index_var, std::get<1>(varLimits), std::get<2>(varLimits));
-	}
-
+                auto pairlims = it->second;
+                min->SetVariableLimits(index_var, pairlims.first, pairlims.second);
+        }
 
 	for (int i = 0; i < Config::ncontr - 1; i++)
 	{
@@ -230,8 +230,7 @@ int main(int argc, char *argv[])
 	
 
 	std::vector<std::pair<int, int>> replaceIndexVect = {};
-        const auto& replace_var = Config::replace_var;
-                for (const auto& rep_var: replace_var){
+                for (const auto& rep_var: Config::replace_var){
                         int index_replaced = min->VariableIndex(rep_var.first);
                         int index_substitute = min->VariableIndex(rep_var.second);
                         if (index_replaced == -1 ){

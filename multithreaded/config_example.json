@@ -7,7 +7,7 @@
   "MC_directory_MD": "D_M_results",
   "MC_directory_MB": "B_M_results",
 
-  "nentries": -1,
+  "nentries": 1e5,
 
   "tolerance": 10000.0,
   "functionCalls": 1e7,
@@ -33,9 +33,24 @@
 
    "fixVect" : ["signal_n", "signal_alpha_h", "BuDmunu_mean", "BuDmunu_f12", "BuDmunu_n", "BuDmunu_alpha_h", "BsDsMunu_sigma", "BsDsMunu_mean", "BsDsMunu_n", "BsDsMunu_alpha_h", "B02DpDsm_mean", "B02DpDsm_alpha", "B02DpDsm_n", "B02DpDsm_alpha_h", "sidebands_sigma", "sidebands_mean", "sidebands_sigmaCB", "sidebands_f12", "sidebands_alpha", "sidebands_n", "sidebands_alpha_h", "Bu2D0Dsm_mean", "Bu2D0Dsm_sigmaCB", "Bu2D0Dsm_alpha", "Bu2D0Dsm_n", "Bu2D0Dsm_alpha_h", "BsDsMunu_f12_gaus"],
 
-   "replace_var": [["BuDmunu_mean", "signal_mean"], ["B02DpDsm_mean", "signal_mean"], ["Bu2D0Dsm_mean", "signal_mean"]],
+   "replace_var": {
+			"BuDmunu_mean": "signal_mean", 
+			"B02DpDsm_mean": "signal_mean", 
+			"Bu2D0Dsm_mean": "signal_mean"
+		},
 
-   "varLimitsVect": [["signal_f12", -1.0, 1.0], ["BuDmunu_f12", -1.0, 1.0], ["BsDsMunu_f12", -1.0, 1.0], ["B02DpDsm_f12", -1.0, 1.0], ["Bu2D0Dsm_f12", -1.0, 1.0], ["signal_f12_gaus", -1.0, 1.0], ["BuDmunu_f12_gaus", -1.0, 1.0], ["BsDsMunu_f12_gaus", -1.0, 1.0], ["B02DpDsm_f12_gaus", -1.0, 1.0], ["sidebands_f12_gaus", -1.0, 1.0], ["Bu2D0Dsm_f12_gaus", -1.0, 1.0]],
+   "varLimitsVect":{	"signal_f12":  [-1.0, 1.0], 
+			"BuDmunu_f12": [-1.0, 1.0], 
+			"BsDsMunu_f12":[-1.0, 1.0], 
+			"B02DpDsm_f12":[-1.0, 1.0], 
+			"Bu2D0Dsm_f12":[-1.0, 1.0], 
+			"signal_f12_gaus":[-1.0, 1.0], 
+			"BuDmunu_f12_gaus":[-1.0, 1.0], 
+			"BsDsMunu_f12_gaus":[-1.0, 1.0], 
+			"B02DpDsm_f12_gaus":[-1.0, 1.0], 
+			"sidebands_f12_gaus":[-1.0, 1.0],
+			"Bu2D0Dsm_f12_gaus": [-1.0, 1.0]
+		},
 
    "_old_fracInit": [0.531364, 0.123454, 0.00900857, 0.0171418, 0.317511],
    "fracInit": [0.544221, 0.128957, 0.0182142, 0.0354018, 0.238786]

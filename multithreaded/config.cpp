@@ -46,8 +46,8 @@ std::vector<double> Config::fracInit = {};
 std::vector<std::string> Config::contrName = {};
 std::vector<std::string> Config::varname_md = {};
 std::vector<std::string> Config::varname_mb = {};
-std::vector<std::pair<std::string, std::string>> Config::replace_var = {};
-std::vector<std::tuple<std::string, double, double>> Config::varLimitsVect = {};
+std::map<std::string, std::string> Config::replace_var;
+std::map<std::string, std::pair<double, double>> Config::varLimitsMap;
 
 std::vector<std::vector<double>> Config::MC_MD={};
 std::vector<std::vector<double>> Config::dMC_MD={};
@@ -395,24 +395,30 @@ int Config::load(const std::string& filename) {
 	read_MC(MC_MD, dMC_MD, MC_directory_MD, nvar_md);
 	read_MC(MC_MB, dMC_MB, MC_directory_MB, nvar_mb);
 
-	if (config.contains("replace_var")) {
-                replace_var = config["replace_var"].template get<std::vector<std::pair<std::string, std::string>>>();
-		for (const auto& rep_var: replace_var){
-			fixVect.push_back(rep_var.first);
+        if (config.contains("replace_var")) {
+                json entry = config["replace_var"];
+                for (auto it = entry.begin(); it!=entry.end();++it){
+                        std::string aim = it.value().template get<std::string>();
+                        replace_var[it.key()] = aim;
+		}
+                for (const auto& rep_var: replace_var){
+                        fixVect.push_back(rep_var.first);
                 }
         } else {
                 std::cerr << "Invalid config file: missing 'replace_var' key." << std::endl;
                 return 1;
         }
 
-	if (config.contains("varLimitsVect")) {
-                varLimitsVect = config["varLimitsVect"].template get<std::vector<std::tuple<std::string, double, double>>>();
+        if (config.contains("varLimitsVect")) {
+                json entry = config["varLimitsVect"];
+                for( auto it = entry.begin(); it!=entry.end();++it){
+                        std::pair<double, double> pair_lims = it.value().template get<std::pair<double, double>>();
+                        varLimitsMap[it.key()] = pair_lims;
+                }
         } else {
                 std::cerr << "Invalid config file: missing 'varLimitsVect' key." << std::endl;
                 return 1;
         }
-
-
 
 
 	return 0;

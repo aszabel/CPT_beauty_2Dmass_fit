@@ -69,8 +69,8 @@ public:
 	static std::vector<std::string> contrName;
 	static std::vector<std::string> varname_md;
 	static std::vector<std::string> varname_mb;
-	static std::vector<std::pair<std::string, std::string>> replace_var;
-	static std::vector<std::tuple<std::string, double, double>> varLimitsVect;
+	static std::map<std::string, std::string> replace_var;
+	static std::map<std::string, std::pair< double, double>> varLimitsMap;
 
 	static std::vector<std::vector<double>> MC_MD;
 	static std::vector<std::vector<double>> dMC_MD;
