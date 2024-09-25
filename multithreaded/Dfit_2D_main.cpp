@@ -53,7 +53,7 @@ bool avx = true;
  * @param argv
  * @return int
  */
-std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr<PDFInterface>>& D_PDFs_get, const std::vector<std::shared_ptr<PDFInterface>>& B_PDFs_get, std::vector<std::pair<double, double>> vect_2D, const std::vector<std::vector<double>>& MC_MD, const std::vector<std::vector<double>>& dMC_MD, const std::vector<std::vector<double>>& MC_MB, const std::vector<std::vector<double>>& dMC_MB, const std::vector<std::pair<int, int>>& replaceIndexVect);
+std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr<PDFInterface>>& D_PDFs_get, const std::vector<std::shared_ptr<PDFInterface>>& B_PDFs_get, std::vector<std::pair<double, double>> vect_2D, const std::vector<std::vector<double>>& MC_MD, const std::vector<std::vector<double>>& dMC_MD, const std::vector<std::vector<double>>& MC_MB, const std::vector<std::vector<double>>& dMC_MB, const std::vector<std::pair<int, int>>& replaceIndexVect, int int_choose_fit);
 
 
 
@@ -84,16 +84,6 @@ int main(int argc, char *argv[])
         }
         int nentries = Config::nentries;
 	
-	std::string minName = "Minuit2";
-	std::string algoName = "";
-	ROOT::Math::Minimizer *min =
-		ROOT::Math::Factory::CreateMinimizer(minName, algoName);
-
-	// Set tolerance , etc...
-	min->SetMaxFunctionCalls(Config::functionCalls); // for Minuit/Minuit2
-	min->SetTolerance(Config::tolerance);
-	min->SetPrintLevel(Config::printLevel);
-	// min->SetStrategy(2);
 
 	// Load data set
 	TChain ch((Config::chainName).c_str());
@@ -138,98 +128,124 @@ int main(int argc, char *argv[])
 		
 
 	// Define Minuit fit variables for M_D
+	const int n_all = (Config::nvar_md+Config::nvar_mb) * Config::ncontr + Config::ncontr - 1;
+	double previous_fit_results[n_all];
+	bool previous_fit = false;
+	std::string minName = "Minuit2";
+	std::string algoName = "";
+	for (auto& int_choose_fit: Config::int_choose_fits){
+		ROOT::Math::Minimizer *min =
+			ROOT::Math::Factory::CreateMinimizer(minName, algoName);
 
-	double starting_point[(Config::nvar_md+Config::nvar_mb) * Config::ncontr + Config::ncontr - 1];
-	for (int i = 0; i < Config::ncontr; i++)
-	{
-		for (int ivar = 0; ivar < Config::nvar_md; ivar++)
+		// Set tolerance , etc...
+		min->SetMaxFunctionCalls(Config::functionCalls); // for Minuit/Minuit2
+		min->SetTolerance(Config::tolerance);
+		min->SetPrintLevel(Config::printLevel);
+		// min->SetStrategy(2);
+
+		double starting_point[n_all];
+		for (int i = 0; i < Config::ncontr; i++)
 		{
-			min->SetVariable(i * Config::nvar_md + ivar, (TString::Format("%s_%s", Config::contrName[i].c_str(), Config::varname_md[ivar].c_str())).Data(), Config::MC_MD[i][ivar], Config::dMC_MD[i][ivar] + 1.0e-11);
-			starting_point[i * Config::nvar_md + ivar] = Config::MC_MD[i][ivar];
+			for (int ivar = 0; ivar < Config::nvar_md; ivar++)
+			{
+				min->SetVariable(i * Config::nvar_md + ivar, (TString::Format("%s_%s", Config::contrName[i].c_str(), Config::varname_md[ivar].c_str())).Data(), Config::MC_MD[i][ivar], Config::dMC_MD[i][ivar] + 1.0e-11);
+				if (int_choose_fit == 0){
+		       			min->FixVariable(i * Config::nvar_md + ivar);
+				}
+				starting_point[i * Config::nvar_md + ivar] = Config::MC_MD[i][ivar];
 
+			}
 		}
-	}
 
-	// Define Minuit fit variables for M_B
+		// Define Minuit fit variables for M_B
 
-	for (int i = 0; i < Config::ncontr; i++)
-	{
-		for (int ivar = 0; ivar < Config::nvar_mb; ivar++)
+		for (int i = 0; i < Config::ncontr; i++)
 		{
-			min->SetVariable(Config::ncontr * Config::nvar_md + i * Config::nvar_mb + ivar, (TString::Format("%s_%s", Config::contrName[i].c_str(), Config::varname_mb[ivar].c_str())).Data(), Config::MC_MB[i][ivar], Config::dMC_MB[i][ivar] + 1.0e-11);
-			starting_point[Config::ncontr * Config::nvar_md + i * Config::nvar_mb + ivar] = Config::MC_MB[i][ivar];
+			for (int ivar = 0; ivar < Config::nvar_mb; ivar++)
+			{
+				min->SetVariable(Config::ncontr * Config::nvar_md + i * Config::nvar_mb + ivar, (TString::Format("%s_%s", Config::contrName[i].c_str(), Config::varname_mb[ivar].c_str())).Data(), Config::MC_MB[i][ivar], Config::dMC_MB[i][ivar] + 1.0e-11);
+				if (int_choose_fit == 1){
+		       			min->FixVariable(Config::ncontr * Config::nvar_md + i * Config::nvar_mb + ivar);
+				}
+				starting_point[Config::ncontr * Config::nvar_md + i * Config::nvar_mb + ivar] = Config::MC_MB[i][ivar];
+			}
 		}
-	}
 
-	//Set Limits on variables
-        for (auto it =Config::varLimitsMap.begin(); it!=Config::varLimitsMap.end(); ++it)
-        {
-                int index_var = min->VariableIndex(it->first);
-                if (index_var == -1 ){
-                        std::cerr<< "Error in limiting parameters: param " << it->first << " not found.\n";
-                        return 1;
-                }
-                auto pairlims = it->second;
-                min->SetVariableLimits(index_var, pairlims.first, pairlims.second);
-        }
+		//Set Limits on variables
+        	for (auto it =Config::varLimitsMap.begin(); it!=Config::varLimitsMap.end(); ++it)
+        	{
+                	int index_var = min->VariableIndex(it->first);
+                	if (index_var == -1 ){
+                        	std::cerr<< "Error in limiting parameters: param " << it->first << " not found.\n";
+                        	return 1;
+                	}
+                	auto pairlims = it->second;
+                	min->SetVariableLimits(index_var, pairlims.first, pairlims.second);
+        	}
 
-	for (int i = 0; i < Config::ncontr - 1; i++)
-	{
-		min->SetVariable((Config::nvar_md + Config::nvar_mb) * Config::ncontr + i, (TString::Format("par_frac%d", i)).Data(), Config::fracInit[i], 0.01);
-		starting_point[(Config::nvar_md + Config::nvar_mb) * Config::ncontr + i] = Config::fracInit[i];
-	}
+		for (int i = 0; i < Config::ncontr - 1; i++)
+		{
+			min->SetVariable((Config::nvar_md + Config::nvar_mb) * Config::ncontr + i, (TString::Format("par_frac%d", i)).Data(), Config::fracInit[i], 0.01);
+			if (int_choose_fit == 1){
+		       		min->FixVariable((Config::nvar_md + Config::nvar_mb) * Config::ncontr + i);
+			}
+			starting_point[(Config::nvar_md + Config::nvar_mb) * Config::ncontr + i] = Config::fracInit[i];
+		}
 
 
-	// Define the error setimation parameter in minuit for 1 sigma and ncontr -1 free parameters
-	double CL_normal = ROOT::Math::normal_cdf(1) - ROOT::Math::normal_cdf(-1); //1 sigma ~68%
-	min->SetErrorDef(TMath::ChisquareQuantile(CL_normal, Config::ncontr-1));// ncontr-1 free fraction parameters, other parameters have gaussian contraints base on MC fits.
+		// Define the error setimation parameter in minuit for 1 sigma and ncontr -1 free parameters
+		double CL_normal = ROOT::Math::normal_cdf(1) - ROOT::Math::normal_cdf(-1); //1 sigma ~68%
+		min->SetErrorDef(TMath::ChisquareQuantile(CL_normal, Config::ncontr-1));// ncontr-1 free fraction parameters, other parameters have gaussian contraints base on MC fits.
 
-	const auto& D_PDFs = Config::getVectorPDFs("Dmass");
-	if (int(D_PDFs.size()) != Config::ncontr){
-		std::cout<< " NO D_PDFs \n";
-		return 1;
-	}
-	for (int i=0; i<Config::ncontr; ++i){
-		auto pdf = D_PDFs[i].get();
-
-		if (!pdf){
-			std::cout<< "Nullptr passed as pdf\n";
+		const auto& D_PDFs = Config::getVectorPDFs("Dmass");
+		if (int(D_PDFs.size()) != Config::ncontr){
+			std::cout<< " NO D_PDFs \n";
 			return 1;
 		}
-	}
+		for (int i=0; i<Config::ncontr; ++i){
+			auto pdf = D_PDFs[i].get();
+
+			if (!pdf){
+				std::cout<< "Nullptr passed as pdf\n";
+				return 1;
+			}
+		}
 		
-	const auto& B_PDFs = Config::getVectorPDFs("Bmass");
-        if (int(B_PDFs.size()) != Config::ncontr){
-                std::cout<< " NO B_PDFs \n";    
-                return 1;
-        }
-        for (int i=0; i<Config::ncontr; ++i){
-                auto pdf = B_PDFs[i].get();
-                if (!pdf){
-                        std::cout<< "Nullptr passed as pdf\n";
-                        return 1;
-                }
-        }
-	//list of fixed variables form config
-	for (const auto& fix: Config::fixVect){
-		min->FixVariable(min->VariableIndex(fix));
-		//std::cout << fix << "  " << min->VariableIndex(fix) << std::endl;
-	}
-	TRandom rand;
-	if (Config::randSeed >-1)
-		rand.SetSeed(Config::randSeed);
-	//staring point for stability checks
-	for (int ivar=0; ivar<(Config::nvar_md+Config::nvar_mb) * Config::ncontr + Config::ncontr - 1; ivar++){
-	//for (int ivar=0; ivar<(nvar_md+nvar_mb)*ncontr+ncontr; ivar++){
-		double random = 0.0;
-		if (Config::randSeed > -1 && !min->IsFixedVariable(ivar))
-			random = rand.Uniform(-1.0, 1.0);
-		min->SetVariableValue(ivar, starting_point[ivar]*(1.0+0.01*random));
-	}
+		const auto& B_PDFs = Config::getVectorPDFs("Bmass");
+        	if (int(B_PDFs.size()) != Config::ncontr){
+                	std::cout<< " NO B_PDFs \n";    
+                	return 1;
+        	}
+        	for (int i=0; i<Config::ncontr; ++i){
+                	auto pdf = B_PDFs[i].get();
+                	if (!pdf){
+                        	std::cout<< "Nullptr passed as pdf\n";
+                        	return 1;
+                	}
+        	}
+		//list of fixed variables form config
+		for (const auto& fix: Config::fixVect){
+			min->FixVariable(min->VariableIndex(fix));
+			//std::cout << fix << "  " << min->VariableIndex(fix) << std::endl;
+		}
+		TRandom rand;
+		if (Config::randSeed >-1)
+			rand.SetSeed(Config::randSeed);
+		//staring point for stability checks
+		for (int ivar=0; ivar<(Config::nvar_md+Config::nvar_mb) * Config::ncontr + Config::ncontr - 1; ivar++){
+			//for (int ivar=0; ivar<(nvar_md+nvar_mb)*ncontr+ncontr; ivar++){
+			double random = 0.0;
+			if (Config::randSeed > -1 && !min->IsFixedVariable(ivar))
+				random = rand.Uniform(-1.0, 1.0);
+			min->SetVariableValue(ivar, starting_point[ivar]*(1.0+0.01*random));
+			if(previous_fit){
+				min->SetVariableValue(ivar, previous_fit_results[ivar]*(1.0+0.01*random));
+			}
+		}
 
 	
 
-	std::vector<std::pair<int, int>> replaceIndexVect = {};
+		std::vector<std::pair<int, int>> replaceIndexVect = {};
                 for (const auto& rep_var: Config::replace_var){
                         int index_replaced = min->VariableIndex(rep_var.first);
                         int index_substitute = min->VariableIndex(rep_var.second);
@@ -241,37 +257,48 @@ int main(int argc, char *argv[])
                                 std::cerr<< "Error in substituting parameters param " << rep_var.second << " not found.\n";
 				return 1;
                         }
-		replaceIndexVect.push_back(std::make_pair(index_replaced, index_substitute));
+			replaceIndexVect.push_back(std::make_pair(index_replaced, index_substitute));
 		}
 
 
 
-	// Start the minimization
-	// Define a fit function for Minuit
-	auto fchi2 = wrap_chi2(D_PDFs, B_PDFs, vect_2D, Config::MC_MD, Config::dMC_MD, Config::MC_MB, Config::dMC_MB, replaceIndexVect);
-	ROOT::Math::Functor f(fchi2, (Config::nvar_md + Config::nvar_mb) * Config::ncontr + Config::ncontr - 1);
-	//ROOT::Math::Functor f(fchi2, (nvar_md + nvar_mb) * ncontr + ncontr);
-	min->SetFunction(f);
-	min->Minimize();
+		// Start the minimization
+		// Define a fit function for Minuit
+		auto fchi2 = wrap_chi2(D_PDFs, B_PDFs, vect_2D, Config::MC_MD, Config::dMC_MD, Config::MC_MB, Config::dMC_MB, replaceIndexVect, int_choose_fit);
+		ROOT::Math::Functor f(fchi2, n_all);
+		//ROOT::Math::Functor f(fchi2, (nvar_md + nvar_mb) * ncontr + ncontr);
+		min->SetFunction(f);
+		min->Minimize();
 
-	// Print the fit results
-	std::ofstream results(TString::Format("results_%d.txt", Config::sign));
-	results << min->Status() << "  " << min->MinValue() << std::endl;
-	for (int i = 0; i < (Config::nvar_md + Config::nvar_mb) * Config::ncontr + Config::ncontr - 1; i++)
-	//for (int i = 0; i < (nvar_md + nvar_mb) * ncontr + ncontr; i++)
-	{
-		results << min->X()[i] << "  " << min->Errors()[i] << std::endl;
+		// Print the fit results
+		std::ofstream results(TString::Format("results_%d_%d.txt", Config::sign, int_choose_fit));
+		results << min->Status() << "  " << min->MinValue() << std::endl;
+		if (min->Status()!=0 && min->Status()!=1){
+			std::cout << "Bad status of fit "<< min->Status() << std::endl; 
+		}else{
+			previous_fit = true;
+		}
+		for (int i = 0; i < n_all; i++)
+		//for (int i = 0; i < (nvar_md + nvar_mb) * ncontr + ncontr; i++)
+		{
+			results << min->X()[i] << "  " << min->Errors()[i] << std::endl;
+			previous_fit_results[i] = min->X()[i];
+
+		}
+		results.close();
+		if (min){
+			delete min;
+		}
 	}
-	results.close();
 	return 0;
 }
 
 
-std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr<PDFInterface>>& D_PDFs_get, const std::vector<std::shared_ptr<PDFInterface>>& B_PDFs_get, std::vector<std::pair<double, double>> vect_2D, const std::vector<std::vector<double>>& MC_MD, const std::vector<std::vector<double>>& dMC_MD, const std::vector<std::vector<double>>& MC_MB, const std::vector<std::vector<double>>& dMC_MB, const std::vector<std::pair<int, int>>& replaceIndexVect){
+std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr<PDFInterface>>& D_PDFs_get, const std::vector<std::shared_ptr<PDFInterface>>& B_PDFs_get, std::vector<std::pair<double, double>> vect_2D, const std::vector<std::vector<double>>& MC_MD, const std::vector<std::vector<double>>& dMC_MD, const std::vector<std::vector<double>>& MC_MB, const std::vector<std::vector<double>>& dMC_MB, const std::vector<std::pair<int, int>>& replaceIndexVect, int int_choose_fit){
 
 	long int emax = vect_2D.size();
 	std::cout << emax << " yield of the sample \n";
-	auto fchi2 = [D_PDFs_get, B_PDFs_get, vect_2D, MC_MD, dMC_MD, MC_MB, dMC_MB, emax, replaceIndexVect](const double *par) -> double 
+	auto fchi2 = [D_PDFs_get, B_PDFs_get, vect_2D, MC_MD, dMC_MD, MC_MB, dMC_MB, emax, replaceIndexVect, int_choose_fit](const double *par) -> double 
 	{
 
 
@@ -307,31 +334,34 @@ std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr
 		}
 
 		double likelihood = 1.0;
-		for (int i = 0; i < Config::ncontr; i++)
-		{
-			// TODO set dxx for D comb background to 0 and remove this
-			for (int ivar = 0; ivar < Config::nvar_md; ivar++)
+		if(int_choose_fit!= 0){ //don't calculate if only Bmass fit
+			for (int i = 0; i < Config::ncontr; i++)
 			{
-				// Skip the constrain for chebyshev background: {"Chebyshev", 1}
-				if (Config::intshapesDM[i] == 1) continue;
-				if (dMC_MD[i][ivar] != 0){
-					 double tmp = (MC_MD[i][ivar] - param[i * Config::nvar_md + ivar]) * (MC_MD[i][ivar] - param[i * Config::nvar_md + ivar]) / (2.0*(dMC_MD[i][ivar] * dMC_MD[i][ivar])); // use the results of MC fits
-					likelihood *= std::exp(-tmp)/(sqrt(2.0*TMath::Pi())*dMC_MD[i][ivar]);
+				// TODO set dxx for D comb background to 0 and remove this
+				for (int ivar = 0; ivar < Config::nvar_md; ivar++)
+				{
+					// Skip the constrain for chebyshev background: {"Chebyshev", 1}
+					if (Config::intshapesDM[i] == 1) continue;
+					if (dMC_MD[i][ivar] != 0){
+					 	double tmp = (MC_MD[i][ivar] - param[i * Config::nvar_md + ivar]) * (MC_MD[i][ivar] - param[i * Config::nvar_md + ivar]) / (2.0*(dMC_MD[i][ivar] * dMC_MD[i][ivar])); // use the results of MC fits
+						likelihood *= std::exp(-tmp)/(sqrt(2.0*TMath::Pi())*dMC_MD[i][ivar]);
+					}
 				}
 			}
 		}
-		for (int i = 0; i < Config::ncontr; i++)
-		{
-			for (int ivar = 0; ivar < Config::nvar_mb; ivar++)
+		if (int_choose_fit !=1){ //don't calculate if only Dmass fit
+			for (int i = 0; i < Config::ncontr; i++)
 			{
-				if (dMC_MB[i][ivar] != 0){
-					double tmp = (MC_MB[i][ivar] - param[Config::ncontr * Config::nvar_md + i * Config::nvar_mb + ivar]) * (MC_MB[i][ivar] - param[Config::ncontr * Config::nvar_md + i * Config::nvar_mb + ivar]) /(2.0* (dMC_MB[i][ivar] * dMC_MB[i][ivar])); // use the results of MC fits																							    		    	
+				for (int ivar = 0; ivar < Config::nvar_mb; ivar++)
+				{
+					if (dMC_MB[i][ivar] != 0){
+						double tmp = (MC_MB[i][ivar] - param[Config::ncontr * Config::nvar_md + i * Config::nvar_mb + ivar]) * (MC_MB[i][ivar] - param[Config::ncontr * Config::nvar_md + i * Config::nvar_mb + ivar]) /(2.0* (dMC_MB[i][ivar] * dMC_MB[i][ivar])); // use the results of MC fits																							    		    	
 
-					likelihood *= std::exp(-tmp)/(sqrt(2.0*TMath::Pi())*dMC_MB[i][ivar]);
+						likelihood *= std::exp(-tmp)/(sqrt(2.0*TMath::Pi())*dMC_MB[i][ivar]);
+					}
 				}
 			}
 		}
-	
 		// Main loop that calculates the chi2
 		double chi2 = 0.0;
 		double *vect_chi2 = new double[vect_2D.size()]; // Per event results - required to efficiently calculate a Kahan compensated sum
@@ -347,9 +377,22 @@ std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr
 				double md_like, mb_like;
 				md_like = D_PDFs_get[i]->EvalPDF(&mdass, &param[i * Config::nvar_md]);
 				mb_like = B_PDFs_get[i]->EvalPDF(&mcorr, &param[Config::ncontr * Config::nvar_md + i * Config::nvar_mb]);
-				likelihood_event += md_like * mb_like * frac[i];
+				switch(int_choose_fit){
+					case 0:
+						likelihood_event += mb_like * frac[i];
+						break;
+					case 1:
+						likelihood_event += md_like * frac[i];
+						break;
+				        case 2:	
+						likelihood_event += md_like * mb_like * frac[i];
+						break;
+					default:
+						std::cerr << "Wrong fit choice!" << std::endl;
+					       	break;
+				}
 			}
-			if (likelihood > 0.0)
+			if (likelihood*likelihood_event > 0.0)
 				vect_chi2[e] = -log(likelihood*likelihood_event);
 			/*
 			{

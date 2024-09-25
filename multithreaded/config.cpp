@@ -34,9 +34,11 @@ int Config::nvar_md = 7;
 int Config::nvar_mb = 7;
 int Config::ncontr = 6;
 
+std::vector<int> Config::int_choose_fits = {};
 std::vector<int> Config::intshapesDM = {};
 std::vector<int> Config::intshapesBMcorr = {};
 
+std::vector<std::string> Config::Fits = {};
 std::vector<std::string> Config::DMshapes = {};
 std::vector<std::string> Config::BMshapes = {};
 
@@ -279,6 +281,28 @@ int Config::load(const std::string& filename) {
                 std::cerr << "Invalid config file: missing 'nvar_mb' key." << std::endl;
                 return 1;
         }
+	
+	if (config.contains("Fits")) {
+                Fits = config["Fits"].template get<std::vector<std::string>>();
+                if (int(Fits.size())==ncontr){
+                        std::cerr << "Invalid config file: no fits chosen " << std::endl;
+                        return 1;
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'Fits' key." << std::endl;
+                return 1;
+        }	 
+	for (auto fit: Fits){
+                if (dictionaryChooseFit.find(fit) != dictionaryChooseFit.end()) {
+                        int_choose_fits.push_back(dictionaryChooseFit.at(fit));
+
+                } else {
+                        std::cerr << "Fit '" << fit << "' not found. Chose 'BM', 'DM' or 'all'" << std::endl;
+                        return 1;
+                }
+        }
+
+
 	if (config.contains("DMshapes")) {
                 DMshapes = config["DMshapes"].template get<std::vector<std::string>>();
                 if (int(DMshapes.size())!=ncontr){

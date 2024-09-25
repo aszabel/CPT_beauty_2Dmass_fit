@@ -4,12 +4,14 @@
   "local_input_file": "/home/szabelskia/LHCb/data2016/tree_missPT_D_M_MagDown25102023_nomassDmuCut/selected_data2016MagDown.root",
   "chainName": "BlindedTree",
 
+  "Fits": ["BM", "DM", "all"],
+
   "MC_directory_MD": "D_M_results",
   "MC_directory_MB": "B_M_results",
 
   "nentries": 1e5,
 
-  "tolerance": 10000.0,
+  "tolerance": 1e4,
   "functionCalls": 1e7,
   "printLevel": 2,
   "randSeed": -1,

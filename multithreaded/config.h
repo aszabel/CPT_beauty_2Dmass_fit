@@ -24,6 +24,12 @@ const std::unordered_map<std::string, const int> dictionaryDM ={
 const std::unordered_map<std::string, const int> dictionaryBMcorr ={
 	{"RCplusGaus", 0}
 };
+const std::unordered_map<std::string, const int> dictionaryChooseFit ={
+        {"BM", 0},
+	{"DM", 1},
+	{"all", 2}
+};
+
 
 class Config {
 public:
@@ -58,8 +64,10 @@ public:
     	static int nvar_mb;
     	static int ncontr;
 
+	static std::vector<std::string> Fits;
 	static std::vector<std::string> DMshapes;
 	static std::vector<std::string> BMshapes;
+	static std::vector <int> int_choose_fits;
 	static std::vector <int> intshapesDM;
 	static std::vector <int> intshapesBMcorr;
 
