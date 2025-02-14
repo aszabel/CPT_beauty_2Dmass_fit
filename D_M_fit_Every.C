@@ -11,8 +11,8 @@ void D_M_fit_Every(int choice, int sign, bool isUnbinned=true){
 	// set tolerance , etc...
    	min->SetMaxFunctionCalls(10000000); // for Minuit/Minuit2
    	min->SetMaxIterations(10000);  // for GSL
-   	min->SetTolerance(2.5e0);
-	if(choice==2) min->SetTolerance(2.5e2);
+   	min->SetTolerance(1.0e-6);
+	if(choice==2) min->SetTolerance(0.01);
    	min->SetPrintLevel(2);
 
    	//min->SetStrategy(2);
@@ -22,8 +22,8 @@ void D_M_fit_Every(int choice, int sign, bool isUnbinned=true){
 
    double minx = 1800.;
    double maxx = 1940.;
-   double miny = 2700.;
-   double maxy = 8300.;
+   double miny = 3000.;
+   double maxy = 8000.;
 	
 
    	// create funciton wrapper for minmizer
@@ -79,24 +79,29 @@ void D_M_fit_Every(int choice, int sign, bool isUnbinned=true){
       		}
    	}
 	double  nevents = double(vect_Dmass.size());
-	md_fit md_shape(minx, maxx);
+	md_fit md_shape(minx, maxx, nvar);
 
-	auto fchi2 = [&md_shape, vect_Dmass](const double *par)->double{
+	auto fchi2 = [&md_shape, vect_Dmass, choice](const double *par)->double{
 		double chi2 = 0.0;
 		for (auto dmass: vect_Dmass){
-			double likelihood = md_shape.func_full(&dmass, par);
+			double likelihood = md_shape.func_full(&dmass, par, choice);
 			chi2 -= 2.0*log(likelihood);
 		}
 		return chi2;
 	};
-	auto fchi2binned = [&md_shape, hist, minx, maxx, nevents, nbins](const double *par)->double{
+	auto fchi2binned = [&md_shape, hist, minx, maxx, nevents, nbins, choice](const double *par)->double{
 		double chi2 = 0;
 		double bin_width = (maxx-minx)/double(nbins);
 		   for (int bin=1; bin<=nbins; bin++){
 			   double bincenter = hist->GetBinCenter(bin);
 			   double bincont = hist->GetBinContent(bin);
 			   double err = hist->GetBinError(bin);
-			   double estim = bin_width*double(nevents)*md_shape.func_full(&bincenter, par);
+			   double param[nvar];
+			   for (int ipar=0; ipar <nvar; ipar++)
+				   param[ipar] = par[ipar];
+			   //param[2] = par[0];
+			   //param[6] = par[4];
+			   double estim = bin_width*double(nevents)*md_shape.func_full(&bincenter, param, choice);
 			   if(err!=0.0) chi2+=(bincont-estim)*(bincont-estim)/err/err;
 		   }
 		   return chi2;
@@ -106,10 +111,10 @@ void D_M_fit_Every(int choice, int sign, bool isUnbinned=true){
 
         double step = 0.01;
 	double initial[ncontr] [nvar] = {
-		8.7673, 1870.23, 5.88232, 0.443328, 1.75869, 1.22507, 2.12662,
-		8.7673, 1870.23, 5.88232, 0.443328, 1.75869, 1.22507, 2.12662,
-		17.7149, 1880.59, 12.893, 2.92653e-07, 0.326914, 4.1634, 1.68152,
-		8.7673, 1870.23, 5.88232, 0.443328, 1.75869, 1.22507, 2.12662,
+		15.7673, 1870.23, 5.88232, 0.3, 2.0, 1.76, 2.12662,
+		8.7673, 1870.23, 5.0, 0.443328, 1.75869, 1.22507, 2.12662,
+		17.7149, 1880.59, 50.893, 0.0, 2.0, 2.0, 1.8,
+		8.7673, 1870.23, 5.0, 0.443328, 1.75869, 1.22507, 1.662,
 		8.7673, 1870.23, 5.88232, 0.443328, 1.75869, 1.22507, 2.12662,
 		8.7673, 1870.23, 5.88232, 0.443328, 1.75869, 1.22507, 2.12662
 	};
@@ -121,16 +126,23 @@ void D_M_fit_Every(int choice, int sign, bool isUnbinned=true){
 
 	for (int ivar=0; ivar<nvar; ivar++){
 		min->SetVariable(ivar, varname[ivar].Data(), initial[choice][ivar], step);
-		min->SetVariableLowerLimit(ivar, 0.0);
+		//min->SetVariableLowerLimit(ivar, 0.0);
 	}
+	min->FixVariable(0);
+	min->FixVariable(1);
+	//min->FixVariable(2);
+	min->FixVariable(3);
+	//min->FixVariable(4);
+	min->FixVariable(5);
+	//min->FixVariable(6);
 	
    	double CL_normal = ROOT::Math::normal_cdf(1) -  ROOT::Math::normal_cdf(-1);
 
 	min -> SetErrorDef(ROOT::Math::chisquared_quantile(CL_normal, min->NFree()));
 	min->Minimize();
 	double err_up, err_down;
-	min->GetMinosError(1, err_up, err_down);
-	cout << "Minos mean " << err_up << "  " << err_down << endl;
+	//min->GetMinosError(1, err_up, err_down);
+	//cout << "Minos mean " << err_up << "  " << err_down << endl;
 
 	for (int i=0; i<nvar; i++){
 		cout << min->X()[i] << ", ";
@@ -143,9 +155,14 @@ void D_M_fit_Every(int choice, int sign, bool isUnbinned=true){
    	 	pad1->Draw();
    	 	pad1->cd();
 
-	auto funcDraw = [&md_shape, min, nevents, minx, maxx, nbins](double *x, double *par)->double{
+	auto funcDraw = [&md_shape, min, nevents, minx, maxx, nbins, choice](double *x, double *par)->double{
 		double bin_width = (maxx-minx)/double(nbins);
-		return bin_width*double(nevents)*md_shape.func_full(x, par);
+			   double param[nvar];
+			   for (int ipar=0; ipar <nvar; ipar++)
+				   param[ipar] = par[ipar];
+			   //param[2] = par[0];
+			   //param[6] = par[4];
+		return bin_width*double(nevents)*md_shape.func_full(x, param, choice);
 	};
 	TF1 *tf1 = new TF1("tf1", funcDraw, minx, maxx, nvar);
 	tf1->SetParameters(min->X());
