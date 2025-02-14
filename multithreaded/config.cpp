@@ -9,13 +9,17 @@ using json = nlohmann::json;
 using namespace cpt_b0_analysis;
 
 
+bool Config::isMC = false;
+bool Config::binned = false;
+bool Config::start_from_previous = false;
 int Config::sign = -1;
 std::string Config::input_file = "";
 std::string Config::chainName = "";
+std::string Config::previous_result_file = "";
 
 int Config::nentries = -1;
 
-double Config::tolerance = 50.;
+std::vector<double> Config::tolerance = {};
 int Config::functionCalls = 1e7;
 int Config::printLevel = 1;
 int Config::randSeed = -1;
@@ -33,10 +37,13 @@ double Config::maxBMcorr = 8300.;
 int Config::nvar_md = 7;
 int Config::nvar_mb = 7;
 int Config::ncontr = 6;
+int Config::ntries = 1;
 
+std::vector<int> Config::int_choose_fits = {};
 std::vector<int> Config::intshapesDM = {};
 std::vector<int> Config::intshapesBMcorr = {};
 
+std::vector<std::string> Config::Fits = {};
 std::vector<std::string> Config::DMshapes = {};
 std::vector<std::string> Config::BMshapes = {};
 
@@ -46,27 +53,27 @@ std::vector<double> Config::fracInit = {};
 std::vector<std::string> Config::contrName = {};
 std::vector<std::string> Config::varname_md = {};
 std::vector<std::string> Config::varname_mb = {};
-std::vector<std::pair<std::string, std::string>> Config::replace_var = {};
-std::vector<std::tuple<std::string, double, double>> Config::varLimitsVect = {};
+std::map<std::string, std::string> Config::replace_var;
+std::map<std::string, std::pair<double, double>> Config::varLimitsMap;
 
 std::vector<std::vector<double>> Config::MC_MD={};
 std::vector<std::vector<double>> Config::dMC_MD={};
 std::vector<std::vector<double>> Config::MC_MB={};
 std::vector<std::vector<double>> Config::dMC_MB = {};
-std::vector<std::unique_ptr<PDFInterface>> Config::getVectorPDFs(const std::string& domain) {
-	std::vector<std::unique_ptr<PDFInterface>> vPDFs;
+std::vector<std::shared_ptr<PDFInterface>> Config::getVectorPDFs(const std::string& domain) {
+	std::vector<std::shared_ptr<PDFInterface>> vPDFs;
 	if (domain == std::string("Dmass")){
 		for (auto intshape: intshapesDM){
                 	switch (intshape){
                         	case 0:
-                                	vPDFs.push_back(std::make_unique<DoubleSidedCrystalballPlusGaussPDF>());
+                                	vPDFs.push_back(std::make_shared<DoubleSidedCrystalballPlusGaussPDF>());
                                 	break;
                         	case 1:
-                                	vPDFs.push_back(std::make_unique<ChebyshevPDF>());
+                                	vPDFs.push_back(std::make_shared<ChebyshevPDF>());
                                 	break;
                         	default:
                                 	std::cerr << "Error while DM_pdf dynamic declaration. Check if shapes from config file refer to the shapes defined in the code." << std::endl;
-                                	return std::vector<std::unique_ptr<PDFInterface>>{};
+                                	return std::vector<std::shared_ptr<PDFInterface>>{};
                 	}
 		}
 
@@ -74,17 +81,17 @@ std::vector<std::unique_ptr<PDFInterface>> Config::getVectorPDFs(const std::stri
 	        for (auto intshape: intshapesBMcorr){
         	        switch (intshape){
                         	case 0:
-                                	vPDFs.push_back(std::make_unique<RaisedCosinePlusGaussPDF>());
+                                	vPDFs.push_back(std::make_shared<RaisedCosinePlusGaussPDF>());
                                 	break;
                         	default:
                                 	std::cerr << "Error while BM_pdf dynamic declaration. Check if shapes from config file refer to the shapes defined in the code." << std::endl;
-                                return std::vector<std::unique_ptr<PDFInterface>>{};
+                                return std::vector<std::shared_ptr<PDFInterface>>{};
                 	}
         	}
 
 	}else{
 		std::cerr << "Error wrong domaine in getVectorPDFs(domain) chose 'Dmass' or 'Bmass'" << std::endl;
-		return std::vector<std::unique_ptr<PDFInterface>>{};
+		return std::vector<std::shared_ptr<PDFInterface>>{};
 	}	
     	return vPDFs;
 }
@@ -124,7 +131,7 @@ int Config::load(const std::string& filename) {
         json config = json::parse(config_file);
         config_file.close();
 
-        if (config.contains("sign")) {
+	if (config.contains("sign")) {
                 if (config["sign"].template get<std::string>() == std::string("muplus"))
                         sign = 1;
                 else if (config["sign"].template get<std::string>() == std::string("muminus"))
@@ -138,25 +145,67 @@ int Config::load(const std::string& filename) {
                 return 1;
         }
 
+        if (config.contains("isMC")) {
+                if (config["isMC"].template get<std::string>() == std::string("true"))
+                        isMC = true;
+                else if (config["isMC"].template get<std::string>() == std::string("false"))
+                        isMC = false;
+                else {
+                        std::cerr << "Invalid config file: allowed values for the 'isMC' key are 'true' or 'false'." << std::endl;
+                        return 1;
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'isMC' key." << std::endl;
+                return 1;
+        }
+
+        if (config.contains("binned")) {
+                if (config["binned"].template get<std::string>() == std::string("true"))
+                        binned = true;
+                else if (config["binned"].template get<std::string>() == std::string("false"))
+                        binned = false;
+                else {
+                        std::cerr << "Invalid config file: allowed values for the 'binned' key are 'true' or 'false'." << std::endl;
+                        return 1;
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'binned' key." << std::endl;
+                return 1;
+        }
+
+        if (config.contains("start_from_previous")) {
+                if (config["start_from_previous"].template get<std::string>() == std::string("true"))
+                        start_from_previous = true;
+                else if (config["start_from_previous"].template get<std::string>() == std::string("false"))
+                        start_from_previous = false;
+                else {
+                        std::cerr << "Invalid config file: allowed values for the 'start_from_previous' key are 'true' or 'false'." << std::endl;
+                        return 1;
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'start_from_previous' key." << std::endl;
+                return 1;
+        }
+
+	struct stat sb;
+       	if (config.contains("previous_result_file")) {
+                previous_result_file = config["previous_result_file"].template get<std::string>();
+                if (stat(previous_result_file.c_str(), &sb)!=0 && start_from_previous){
+                        std::cerr << "Invalid config file: File " <<  previous_result_file << " does not exist." << std::endl;
+                        return 1;
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'previous_result_file' key." << std::endl;
+                return 1;
+        }
+ 
+
 	if (config.contains("chainName")) {
                 chainName  = config["chainName"].template get<std::string>();
         } else {
                 std::cerr << "Invalid config file: missing 'chainName' key." << std::endl;
                 return 1;
         }
-
-
-        if (config.contains("tolerance")){
-                tolerance = config["tolerance"];
-                if (tolerance <0.){
-                        std::cerr << "Invalid config file: 'tolerance' must be positive." << std::endl;
-                        return 1;
-                }
-        }else{
-                std::cerr << "Invalid config file: missing 'tolerance' key." << std::endl;
-                return 1;
-        }
-
 
         if (config.contains("functionCalls")){
                 functionCalls = config["functionCalls"];
@@ -224,7 +273,6 @@ int Config::load(const std::string& filename) {
                 return 1;
         }
 
-	struct stat sb;
         if (config.contains("input_file")) {
                 input_file = config["input_file"].template get<std::string>();
                 if (stat(input_file.c_str(), &sb)!=0){
@@ -235,7 +283,8 @@ int Config::load(const std::string& filename) {
                 std::cerr << "Invalid config file: missing 'input_file' key." << std::endl;
                 return 1;
         }
-        if (config.contains("DM_range")){
+       
+       if (config.contains("DM_range")){
                 auto DM_range = config["DM_range"];
                 minDM = DM_range[0];
                 maxDM = DM_range[1];
@@ -279,6 +328,47 @@ int Config::load(const std::string& filename) {
                 std::cerr << "Invalid config file: missing 'nvar_mb' key." << std::endl;
                 return 1;
         }
+	         if (config.contains("ntries")){
+                ntries = config["ntries"];
+                if (ntries<=0){
+                        std::cerr << "Invalid config file: 'ntries' must be positive." << std::endl;
+                        return 1;
+                }
+        }else{
+                std::cerr << "Invalid config file: missing 'ntries' key." << std::endl;
+                return 1;
+        }
+	
+	if (config.contains("Fits")) {
+                Fits = config["Fits"].template get<std::vector<std::string>>();
+                if (int(Fits.size())==ncontr){
+                        std::cerr << "Invalid config file: no fits chosen " << std::endl;
+                        return 1;
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'Fits' key." << std::endl;
+                return 1;
+        }	 
+	for (auto fit: Fits){
+                if (dictionaryChooseFit.find(fit) != dictionaryChooseFit.end()) {
+                        int_choose_fits.push_back(dictionaryChooseFit.at(fit));
+
+                } else {
+                        std::cerr << "Fit '" << fit << "' not found. Chose 'frac', 'BM', 'DM+BMfixed', 'shapes' or 'all'" << std::endl;
+                        return 1;
+                }
+        }
+	if (config.contains("tolerance")) {
+                tolerance = config["tolerance"].template get<std::vector<double>>();
+                if(tolerance.size()!=Fits.size()){
+                        std::cerr << " You have to provide the same number of Fits and tolerances\n";
+                        return 1;
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'tolerance' key." << std::endl;
+                return 1;
+        }
+
 	if (config.contains("DMshapes")) {
                 DMshapes = config["DMshapes"].template get<std::vector<std::string>>();
                 if (int(DMshapes.size())!=ncontr){
@@ -299,17 +389,7 @@ int Config::load(const std::string& filename) {
                 std::cerr << "Invalid config file: missing 'BMshapes' key." << std::endl;
                 return 1;
         }
-	
-	//mapping string values of shape vector onto integer values to use switch afterwards
-        const std::unordered_map<std::string, const int> dictionaryDM ={
-                {"DCBplusGaus", 0},
-                {"Chebyshev", 1}
-        };
 
-        const std::unordered_map<std::string, const int> dictionaryBMcorr ={
-
-                {"RCplusGaus", 0}
-        };
 	for (auto shape: DMshapes){
                 if (dictionaryDM.find(shape) != dictionaryDM.end()) {
                         intshapesDM.push_back(dictionaryDM.at(shape));
@@ -339,8 +419,8 @@ int Config::load(const std::string& filename) {
 	
 	if (config.contains("fracInit")) {
                 fracInit = config["fracInit"].template get<std::vector<double>>();
-		if( int(fracInit.size())!=ncontr-1){
-			std::cerr << "Invalid config file: vector 'fracInit' should have " << ncontr-1 << " elements.";
+		if( int(fracInit.size())!=ncontr){
+			std::cerr << "Invalid config file: vector 'fracInit' should have " << ncontr << " elements.";
 		        return 1;	
 		}
         } else {
@@ -386,7 +466,7 @@ int Config::load(const std::string& filename) {
                         return 1;
                 }
         } else {
-                std::cerr << "Invalid config file: missing 'input_file' key." << std::endl;
+                std::cerr << "Invalid config file: missing 'MC_directory_MD' key." << std::endl;
                 return 1;
         }
 	std::string MC_directory_MB;
@@ -397,7 +477,7 @@ int Config::load(const std::string& filename) {
                         return 1;
                 }
         } else {
-                std::cerr << "Invalid config file: missing 'input_file' key." << std::endl;
+                std::cerr << "Invalid config file: missing 'MC_directory_MB' key." << std::endl;
                 return 1;
         }
 
@@ -405,24 +485,30 @@ int Config::load(const std::string& filename) {
 	read_MC(MC_MD, dMC_MD, MC_directory_MD, nvar_md);
 	read_MC(MC_MB, dMC_MB, MC_directory_MB, nvar_mb);
 
-	if (config.contains("replace_var")) {
-                replace_var = config["replace_var"].template get<std::vector<std::pair<std::string, std::string>>>();
-		for (const auto& rep_var: replace_var){
-			fixVect.push_back(rep_var.first);
+        if (config.contains("replace_var")) {
+                json entry = config["replace_var"];
+                for (auto it = entry.begin(); it!=entry.end();++it){
+                        std::string aim = it.value().template get<std::string>();
+                        replace_var[it.key()] = aim;
+		}
+                for (const auto& rep_var: replace_var){
+                        fixVect.push_back(rep_var.first);
                 }
         } else {
                 std::cerr << "Invalid config file: missing 'replace_var' key." << std::endl;
                 return 1;
         }
 
-	if (config.contains("varLimitsVect")) {
-                varLimitsVect = config["varLimitsVect"].template get<std::vector<std::tuple<std::string, double, double>>>();
+        if (config.contains("varLimitsVect")) {
+                json entry = config["varLimitsVect"];
+                for( auto it = entry.begin(); it!=entry.end();++it){
+                        std::pair<double, double> pair_lims = it.value().template get<std::pair<double, double>>();
+                        varLimitsMap[it.key()] = pair_lims;
+                }
         } else {
                 std::cerr << "Invalid config file: missing 'varLimitsVect' key." << std::endl;
                 return 1;
         }
-
-
 
 
 	return 0;
