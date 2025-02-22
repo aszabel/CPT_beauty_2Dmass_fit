@@ -11,9 +11,9 @@
 
   "Nbins": 250,
   "nlogBins": 50,
-  "tolerance": [1.0e5, 100.0], 
+  "tolerance": [0.01, 1.0e-4], 
   "ntries": [30, 1],
-  "nentries": 10000,
+  "nentries": -1,
   "functionCalls": 1e7,
   "printLevel": 2,
   "randSeed": 1,
@@ -57,8 +57,8 @@
    "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
    "BMshapes": ["RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus"],
 
-   "fixVect" : [["rez", "t_shift_anti", "alpha_anti", "beta_anti"],
-	        ["rez", "Gamma", "t_shift", "alpha", "beta", "t_shift_anti", "alpha_anti", "beta_anti"]],
+   "fixVect" : [["rez"],
+	        ["rez", "Gamma", "t_shift", "alpha", "beta"]],
 
    "replace_var":{	"t_shift_anti": "t_shift",
 	   		"alpha_anti": "alpha",

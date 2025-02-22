@@ -47,7 +47,7 @@ bool avx = true;
 
 using json = nlohmann::json;
 using namespace cpt_b0_analysis;
-std::function<double(const double*)> wrap_chi2(TH1D *logHist_expectB, TH1D *logHist_expectBbar, TH1D *logAsym, TH1D *logExpAsym, std::function<double(double, const double*, bool)> func_conv, std::vector<double> vec_time, std::vector<double> vec_time_bar,  TH1D *hist_B, TH1D *hist_Bbar, TH1D *logHistB, TH1D *logHistBbar, bool make_asym, std::vector<std::pair<int, int>> replaceIndexVect);
+std::function<double(const double*)> wrap_chi2(TH1D *logHist_expectB, TH1D *logHist_expectBbar, TH1D *logAsym, TH1D *logExpAsym, std::function<double(double, const double*, bool)> func_conv, std::vector<double> vec_time, std::vector<double> vec_time_bar,  TH1D *hist_B, TH1D *hist_Bbar, TH1D *logHistB, TH1D *logHistBbar, int ii, std::vector<std::pair<int, int>> replaceIndexVect);
 
 TH1D* rebin_to_log_bins(TH1D *histin, char *name );
 
@@ -316,7 +316,6 @@ int main(int argc, char *argv[]){
         min->SetTolerance(Config::tolerance[ii]);
         min->SetPrintLevel(Config::printLevel);
 	double CL_normal = ROOT::Math::normal_cdf(1) - ROOT::Math::normal_cdf(-1); //1 sigma ~68%
-	min->SetErrorDef(TMath::ChisquareQuantile(CL_normal, 4));
 
 	
 	int ivar=0;
@@ -347,14 +346,17 @@ int main(int argc, char *argv[]){
                                 std::cerr<< "Error in substituting parameters param " << rep_var.second << " not found.\n";
                                 return 1;
                         }
-			Config::fixVect[ii].push_back(rep_var.first);
+			auto it = std::find(Config::fixVect[ii].begin(), Config::fixVect[ii].end(), rep_var.first);
+			if (it == Config::fixVect[ii].end()) 
+				Config::fixVect[ii].push_back(rep_var.first);
         	        replaceIndexVect.push_back(std::make_pair(index_replaced, index_substitute));
                 }
 
 	for (const auto& fix: Config::fixVect[ii]){
                 min->FixVariable(min->VariableIndex(fix));
         }
-
+	min->SetErrorDef(TMath::ChisquareQuantile(CL_normal, Config::nvar_time-Config::fixVect[ii].size()));
+	std::cout << Config::fixVect[ii].size() << std::endl;
 
 
 	auto func_chi2 = wrap_chi2(logHist_expectB, logHist_expectBbar, logAsym, logExpAsym, func_conv, vec_time, vec_time_bar, hist_B, hist_Bbar, logHistB, logHistBbar, make_asym, replaceIndexVect);	
@@ -422,8 +424,9 @@ int main(int argc, char *argv[]){
 
 	return 0;
 }
-std::function<double(const double*)> wrap_chi2(TH1D *logHist_expectB, TH1D *logHist_expectBbar, TH1D *logAsym, TH1D *logExpAsym, std::function<double(double, const double*, bool)> func_conv, std::vector<double> vec_time, std::vector<double> vec_time_bar,  TH1D *hist_B, TH1D *hist_Bbar, TH1D *logHistB, TH1D *logHistBbar, bool make_asym, std::vector<std::pair<int, int>> replaceIndexVect){
-	auto func_chi2 = [logHist_expectB, logHist_expectBbar, logAsym, func_conv, vec_time, vec_time_bar, hist_B, hist_Bbar, logHistB, logHistBbar, make_asym, replaceIndexVect] (const double *par)->double{
+std::function<double(const double*)> wrap_chi2(TH1D *logHist_expectB, TH1D *logHist_expectBbar, TH1D *logAsym, TH1D *logExpAsym, std::function<double(double, const double*, bool)> func_conv, std::vector<double> vec_time, std::vector<double> vec_time_bar,  TH1D *hist_B, TH1D *hist_Bbar, TH1D *logHistB, TH1D *logHistBbar, int ii, std::vector<std::pair<int, int>> replaceIndexVect){
+	auto func_chi2 = [logHist_expectB, logHist_expectBbar, logAsym, func_conv, vec_time, vec_time_bar, hist_B, hist_Bbar, logHistB, logHistBbar, ii, replaceIndexVect] (const double *par)->double{
+		bool make_asym = ii==1;
 		// Extract the parameters and add some constraints
                 double param[Config::nvar_time];
                 for (int ivar = 0; ivar < Config::nvar_time; ivar++)
@@ -496,7 +499,7 @@ std::function<double(const double*)> wrap_chi2(TH1D *logHist_expectB, TH1D *logH
 		}
 
 		
-		return chi2;
+		return chi2/double(Config::nlogBins-Config::nvar_time+Config::fixVect[ii].size()-1.0);
 	};
 	return func_chi2;
 }
