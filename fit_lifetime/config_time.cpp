@@ -62,7 +62,7 @@ std::vector<std::string> Config::DMshapes = {};
 std::vector<std::string> Config::BMshapes = {};
 
 
-std::vector<std::string> Config::fixVect = {};
+std::vector<std::vector<std::string>> Config::fixVect = {};
 
 std::vector<std::pair<std::string, double>> Config::varname;
 int Config::nvar_time = 10;
@@ -391,7 +391,7 @@ int Config::load(const std::string& filename) {
         }
 
 	if (config.contains("fixVect")) {
-                fixVect = config["fixVect"].template get<std::vector<std::string>>();
+                fixVect = config["fixVect"].template get<std::vector<std::vector<std::string>>>();
         } else {
                 std::cerr << "Invalid config file: missing 'fixVect' key." << std::endl;
                 return 1;
@@ -416,9 +416,6 @@ int Config::load(const std::string& filename) {
                         std::string target = it.value().template get<std::string>();
                         replace_var[it.key()] = target;
 		}
-                for (const auto& rep_var: replace_var){
-                        fixVect.push_back(rep_var.first);
-                }
         } else {
                 std::cerr << "Invalid config file: missing 'replace_var' key." << std::endl;
                 return 1;

@@ -57,9 +57,12 @@
    "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
    "BMshapes": ["RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus"],
 
-   "fixVect" : ["t_shift_anti", "alpha_anti", "beta_anti"],
+   "fixVect" : [["rez", "t_shift_anti", "alpha_anti", "beta_anti"],
+	        ["rez", "Gamma", "t_shift", "alpha", "beta", "t_shift_anti", "alpha_anti", "beta_anti"]],
 
-   "replace_var":{},
+   "replace_var":{	"t_shift_anti": "t_shift",
+	   		"alpha_anti": "alpha",
+			"beta_anti": "beta"},	
 
    "varLimitsVect":{}
 }

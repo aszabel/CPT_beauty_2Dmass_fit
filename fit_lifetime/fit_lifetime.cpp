@@ -47,8 +47,10 @@ bool avx = true;
 
 using json = nlohmann::json;
 using namespace cpt_b0_analysis;
+std::function<double(const double*)> wrap_chi2(TH1D *logHist_expectB, TH1D *logHist_expectBbar, TH1D *logAsym, TH1D *logExpAsym, std::function<double(double, const double*, bool)> func_conv, std::vector<double> vec_time, std::vector<double> vec_time_bar,  TH1D *hist_B, TH1D *hist_Bbar, TH1D *logHistB, TH1D *logHistBbar, bool make_asym, std::vector<std::pair<int, int>> replaceIndexVect);
 
 TH1D* rebin_to_log_bins(TH1D *histin, char *name );
+
 int main(int argc, char *argv[]){
 	
 	
@@ -223,7 +225,7 @@ int main(int argc, char *argv[]){
      			if (bbar) 
 				value += PDFs.time_acceptance(&time_c, &par[4])*PDFs.func1D_f(&time_c, par)*n_r;
 			else
-				value += PDFs.time_acceptance(&time_c, &par[4])*PDFs.func1D_fbar(&time_c, par)*n_r;
+				value += PDFs.time_acceptance(&time_c, &par[7])*PDFs.func1D_fbar(&time_c, par)*n_r;
 		}
    	return value;
 	};
@@ -292,6 +294,8 @@ int main(int argc, char *argv[]){
 
 	}
 
+
+
 	TRandom3 randvar(Config::randSeed);
 	double minchi2 = 1.0e14;
         double minoutput[10];
@@ -301,69 +305,6 @@ int main(int argc, char *argv[]){
 		bool make_asym = ii==1;
         for (int itry=0; itry<tries[ii]; itry++){
 
-	auto func_chi2 = [&logHist_expectB, &logHist_expectBbar, &logAsym, &logExpAsym, func_conv, vec_time, vec_time_bar, &f_norm, &f_norm_bar, &hist_B, &hist_Bbar, &logHistB, &logHistBbar, make_asym] (const double *par)->double{
-		double chi2 = 0.0;
-		int emax;
-
-		bool binned = true;
-		double *vect_chi2;
-		for (int int_bbar=0; int_bbar<2; int_bbar++){
-				double norm = 0.0;
-				std::vector<double> vect_expect;
-				vect_expect.clear();
-				for (int bin=1; bin<=Config::nlogBins; bin++){
-                                        double t = logHistB->GetBinCenter(bin);
-                                        double expect = func_conv(t, par, int_bbar==0)*logHistB->GetBinWidth(bin);
-					vect_expect.push_back(expect);
-					norm +=expect;
-                                }
-
-				double integral = hist_B->Integral();
-				double integralBbar = hist_Bbar->Integral();
-				for (int bin=1; bin<=Config::nlogBins; bin++){
-					if(int_bbar==1) 
-						integral = integralBbar;
-					double expect = vect_expect[bin-1]/norm*integral;
-					if(!make_asym){
-						double cont, err;
-						if (int_bbar==0){
-							cont = logHistB->GetBinContent(bin); 
-							err = logHistB->GetBinError(bin);
-						}else{	
-							cont = logHistBbar->GetBinContent(bin); 
-							err = logHistBbar->GetBinError(bin);
-						}
-						if (err!=0)
-							chi2+= (cont-expect)*(cont-expect)/err/err;
-					}
-					if (int_bbar==0){
-						logHist_expectB->SetBinContent(bin, expect);
-						logHist_expectB->SetBinError(bin, 0.0);
-					}else{
-						logHist_expectBbar->SetBinContent(bin, expect);
-						logHist_expectBbar->SetBinError(bin, 0.0);
-					}
-					
-				}
-			
-				if (make_asym){
-					if(int_bbar==0) continue;
-					//logHist_expectB->Scale(logHistB->Integral()/logHist_expectB->Integral());
-					//logHist_expectBbar->Scale(logHistBbar->Integral()/logHist_expectBbar->Integral());
-					logExpAsym = dynamic_cast<TH1D*>(logHist_expectB->GetAsymmetry(logHist_expectBbar)); 	
-					for (int bin=1; bin<=Config::nlogBins; bin++){
-						double cont = logAsym->GetBinContent(bin);
-						double err = logAsym->GetBinError(bin);
-						double expect = logExpAsym->GetBinContent(bin);
-						if (err!=0)
-							chi2+= (cont-expect)*(cont-expect)/err/err;
-					}
-				}
-		}
-
-		
-		return chi2;
-	};
 
 	filetree.cd();
 
@@ -392,27 +333,36 @@ int main(int argc, char *argv[]){
 		ivar++;
 	}
 
-	if(ii==0){
-	min->FixVariable(min->VariableIndex("rez"));
-	min->FixVariable(min->VariableIndex("t_shift_anti"));
-	min->FixVariable(min->VariableIndex("alpha_anti"));
-	min->FixVariable(min->VariableIndex("beta_anti"));
-	}
 	if (ii==1){
-
-	min->FixVariable(min->VariableIndex("rez"));
-	min->FixVariable(min->VariableIndex("Gamma"));
-	min->FixVariable(min->VariableIndex("t_shift"));
-	min->FixVariable(min->VariableIndex("alpha"));
-	min->FixVariable(min->VariableIndex("beta"));
-	min->FixVariable(min->VariableIndex("t_shift_anti"));
-	min->FixVariable(min->VariableIndex("alpha_anti"));
-	min->FixVariable(min->VariableIndex("beta_anti"));
-
-	for(int i=0; i<Config::nvar_time; i++)
-		min->SetVariableValue(i, minoutput[i]);
+		for(int i=0; i<Config::nvar_time; i++)
+			min->SetVariableValue(i, minoutput[i]);
 	}
 	//for (int i=0; i<10; i++) min->FixVariable(i);
+	std::vector<std::pair<int, int>> replaceIndexVect = {};
+
+        const auto& replace_var = Config::replace_var;
+                for (const auto& rep_var: replace_var){
+                        int index_replaced = min->VariableIndex(rep_var.first);
+                        int index_substitute = min->VariableIndex(rep_var.second);
+                        if (index_replaced == -1 ){
+                                std::cerr<< "Error in substituting parameters param " << rep_var.first << " not found.\n";
+                                return 1;
+                        }
+                        if (index_substitute == -1 ){
+                                std::cerr<< "Error in substituting parameters param " << rep_var.second << " not found.\n";
+                                return 1;
+                        }
+			Config::fixVect[ii].push_back(rep_var.first);
+        	        replaceIndexVect.push_back(std::make_pair(index_replaced, index_substitute));
+                }
+
+	for (const auto& fix: Config::fixVect[ii]){
+                min->FixVariable(min->VariableIndex(fix));
+        }
+
+
+
+	auto func_chi2 = wrap_chi2(logHist_expectB, logHist_expectBbar, logAsym, logExpAsym, func_conv, vec_time, vec_time_bar, hist_B, hist_Bbar, logHistB, logHistBbar, make_asym, replaceIndexVect);	
 
 	ROOT::Math::Functor f(func_chi2, Config::nvar_time);
 	min->SetFunction(f);
@@ -476,4 +426,82 @@ int main(int argc, char *argv[]){
 	filetree.Close();
 
 	return 0;
+}
+std::function<double(const double*)> wrap_chi2(TH1D *logHist_expectB, TH1D *logHist_expectBbar, TH1D *logAsym, TH1D *logExpAsym, std::function<double(double, const double*, bool)> func_conv, std::vector<double> vec_time, std::vector<double> vec_time_bar,  TH1D *hist_B, TH1D *hist_Bbar, TH1D *logHistB, TH1D *logHistBbar, bool make_asym, std::vector<std::pair<int, int>> replaceIndexVect){
+	auto func_chi2 = [logHist_expectB, logHist_expectBbar, logAsym, func_conv, vec_time, vec_time_bar, hist_B, hist_Bbar, logHistB, logHistBbar, make_asym, replaceIndexVect] (const double *par)->double{
+		// Extract the parameters and add some constraints
+                double param[Config::nvar_time];
+                for (int ivar = 0; ivar < Config::nvar_time; ivar++)
+                {
+                        param[ivar] = par[ivar];
+                }
+                for (const auto& irep_var: replaceIndexVect){
+                        param[irep_var.first] = par[irep_var.second];
+                }
+
+
+
+
+
+		double chi2 = 0.0;
+
+		for (int int_bbar=0; int_bbar<2; int_bbar++){
+				double norm = 0.0;
+				std::vector<double> vect_expect;
+				vect_expect.clear();
+				for (int bin=1; bin<=Config::nlogBins; bin++){
+                                        double t = logHistB->GetBinCenter(bin);
+
+                                        double expect = func_conv(t, param, int_bbar==0)*logHistB->GetBinWidth(bin);
+					vect_expect.push_back(expect);
+					norm +=expect;
+                                }
+
+				double integral = hist_B->Integral();
+				double integralBbar = hist_Bbar->Integral();
+				for (int bin=1; bin<=Config::nlogBins; bin++){
+					if(int_bbar==1) 
+						integral = integralBbar;
+					double expect = vect_expect[bin-1]/norm*integral;
+					if(!make_asym){
+						double cont, err;
+						if (int_bbar==0){
+							cont = logHistB->GetBinContent(bin); 
+							err = logHistB->GetBinError(bin);
+						}else{	
+							cont = logHistBbar->GetBinContent(bin); 
+							err = logHistBbar->GetBinError(bin);
+						}
+						if (err!=0)
+							chi2+= (cont-expect)*(cont-expect)/err/err;
+					}
+					if (int_bbar==0){
+						logHist_expectB->SetBinContent(bin, expect);
+						logHist_expectB->SetBinError(bin, 0.0);
+					}else{
+						logHist_expectBbar->SetBinContent(bin, expect);
+						logHist_expectBbar->SetBinError(bin, 0.0);
+					}
+					
+				}
+			
+				if (make_asym){
+					if(int_bbar==0) continue;
+					//logHist_expectB->Scale(logHistB->Integral()/logHist_expectB->Integral());
+					//logHist_expectBbar->Scale(logHistBbar->Integral()/logHist_expectBbar->Integral());
+					TH1D *logExpAsym = dynamic_cast<TH1D*>(logHist_expectB->GetAsymmetry(logHist_expectBbar)); 	
+					for (int bin=1; bin<=Config::nlogBins; bin++){
+						double cont = logAsym->GetBinContent(bin);
+						double err = logAsym->GetBinError(bin);
+						double expect = logExpAsym->GetBinContent(bin);
+						if (err!=0)
+							chi2+= (cont-expect)*(cont-expect)/err/err;
+					}
+				}
+		}
+
+		
+		return chi2;
+	};
+	return func_chi2;
 }

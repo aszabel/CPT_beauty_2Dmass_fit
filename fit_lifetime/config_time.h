@@ -85,7 +85,7 @@ public:
     	static int ntries;
 
 
-	static std::vector<std::string> fixVect;
+	static std::vector<std::vector<std::string>> fixVect;
 
 	static std::vector<std::pair<std::string, double>> varname;
 	static std::map<std::string, std::string> replace_var;
