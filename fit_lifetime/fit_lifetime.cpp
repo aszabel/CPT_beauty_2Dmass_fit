@@ -298,12 +298,11 @@ int main(int argc, char *argv[]){
 
 	TRandom3 randvar(Config::randSeed);
 	double minchi2 = 1.0e14;
-        double minoutput[10];
-        int tries[2]={30, 1};
-        for (int i=0; i<10; i++) minoutput[i] = -1000.0;
+        double minoutput[Config::nvar_time];
+        for (int i=0; i<Config::nvar_time; i++) minoutput[i] = -1000.0;
         for (int ii=0; ii<2; ii++){
 		bool make_asym = ii==1;
-        for (int itry=0; itry<tries[ii]; itry++){
+        for (int itry=0; itry<Config::ntries[ii]; itry++){
 
 
 	filetree.cd();
@@ -313,18 +312,14 @@ int main(int argc, char *argv[]){
 	ROOT::Math::Minimizer *min =
                         ROOT::Math::Factory::CreateMinimizer(minName, algoName);
 
-        min->SetMaxFunctionCalls(1e7); // for Minuit/Minuit2
-        min->SetTolerance(1e5);
-	 if (ii==1)min->SetTolerance(100.0);
-        min->SetPrintLevel(2);
+        min->SetMaxFunctionCalls(Config::functionCalls); // for Minuit/Minuit2
+        min->SetTolerance(Config::tolerance[ii]);
+        min->SetPrintLevel(Config::printLevel);
 	double CL_normal = ROOT::Math::normal_cdf(1) - ROOT::Math::normal_cdf(-1); //1 sigma ~68%
 	min->SetErrorDef(TMath::ChisquareQuantile(CL_normal, 4));
 
 	
-	//std::string var_list[Config::nvar_time] = {"rez", "imz", "Gamma", "eta", "t_shift", "alpha", "beta", "t_shift_anti", "alpha_anti", "beta_anti"};
 	int ivar=0;
-	//for (int ivar=0; ivar<Config::nvar_time; ivar++){
-		//auto it = Config::varname.find(var_list[ivar]);
 	for (const auto& pair : Config::varname){ 
 		double drawvar=1.0;
 		if (ivar>=3 && ivar <=6)

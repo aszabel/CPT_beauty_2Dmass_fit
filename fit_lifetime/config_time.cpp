@@ -15,7 +15,7 @@ std::string Config::chainName = "";
 
 int Config::nentries = -1;
 
-double Config::tolerance = 0.1;
+std::vector<double> Config::tolerance = {} ;
 int Config::functionCalls = 1e7;
 int Config::printLevel = 1;
 int Config::randSeed = -1;
@@ -53,7 +53,7 @@ int Config::nlogBins = 50;
 int Config::nvar_md = 7;
 int Config::nvar_mb = 7;
 int Config::ncontr = 6;
-int Config::ntries = 1;
+std::vector<int> Config::ntries = {};
 
 std::vector<int> Config::intshapesDM = {};
 std::vector<int> Config::intshapesBMcorr = {};
@@ -333,8 +333,8 @@ int Config::load(const std::string& filename) {
                 return 1;
         }
 	         if (config.contains("ntries")){
-                ntries = config["ntries"];
-                if (ntries<=0){
+                ntries = config["ntries"].template get<std::vector<int>>();
+                if (ntries[0]<=0 || ntries[1]<=0){
                         std::cerr << "Invalid config file: 'ntries' must be positive." << std::endl;
                         return 1;
                 }
@@ -344,7 +344,7 @@ int Config::load(const std::string& filename) {
         }
 	
 	if (config.contains("tolerance")) {
-                tolerance = config["tolerance"].template get<double>();
+                tolerance = config["tolerance"].template get<std::vector<double>>();
         } else {
                 std::cerr << "Invalid config file: missing 'tolerance' key." << std::endl;
                 return 1;

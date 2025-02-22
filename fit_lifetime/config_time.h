@@ -46,7 +46,7 @@ public:
 
     	static int nentries;
 
-    	static double tolerance;
+    	static std::vector<double> tolerance;
     	static int functionCalls;
     	static int printLevel;
 	static int randSeed;
@@ -82,7 +82,7 @@ public:
     	static int nvar_mb;
     	static int nvar_time;
     	static int ncontr;
-    	static int ntries;
+    	static std::vector<int> ntries;
 
 
 	static std::vector<std::vector<std::string>> fixVect;
