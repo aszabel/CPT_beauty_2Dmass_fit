@@ -8,9 +8,9 @@ namespace cpt_b0_analysis
 	class sWeights
 	{
 		public:
-		sWeights(const std::string& _path_data);
-		std::vector<std::pair<double, double>> get_sWeigths(double res[], bool BBbar);
-		std::string path_data;
+		sWeights(const std::string& _path_data, const std::string& _outfilename, const std::string& _outtreename);
+		void get_sWeigths(double res[], bool BBbar);
+		std::string path_data, outfilename, outtreename;
 
 	};
 		

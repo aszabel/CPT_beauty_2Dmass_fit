@@ -175,24 +175,62 @@ int main(int argc, char *argv[]){
 	treeres->GetEntry(Config::randSeed);	
 	treeresbar->GetEntry(Config::randSeed);	
 
-	sWeights sW(Config::input_file.c_str());
-	auto vec_sWeights = sW.get_sWeigths(res, true);
+	std::string fileWeightsName = "Tree_sWeights";
+	std::string TreeName = "Tree_sWeights";
+	sWeights sW(Config::input_file.c_str(), fileWeightsName.c_str(), TreeName.c_str());
+	sW.get_sWeigths(res, true);
 
-	auto vec_sWeights_bar = sW.get_sWeigths(resbar, false);
-	auto sum_sWeights = vec_sWeights;
-    	// Append elements of vec2 to result
-    	sum_sWeights.insert(sum_sWeights.end(), vec_sWeights_bar.begin(), vec_sWeights_bar.end());
+	std::vector<double> *vec_Tau_ptr_plus = nullptr;
+	std::vector<double> *vec_sWeights_ptr_plus = nullptr;
+
+	TFile weightFile_plus(Form("%s_plus.root", fileWeightsName.c_str()), "readonly");
+	TTree *tree_sWeights = (TTree*)weightFile_plus.Get(TreeName.c_str());
+	tree_sWeights -> SetBranchAddress("vec_Tau", &vec_Tau_ptr_plus);
+	tree_sWeights -> SetBranchAddress("vec_sWeights", &vec_sWeights_ptr_plus);
+
+	tree_sWeights -> GetEntry(0);
+
+        auto *vec_Tau_plus = vec_Tau_ptr_plus->data();
+        auto *vec_sWeights_plus = vec_sWeights_ptr_plus->data();
+
+	sW.get_sWeigths(resbar, false);
+
+	std::vector<double> *vec_Tau_ptr_minus = nullptr;
+	std::vector<double> *vec_sWeights_ptr_minus = nullptr;
+
+	TFile weightFile_minus(Form("%s_minus.root", fileWeightsName.c_str()), "readonly");
+	TTree *tree_sWeights_bar = (TTree*)weightFile_minus.Get(TreeName.c_str());
+	tree_sWeights_bar -> SetBranchAddress("vec_Tau", &vec_Tau_ptr_minus);
+	tree_sWeights_bar -> SetBranchAddress("vec_sWeights", &vec_sWeights_ptr_minus);
+
+	tree_sWeights_bar -> GetEntry(0);
+	
+        auto *vec_Tau_minus = vec_Tau_ptr_minus->data();
+        auto *vec_sWeights_minus = vec_sWeights_ptr_minus->data();
+	
+	
+	std::vector<double> sum_sWeights = {};
+	std::vector<double> sum_Tau = {};
+	for (int e=0; e<int(vec_Tau_ptr_plus->size()); e++){
+		sum_sWeights.push_back(vec_sWeights_plus[e]);
+		sum_Tau.push_back(vec_Tau_plus[e]);
+	}
+	for (int e=0; e<int(vec_Tau_ptr_minus->size()); e++){
+		sum_sWeights.push_back(vec_sWeights_minus[e]);
+		sum_Tau.push_back(vec_Tau_minus[e]);
+	}
+
 	TRandom3 rand(Config::randSeed);
 	int emax = (int)sum_sWeights.size();
         for (int e=0; e<emax; e++){ 			//Blinding
 		double draw=rand.Uniform(0.0, 1.0);
 		if (draw<0.5){	
-			hist_B->Fill(std::get<0>(sum_sWeights[e]), std::get<1>(sum_sWeights[e]));
-			logHistB->Fill(std::get<0>(sum_sWeights[e]), std::get<1>(sum_sWeights[e]));
+			hist_B->Fill(sum_Tau[e], sum_sWeights[e]);
+			logHistB->Fill(sum_Tau[e], sum_sWeights[e]);
 		}else{
-			hist_Bbar->Fill(std::get<0>(sum_sWeights[e]), std::get<1>(sum_sWeights[e]));
-			logHistBbar->Fill(std::get<0>(sum_sWeights[e]), std::get<1>(sum_sWeights[e]));		    }	
-
+			hist_Bbar->Fill(sum_Tau[e], sum_sWeights[e]);
+			logHistBbar->Fill(sum_Tau[e], sum_sWeights[e]);
+		}
 	}
 	/*TFile fsweights("draw_hist_sweighted.root", "readonly");
 	//TFile fsweights("draw_hist_sweighted07.root", "readonly");

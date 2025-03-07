@@ -12,12 +12,21 @@
 #include <vector>
 #include <iostream>
 
+#include "TFile.h"
+
 namespace cpt_b0_analysis
 {
-	sWeights::sWeights(const std::string& _path_data): path_data(_path_data){};
+	sWeights::sWeights(const std::string& _path_data, const std::string& _outfilename, const std::string& _outtreename): path_data(_path_data), outfilename(_outfilename), outtreename(_outtreename){};
         
-	
-	std::vector<std::pair<double, double>> sWeights::get_sWeigths(double res[], bool BBbar){	
+	void  sWeights::get_sWeigths(double res[], bool BBbar){	
+	std::vector<double> vec_Tau, vec_sWeights;
+	std::string plus_minus;
+	if (BBbar) plus_minus = "plus";
+	else plus_minus = "minus";
+	TFile *outfile = new TFile(Form("%s_%s.root",outfilename.c_str(), plus_minus.c_str()), "recreate");
+       	TTree *outtree = new TTree(outtreename.c_str(), outtreename.c_str());
+	outtree -> Branch("vec_Tau", &vec_Tau);	
+	outtree -> Branch("vec_sWeights", &vec_sWeights);	
 		int ncontr = Config::ncontr;
 		int nvar_md = Config::nvar_md;
 		int nvar_mb = Config::nvar_mb;
@@ -125,11 +134,15 @@ namespace cpt_b0_analysis
                                 mb_like = B_PDFs[i]->EvalPDF(&mcorr, &res[Config::ncontr * Config::nvar_md + i * Config::nvar_mb]);
 				sum_n+=inv_matrixV(0, i)*md_like*mb_like;
 			}
+			vec_Tau.push_back(Tau);
+			vec_sWeights.push_back(sum_n/sum_k);
 			sWeights.push_back(std::make_pair(Tau, sum_n/sum_k));
 		//	std::cout<< sum_n << "  " << sum_k << std::endl;
 		}
-		std::cout << sWeights.size() << " siiiizieeeee \n";
-		return sWeights;
+		outtree->Fill();
+		outtree->Write();
+		outfile->Close();
+		std::cout << vec_sWeights.size() << " siiiizieeeee " << vec_Tau.size() << "\n";
 	}	
 
 }
