@@ -16,7 +16,7 @@ OBJS2 = $(SRCS2:.cpp=.o) $(COMMON)
 TARGET1 = fit2D_mass 
 TARGET2 = fit1D_mass
 
-all: $(TARGETi1) $(TARGET2)
+all: $(TARGET1) $(TARGET2)
 
 
 # Linking
