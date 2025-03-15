@@ -11,6 +11,7 @@ using namespace cpt_b0_analysis;
 
 bool Config::isMC = false;
 bool Config::binned = false;
+bool Config::calc_sWeights = false;
 bool Config::start_from_previous = false;
 int Config::sign = -1;
 std::string Config::input_file = "";
@@ -28,6 +29,8 @@ double Config::muPTmin = 500.;
 double Config::muPmin = 5000.;
 double Config::eta_min  = 2.;
 double Config::eta_max = 4.5;
+double Config::tMin  = 1.0;
+double Config::tMax = 15.0;
 
 //Global
 double Config::minDM = 1800.;
@@ -173,6 +176,20 @@ int Config::load(const std::string& filename) {
                 return 1;
         }
 
+        if (config.contains("calc_sWeights")) {
+                if (config["calc_sWeights"].template get<std::string>() == std::string("true"))
+                        calc_sWeights = true;
+                else if (config["calc_sWeights"].template get<std::string>() == std::string("false"))
+                        calc_sWeights = false;
+                else {
+                        std::cerr << "Invalid config file: allowed values for the 'calc_sWeights' key are 'true' or 'false'." << std::endl;
+                        return 1;
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'binned' key." << std::endl;
+                return 1;
+        }
+
         if (config.contains("start_from_previous")) {
                 if (config["start_from_previous"].template get<std::string>() == std::string("true"))
                         start_from_previous = true;
@@ -265,6 +282,20 @@ int Config::load(const std::string& filename) {
                 std::cerr << "Invalid config file: missing 'eta_cut' key." << std::endl;
                 return 1;
         }
+
+	if (config.contains("t_cut")){
+                auto t_cut= config["t_cut"];
+                tMin = t_cut[0];
+                tMax = t_cut[1];
+                if (tMin <0.0 || tMax <0.0 || tMin>tMax){
+                        std::cerr << "Invalid config file: interval 't_cut' must be positive." << std::endl;
+                        return 1;
+                }
+        }else{
+                std::cerr << "Invalid config file: missing 't_cut' key." << std::endl;
+                return 1;
+        }
+
 
         if (config.contains("nentries")){
                 nentries = config["nentries"];

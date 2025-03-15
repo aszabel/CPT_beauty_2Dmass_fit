@@ -183,7 +183,7 @@ int main(int argc, char *argv[]){
 	std::vector<double> *vec_Tau_ptr_plus = nullptr;
 	std::vector<double> *vec_sWeights_ptr_plus = nullptr;
 
-	TFile weightFile_plus(Form("%s_plus.root", fileWeightsName.c_str()), "readonly");
+	TFile weightFile_plus(Form("../multithreaded/%s_plus.root", fileWeightsName.c_str()), "readonly");
 	TTree *tree_sWeights = (TTree*)weightFile_plus.Get(TreeName.c_str());
 	tree_sWeights -> SetBranchAddress("vec_Tau", &vec_Tau_ptr_plus);
 	tree_sWeights -> SetBranchAddress("vec_sWeights", &vec_sWeights_ptr_plus);
@@ -198,7 +198,7 @@ int main(int argc, char *argv[]){
 	std::vector<double> *vec_Tau_ptr_minus = nullptr;
 	std::vector<double> *vec_sWeights_ptr_minus = nullptr;
 
-	TFile weightFile_minus(Form("%s_minus.root", fileWeightsName.c_str()), "readonly");
+	TFile weightFile_minus(Form("../multithreaded/%s_minus.root", fileWeightsName.c_str()), "readonly");
 	TTree *tree_sWeights_bar = (TTree*)weightFile_minus.Get(TreeName.c_str());
 	tree_sWeights_bar -> SetBranchAddress("vec_Tau", &vec_Tau_ptr_minus);
 	tree_sWeights_bar -> SetBranchAddress("vec_sWeights", &vec_sWeights_ptr_minus);

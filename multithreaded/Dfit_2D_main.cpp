@@ -4,6 +4,7 @@
 #include "omp.h"
 #include "json.hpp"
 #include "config.h"
+#include "sweights.h"
 
 // ROOT includes
 #include "TROOT.h"
@@ -422,6 +423,11 @@ while ((itry<=Config::ntries || !goodfit)&&itry<=100){
 			if(previous_fit) starting_point[i] = min->X()[i];
 
 		}
+
+		std::string fileWeightsName = "Tree_sWeights";
+        	std::string TreeName = "Tree_sWeights";
+        	sWeights sW(Config::input_file.c_str(), fileWeightsName.c_str(), TreeName.c_str());
+        	sW.get_sWeigths(min->X(), Config::sign == 1);
 
 		for (int i = 0; i < Config::ncontr; i++)
 			results << double(frac_indeces[i])/double(vect_2D.size()) <<"  " << 0.0 << std::endl;

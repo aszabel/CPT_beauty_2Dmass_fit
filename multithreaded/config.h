@@ -44,6 +44,7 @@ public:
 	static bool isMC;
 	static bool binned;
 	static bool start_from_previous;
+	static bool calc_sWeights;
     	static int sign;
     	static std::string input_file;
     	static std::string previous_result_file;
@@ -61,6 +62,8 @@ public:
     	static double muPmin;
     	static double eta_min;
     	static double eta_max;
+	static double tMin;
+	static double tMax;
 
     	//Global
     	static double minDM;
