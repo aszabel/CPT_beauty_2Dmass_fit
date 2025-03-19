@@ -3,8 +3,8 @@
 for i in `seq 0 200`
 do	
 	mkdir -p trees
-	JSON=config_temp.json
-	cp config_inter.json $JSON
+	JSON=trees/config_temp.json
+	cp configs/config_inter.json $JSON
 
 	m=$(echo "-0.01+${i}*0.0001"|bc -l| awk '{printf "%.4f", $1}')
 	echo $m

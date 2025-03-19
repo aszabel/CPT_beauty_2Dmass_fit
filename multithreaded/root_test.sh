@@ -8,10 +8,10 @@ do
         m=$(($t*1+$k))
 
 	mkdir -p toy_res/toy_$m
-	JSON_FILE="config_inter.json"
-	JSON_FILE2="config_unbinned.json"
-	JSON_SIDE="config_sidebands.json"
-	cp -r root.sh fit2D_mass fit1D_dmass $JSON_FILE $JSON_FILE2 $JSON_SIDE root_test.sh D_M_results B_M_results check_toys.C toy_res/toy_$m
+	JSON_FILE="configs/config_inter.json"
+	JSON_FILE2="configs/config_unbinned.json"
+	JSON_SIDE="configs/config_sidebands.json"
+	cp -r root.sh fit2D_mass fit1D_dmass $JSON_FILE $JSON_FILE2 $JSON_SIDE root_test.sh D_M_results B_M_results macros/check_toys.C toy_res/toy_$m
 	cd toy_res/toy_$m
 
 
