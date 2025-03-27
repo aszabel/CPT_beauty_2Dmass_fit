@@ -1,17 +1,25 @@
 #include "D_M_fit_shape.h"
+#include "config.h"
 
 using namespace cpt_b0_analysis;
-void D_M_fit_Every(int choice, int sign, bool isUnbinned=true){
+void D_M_fit_Every(int choice, int sign, std::string config_file, bool isUnbinned=true){
 
 	std::string minName = "Minuit2";
  	std::string algoName = "";
-	ROOT::Math::Minimizer* min =
-	ROOT::Math::Factory::CreateMinimizer(minName, algoName);
+	ROOT::Math::Minimizer* min = ROOT::Math::Factory::CreateMinimizer(minName, algoName);
+
+	
+	gSystem->Exec("mkdir -p D_M_figures D_M_results");
+	// Load config
+	if (Config::load(config_file)){
+		std::cerr<< " Bad config file! " << std::endl;
+		return 1;
+	}
 
 	// set tolerance , etc...
    	min->SetMaxFunctionCalls(10000000); // for Minuit/Minuit2
    	min->SetMaxIterations(10000);  // for GSL
-   	min->SetTolerance(1.0e-6);
+   	min->SetTolerance(1.0e-5);
 	if(choice==2) min->SetTolerance(0.01);
    	min->SetPrintLevel(2);
 
@@ -32,22 +40,22 @@ void D_M_fit_Every(int choice, int sign, bool isUnbinned=true){
    	TChain ch("BlindedTree");
 	switch (choice){
 		case 0:
-   		ch.Add("/home/szabelskia/LHCb/MC2016/nomassDmuCut/selected_MCsignal25102023.root");
+   		ch.Add("/mnt/home/share/lhcb/CPT_beauty/MC2016/selected/selectedMagDown_B2Dmunu_signal_taustrip_nomassDmuCut/selected_MCsignal25102023.root");
 		break;
 		case 1:
-		ch.Add("/home/szabelskia/LHCb/MC2016/nomassDmuCut/selected_BuDmunu.root");
+		ch.Add("/mnt/home/share/lhcb/CPT_beauty/MC2016/selected/selectedMagDown_B2Dmunu_Bu2Dmunu_taustrip_nomassDmuCut/selected_BuDmunu.root");
 		break;
 		case 2:
-		ch.Add("/home/szabelskia/LHCb/MC2016/nomassDmuCut/selected_MCBsDsMunu25102023.root");
+		ch.Add("/mnt/home/share/lhcb/CPT_beauty/MC2016/selected/selectedMagDown_B2Dmunu_Bs2Dsmunu_taustrip_nomassDmuCut/selected_MCBsDsMunu25102023.root");
 		break;
 		case 3:
-		ch.Add("/home/szabelskia/LHCb/MC2016/nomassDmuCut/selected_B02DpDsm.root");
+		ch.Add("/mnt/home/share/lhcb/CPT_beauty/MC2016/selected/selectedMagDown_B2Dmunu_B02DpDsm_taustrip_nomassDmuCut/selected_B02DpDsm.root");
 		break;
 		case 4:
 		cout << " No MC for combinatorial " << endl;
 		return;
 		case 5:
-		ch.Add("/home/szabelskia/LHCb/MC2016/nomassDmuCut/selected_MCBu2D0Dsm.root");
+		ch.Add("/mnt/home/share/lhcb/CPT_beauty/MC2016/selected/selectedMagDown_B2Dmunu_Bu2D0Dsm_taustrip_nomassDmuCut/selected_MCBu2D0Dsm.root");
 		break;
 		default:
 		cout << " Unknown channel" << endl;
@@ -67,6 +75,8 @@ void D_M_fit_Every(int choice, int sign, bool isUnbinned=true){
 	std::vector<double> vect_Dmass;
 	int nbins = 40;
 	TH1D *hist = new TH1D("hist", "", nbins, minx, maxx);
+
+	std::cout<<"Events: "<<ch.GetEntries()<<std::endl;
    	for (int i=0; i<ch.GetEntries(); ++i){
       		ch.GetEntry(i);
      		if (mu_PT<500 || mu_P<5000 || mu_eta<2 || mu_eta>4.5) continue;
@@ -79,18 +89,20 @@ void D_M_fit_Every(int choice, int sign, bool isUnbinned=true){
       		}
    	}
 	double  nevents = double(vect_Dmass.size());
-	md_fit md_shape(minx, maxx, nvar);
+	const auto& D_PDFs = Config::getVectorPDFs("Dmass");
 
-	auto fchi2 = [&md_shape, vect_Dmass, choice](const double *par)->double{
+	auto fchi2 = [&D_PDFs, vect_Dmass, minx, maxx, choice](const double *par)->double{
 		double chi2 = 0.0;
+		D_PDFs[choice]->CalcIntegral(par, minx, maxx);
 		for (auto dmass: vect_Dmass){
-			double likelihood = md_shape.func_full(&dmass, par, choice);
+			double likelihood = D_PDFs[choice]->EvalPDF(&dmass, par);
 			chi2 -= 2.0*log(likelihood);
 		}
 		return chi2;
 	};
-	auto fchi2binned = [&md_shape, hist, minx, maxx, nevents, nbins, choice](const double *par)->double{
+	auto fchi2binned = [&D_PDFs, hist, minx, maxx, nevents, nbins, choice](const double *par)->double{
 		double chi2 = 0;
+		D_PDFs[choice]->CalcIntegral(par, minx, maxx);
 		double bin_width = (maxx-minx)/double(nbins);
 		   for (int bin=1; bin<=nbins; bin++){
 			   double bincenter = hist->GetBinCenter(bin);
@@ -101,7 +113,7 @@ void D_M_fit_Every(int choice, int sign, bool isUnbinned=true){
 				   param[ipar] = par[ipar];
 			   //param[2] = par[0];
 			   //param[6] = par[4];
-			   double estim = bin_width*double(nevents)*md_shape.func_full(&bincenter, param, choice);
+			   double estim = bin_width*double(nevents)*D_PDFs[choice]->EvalPDF(&bincenter, param);
 			   if(err!=0.0) chi2+=(bincont-estim)*(bincont-estim)/err/err;
 		   }
 		   return chi2;
@@ -128,12 +140,12 @@ void D_M_fit_Every(int choice, int sign, bool isUnbinned=true){
 		min->SetVariable(ivar, varname[ivar].Data(), initial[choice][ivar], step);
 		//min->SetVariableLowerLimit(ivar, 0.0);
 	}
-	min->FixVariable(0);
-	min->FixVariable(1);
+	//KK //min->FixVariable(0);
+	//KK //min->FixVariable(1);
 	//min->FixVariable(2);
-	min->FixVariable(3);
+	//KK //min->FixVariable(3);
 	//min->FixVariable(4);
-	min->FixVariable(5);
+	//KK //min->FixVariable(5);
 	//min->FixVariable(6);
 	
    	double CL_normal = ROOT::Math::normal_cdf(1) -  ROOT::Math::normal_cdf(-1);
@@ -155,14 +167,15 @@ void D_M_fit_Every(int choice, int sign, bool isUnbinned=true){
    	 	pad1->Draw();
    	 	pad1->cd();
 
-	auto funcDraw = [&md_shape, min, nevents, minx, maxx, nbins, choice](double *x, double *par)->double{
+	auto funcDraw = [&D_PDFs, min, nevents, minx, maxx, nbins, choice](double *x, double *par)->double{
+		D_PDFs[choice]->CalcIntegral(par, minx, maxx);
 		double bin_width = (maxx-minx)/double(nbins);
 			   double param[nvar];
 			   for (int ipar=0; ipar <nvar; ipar++)
 				   param[ipar] = par[ipar];
 			   //param[2] = par[0];
 			   //param[6] = par[4];
-		return bin_width*double(nevents)*md_shape.func_full(x, param, choice);
+		return bin_width*double(nevents)*D_PDFs[choice]->EvalPDF(x, param);
 	};
 	TF1 *tf1 = new TF1("tf1", funcDraw, minx, maxx, nvar);
 	tf1->SetParameters(min->X());
@@ -181,12 +194,11 @@ void D_M_fit_Every(int choice, int sign, bool isUnbinned=true){
     	TPad *pad2 = new TPad("pad2", "", 0.0, 0.0, 1.0, 0.3);
     	pad2->Draw();
     	pad2->cd();
-    	histpull1D.SetStats(kFALSE);
+		histpull1D.SetStats(kFALSE);
     	histpull1D.SetFillColor(kBlue);
     	histpull1D.GetYaxis()->SetLabelSize(0.1);
     	histpull1D.GetXaxis()->SetLabelSize(0.1);
     	histpull1D.DrawClone("hist");
-	gSystem->Exec("mkdir -p D_M_figures D_M_results");
 	TString name[6] = {"signal", "BuDmunu", "BsDsMunu", "B02DpDsm" , "sidebands", "Bu2D0Dsm"};
 	c->SaveAs(Form("D_M_figures/D_M_%s_%d.pdf", name[choice].Data(), sign));
 	

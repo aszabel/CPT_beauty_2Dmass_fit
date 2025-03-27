@@ -186,7 +186,7 @@ int Config::load(const std::string& filename) {
                         return 1;
                 }
         } else {
-                std::cerr << "Invalid config file: missing 'binned' key." << std::endl;
+                std::cerr << "Invalid config file: missing 'calc_sWeights' key." << std::endl;
                 return 1;
         }
 
@@ -205,15 +205,17 @@ int Config::load(const std::string& filename) {
         }
 
 	struct stat sb;
-       	if (config.contains("previous_result_file")) {
-                previous_result_file = config["previous_result_file"].template get<std::string>();
-                if (stat(previous_result_file.c_str(), &sb)!=0 && start_from_previous){
-                        std::cerr << "Invalid config file: File " <<  previous_result_file << " does not exist." << std::endl;
+       	if (start_from_previous) {
+                if (config.contains("previous_result_file")) {
+                        previous_result_file = config["previous_result_file"].template get<std::string>();
+                        if (stat(previous_result_file.c_str(), &sb)!=0 && start_from_previous){
+                                std::cerr << "Invalid config file: Previous file " <<  previous_result_file << " does not exist." << std::endl;
+                                return 1;
+                        }
+                } else {
+                        std::cerr << "Invalid config file: missing 'previous_result_file' key." << std::endl;
                         return 1;
                 }
-        } else {
-                std::cerr << "Invalid config file: missing 'previous_result_file' key." << std::endl;
-                return 1;
         }
  
 
@@ -307,7 +309,7 @@ int Config::load(const std::string& filename) {
         if (config.contains("input_file")) {
                 input_file = config["input_file"].template get<std::string>();
                 if (stat(input_file.c_str(), &sb)!=0){
-                        std::cerr << "Invalid config file: File " << input_file << " does not exist." << std::endl;
+                        std::cerr << "Invalid config file: Input file " << input_file << " does not exist." << std::endl;
                         return 1;
                 }
         } else {
@@ -493,7 +495,7 @@ int Config::load(const std::string& filename) {
         if (config.contains("MC_directory_MD")) {
                 MC_directory_MD = config["MC_directory_MD"].template get<std::string>();
                 if (stat(MC_directory_MD.c_str(), &sb)!=0){
-                        std::cerr << "Invalid config file: Directory " << MC_directory_MD << " does not exist." << std::endl;
+                        std::cerr << "Invalid config file: MC_directory_MD " << MC_directory_MD << " does not exist." << std::endl;
                         return 1;
                 }
         } else {
@@ -504,7 +506,7 @@ int Config::load(const std::string& filename) {
         if (config.contains("MC_directory_MB")) {
                 MC_directory_MB= config["MC_directory_MB"].template get<std::string>();
                 if (stat(MC_directory_MB.c_str(), &sb)!=0){
-                        std::cerr << "Invalid config file: Directory " << MC_directory_MB << " does not exist." << std::endl;
+                        std::cerr << "Invalid config file: MC_directory_MB " << MC_directory_MB << " does not exist." << std::endl;
                         return 1;
                 }
         } else {
@@ -512,9 +514,11 @@ int Config::load(const std::string& filename) {
                 return 1;
         }
 
-	// Initial fit parameter values taken from 1D fits to MC and Side Bands
-	read_MC(MC_MD, dMC_MD, MC_directory_MD, nvar_md);
-	read_MC(MC_MB, dMC_MB, MC_directory_MB, nvar_mb);
+        if(!isMC) {
+                // Initial fit parameter values taken from 1D fits to MC and Side Bands
+                read_MC(MC_MD, dMC_MD, MC_directory_MD, nvar_md);
+                read_MC(MC_MB, dMC_MB, MC_directory_MB, nvar_mb);
+        }
 
         if (config.contains("replace_var")) {
                 json entry = config["replace_var"];

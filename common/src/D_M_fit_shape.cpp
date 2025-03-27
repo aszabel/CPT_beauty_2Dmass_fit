@@ -24,6 +24,8 @@ namespace cpt_b0_analysis
 			double mean = par[1];
 			double f12 = abs(par[3]);
 			double gaus = ROOT::Math::gaussian_pdf(m_rec, sigma, mean);
+			//cout<<"Gaus: "<<gaus<<endl;
+			//cout<<"IntGaus: "<<IntGaus<<endl;
 			if (IntGaus != 0)
 				gaus /= IntGaus;
 
@@ -50,6 +52,8 @@ namespace cpt_b0_analysis
 				result = ROOT::Math::crystalball_function(2. * mean - m_rec, alpha_h, n, sigma, mean);
 			}
 
+			//cout<<"DCB: "<<result<<endl;
+			//cout<<"IntDCB: "<<IntDCB<<endl;
 			if (IntDCB != 0)
 				result /= IntDCB;
 			return (1.0 - f12) * result;
