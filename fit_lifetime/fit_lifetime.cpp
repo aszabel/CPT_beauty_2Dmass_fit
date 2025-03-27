@@ -1,6 +1,5 @@
 #include "pdfs_cpt_model.h"
 #include "decay_parameters.h"
-#include "sweights.h"
 #include "D_M_fit_shape.h"
 #include "M_B_2missPT_fit.h"
 #include "ChebyshevPDF.h"
@@ -177,9 +176,6 @@ int main(int argc, char *argv[]){
 
 	std::string fileWeightsName = "Tree_sWeights";
 	std::string TreeName = "Tree_sWeights";
-	sWeights sW(Config::input_file.c_str(), fileWeightsName.c_str(), TreeName.c_str());
-	sW.get_sWeigths(res, true);
-
 	std::vector<double> *vec_Tau_ptr_plus = nullptr;
 	std::vector<double> *vec_sWeights_ptr_plus = nullptr;
 
@@ -193,7 +189,6 @@ int main(int argc, char *argv[]){
         auto *vec_Tau_plus = vec_Tau_ptr_plus->data();
         auto *vec_sWeights_plus = vec_sWeights_ptr_plus->data();
 
-	sW.get_sWeigths(resbar, false);
 
 	std::vector<double> *vec_Tau_ptr_minus = nullptr;
 	std::vector<double> *vec_sWeights_ptr_minus = nullptr;
