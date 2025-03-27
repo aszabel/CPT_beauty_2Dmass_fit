@@ -1,5 +1,5 @@
 // config.cpp
-#include "config_time.h"
+#include "config.h"
 #include <fstream>
 #include <iomanip>
 #include <iostream>

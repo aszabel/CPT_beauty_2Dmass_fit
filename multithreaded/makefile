@@ -10,11 +10,12 @@ CFLAGS_COMP= -std=c++17 `root-config --cflags` -fopenmp -Wall -O3 -march=haswell
 SRCS1 = src/Dfit_2D_main.cpp 
 SRCS2 = src/Dfit_1D_sidebands.cpp 
 COMMON = ../common/src/D_M_fit_shape.cpp ../common/src/M_B_2missPT_fit.cpp ../common/src/ChebyshevPDF.cpp ../common/src/sweights.cpp
+COMMON_NAMES = $(notdir ${COMMON})
 CONFIG = src/config.cpp
 OBJS1 = $(SRCS1:.cpp=.o)
 OBJS2 = $(SRCS2:.cpp=.o)
 OBJS_CONFIG = $(CONFIG:.cpp=.o)
-OBJS_COMMON = $(COMMON:.cpp=.o)
+OBJS_COMMON = $(COMMON_NAMES:%.cpp=common/%.o)
 
 TARGET1 = fit2D_mass 
 TARGET2 = fit1D_mass
@@ -29,7 +30,11 @@ $(TARGET2): $(OBJS2) $(OBJS_COMMON) $(CONFIG)
 	$(CC) $(CFLAGS)  -o $@ $^
 
 # Compilation
-%.o: %.cpp
+src/%.o: src/%.cpp
+	$(CC) $(CFLAGS_COMP) -c $< -o $@
+
+common/%.o: ../common/src/%.cpp
+	@mkdir -p $(@D)
 	$(CC) $(CFLAGS_COMP) -c $< -o $@
 
 # Clean up

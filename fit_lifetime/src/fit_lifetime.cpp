@@ -11,7 +11,7 @@
 #include <iomanip>
 #include "omp.h"
 #include "json.hpp"
-#include "config_time.h"
+#include "config.h"
 
 // ROOT includes
 #include "TROOT.h"
