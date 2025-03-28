@@ -1,5 +1,5 @@
 // config.cpp
-#include "config_time.h"
+#include "config.h"
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -9,13 +9,18 @@ using json = nlohmann::json;
 using namespace cpt_b0_analysis;
 
 
+bool Config::isMC = false;
+bool Config::binned = false;
+bool Config::calc_sWeights = false;
+bool Config::start_from_previous = false;
+int Config::sign = -1;
 std::string Config::input_file = "";
-std::string Config::r_factor_file = "";
 std::string Config::chainName = "";
+std::string Config::previous_result_file = "";
 
 int Config::nentries = -1;
 
-std::vector<double> Config::tolerance = {} ;
+std::vector<double> Config::tolerance = {};
 int Config::functionCalls = 1e7;
 int Config::printLevel = 1;
 int Config::randSeed = -1;
@@ -26,49 +31,38 @@ double Config::eta_min  = 2.;
 double Config::eta_max = 4.5;
 double Config::tMin  = 1.0;
 double Config::tMax = 15.0;
-double Config::r_factor_min  = 0.0;
-double Config::r_factor_max = 2.0;
-double Config::draw_min  = 0.99;
-double Config::draw_max = 1.01;
-
-
-double Config::Rez = 0.0;
-double Config::Imz = 0.0;
-double Config::eta = 0.99728;
-double Config::alpha = 9.97901;
-double Config::beta = -0.13718;
-double Config::t_shift = -1.24772;
-
-
-
-double Config::imz_start = 0.0;
 
 //Global
 double Config::minDM = 1800.;
 double Config::maxDM = 1940.;
 double Config::minBMcorr = 2700.;
 double Config::maxBMcorr = 8300.;
-int Config::Nbins = 250;
-int Config::nlogBins = 50;
 int Config::nvar_md = 7;
 int Config::nvar_mb = 7;
 int Config::ncontr = 6;
-std::vector<int> Config::ntries = {};
+int Config::ntries = 1;
 
+std::vector<int> Config::int_choose_fits = {};
 std::vector<int> Config::intshapesDM = {};
 std::vector<int> Config::intshapesBMcorr = {};
 
+std::vector<std::string> Config::Fits = {};
 std::vector<std::string> Config::DMshapes = {};
 std::vector<std::string> Config::BMshapes = {};
 
+std::vector<std::string> Config::fixVect = {};
+std::vector<double> Config::fracInit = {};
 
-std::vector<std::vector<std::string>> Config::fixVect = {};
-
-std::vector<std::pair<std::string, double>> Config::varname;
-int Config::nvar_time = 10;
+std::vector<std::string> Config::contrName = {};
+std::vector<std::string> Config::varname_md = {};
+std::vector<std::string> Config::varname_mb = {};
 std::map<std::string, std::string> Config::replace_var;
 std::map<std::string, std::pair<double, double>> Config::varLimitsMap;
 
+std::vector<std::vector<double>> Config::MC_MD={};
+std::vector<std::vector<double>> Config::dMC_MD={};
+std::vector<std::vector<double>> Config::MC_MB={};
+std::vector<std::vector<double>> Config::dMC_MB = {};
 std::vector<std::shared_ptr<PDFInterface>> Config::getVectorPDFs(const std::string& domain) {
 	std::vector<std::shared_ptr<PDFInterface>> vPDFs;
 	if (domain == std::string("Dmass")){
@@ -104,12 +98,126 @@ std::vector<std::shared_ptr<PDFInterface>> Config::getVectorPDFs(const std::stri
 	}	
     	return vPDFs;
 }
+void Config::read_MC(std::vector<std::vector<double>>& xx, std::vector<std::vector<double>>& dxx, std::string MC_directory, int nvar){
+// Read results of 1D fits that are stored as simple text files
+        // Each line corresponds to a single parameter
+        // First column defines parameter value
+        // Second column defines parameter uncertainty
+        // D mass fit
+	xx.reserve(ncontr);
+	dxx.reserve(ncontr);
+        for (int ifile = 0; ifile < ncontr; ifile++)
+        {
+		const int nbuffer = 100;
+		char name[nbuffer];
+		snprintf(name, nbuffer, "%s/res_%s_%d.txt", MC_directory.c_str(), contrName[ifile].c_str(), sign);
+                std::ifstream infile(name);
+		double _x, _dx;
+		std::vector<double> tmp_x = {};
+		std::vector<double> tmp_dx = {};
+                while (infile >> _x >> _dx ){
+			tmp_x.push_back(_x);
+			tmp_dx.push_back(_dx);
+		}
+
+  		xx.emplace_back(std::move(tmp_x));
+  		dxx.emplace_back(std::move(tmp_dx));
+		if (int(xx[ifile].size())!=nvar || int(dxx[ifile].size())!=nvar){
+			std::cerr << " Wrong number of parameters in the MC result file " << name << std::endl;
+        	}
+	}
+}
+
 
 int Config::load(const std::string& filename) {
 	std::ifstream config_file(filename);
         json config = json::parse(config_file);
         config_file.close();
 
+	if (config.contains("sign")) {
+                if (config["sign"].template get<std::string>() == std::string("muplus"))
+                        sign = 1;
+                else if (config["sign"].template get<std::string>() == std::string("muminus"))
+                        sign = 0;
+                else {
+                        std::cerr << "Invalid config file: allowed values for the 'sign' key are 'muplus' or 'muminus'." << std::endl;
+                        return 1;
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'sign' key." << std::endl;
+                return 1;
+        }
+
+        if (config.contains("isMC")) {
+                if (config["isMC"].template get<std::string>() == std::string("true"))
+                        isMC = true;
+                else if (config["isMC"].template get<std::string>() == std::string("false"))
+                        isMC = false;
+                else {
+                        std::cerr << "Invalid config file: allowed values for the 'isMC' key are 'true' or 'false'." << std::endl;
+                        return 1;
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'isMC' key." << std::endl;
+                return 1;
+        }
+
+        if (config.contains("binned")) {
+                if (config["binned"].template get<std::string>() == std::string("true"))
+                        binned = true;
+                else if (config["binned"].template get<std::string>() == std::string("false"))
+                        binned = false;
+                else {
+                        std::cerr << "Invalid config file: allowed values for the 'binned' key are 'true' or 'false'." << std::endl;
+                        return 1;
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'binned' key." << std::endl;
+                return 1;
+        }
+
+        if (config.contains("calc_sWeights")) {
+                if (config["calc_sWeights"].template get<std::string>() == std::string("true"))
+                        calc_sWeights = true;
+                else if (config["calc_sWeights"].template get<std::string>() == std::string("false"))
+                        calc_sWeights = false;
+                else {
+                        std::cerr << "Invalid config file: allowed values for the 'calc_sWeights' key are 'true' or 'false'." << std::endl;
+                        return 1;
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'calc_sWeights' key." << std::endl;
+                return 1;
+        }
+
+        if (config.contains("start_from_previous")) {
+                if (config["start_from_previous"].template get<std::string>() == std::string("true"))
+                        start_from_previous = true;
+                else if (config["start_from_previous"].template get<std::string>() == std::string("false"))
+                        start_from_previous = false;
+                else {
+                        std::cerr << "Invalid config file: allowed values for the 'start_from_previous' key are 'true' or 'false'." << std::endl;
+                        return 1;
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'start_from_previous' key." << std::endl;
+                return 1;
+        }
+
+	struct stat sb;
+       	if (start_from_previous) {
+                if (config.contains("previous_result_file")) {
+                        previous_result_file = config["previous_result_file"].template get<std::string>();
+                        if (stat(previous_result_file.c_str(), &sb)!=0 && start_from_previous){
+                                std::cerr << "Invalid config file: Previous file " <<  previous_result_file << " does not exist." << std::endl;
+                                return 1;
+                        }
+                } else {
+                        std::cerr << "Invalid config file: missing 'previous_result_file' key." << std::endl;
+                        return 1;
+                }
+        }
+ 
 
 	if (config.contains("chainName")) {
                 chainName  = config["chainName"].template get<std::string>();
@@ -164,18 +272,6 @@ int Config::load(const std::string& filename) {
                 return 1;
         }
 
-        if (config.contains("muPTmin")){
-                muPTmin = config["muPTmin"];
-                if (muPmin <0){
-                        std::cerr << "Invalid config file: 'muPTmin' must be positive." << std::endl;
-                        return 1;
-                }
-        }else{
-                std::cerr << "Invalid config file: missing 'muPTmin' key." << std::endl;
-                return 1;
-        }
-
-
         if (config.contains("eta_cut")){
                 auto eta_cut= config["eta_cut"];
                 eta_min = eta_cut[0];
@@ -189,16 +285,7 @@ int Config::load(const std::string& filename) {
                 return 1;
         }
 
-        if (config.contains("draw_cut")){
-                auto draw_cut= config["draw_cut"];
-                draw_min = draw_cut[0];
-                draw_max = draw_cut[1];
-        }else{
-                std::cerr << "Invalid config file: missing 'draw_cut' key." << std::endl;
-                return 1;
-        }
-
-        if (config.contains("t_cut")){
+	if (config.contains("t_cut")){
                 auto t_cut= config["t_cut"];
                 tMin = t_cut[0];
                 tMax = t_cut[1];
@@ -211,13 +298,6 @@ int Config::load(const std::string& filename) {
                 return 1;
         }
 
-	if (config.contains("imz_start")){
-               	imz_start = config["imz_start"];
-        }else{
-                std::cerr << "Invalid config file: missing 'imz_start' key." << std::endl;
-                return 1;
-        }
-
 
         if (config.contains("nentries")){
                 nentries = config["nentries"];
@@ -226,11 +306,10 @@ int Config::load(const std::string& filename) {
                 return 1;
         }
 
-	struct stat sb;
         if (config.contains("input_file")) {
                 input_file = config["input_file"].template get<std::string>();
                 if (stat(input_file.c_str(), &sb)!=0){
-                        std::cerr << "Invalid config file: File " << input_file << " does not exist." << std::endl;
+                        std::cerr << "Invalid config file: Input file " << input_file << " does not exist." << std::endl;
                         return 1;
                 }
         } else {
@@ -238,17 +317,6 @@ int Config::load(const std::string& filename) {
                 return 1;
         }
        
-        if (config.contains("r_factor_file")) {
-                r_factor_file = config["r_factor_file"].template get<std::string>();
-                if (stat(r_factor_file.c_str(), &sb)!=0){
-                        std::cerr << "Invalid config file: File " << r_factor_file << " does not exist." << std::endl;
-                        return 1;
-                }
-        } else {
-                std::cerr << "Invalid config file: missing 'r_factor_file' key." << std::endl;
-                return 1;
-        }
-	
        if (config.contains("DM_range")){
                 auto DM_range = config["DM_range"];
                 minDM = DM_range[0];
@@ -273,37 +341,7 @@ int Config::load(const std::string& filename) {
                 std::cerr << "Invalid config file: missing 'BMcorr_range' key." << std::endl;
                 return 1;
         }
-        if (config.contains("r_factor_range")){
-                auto r_factor_range = config["r_factor_range"];
-                r_factor_min = r_factor_range[0];
-                r_factor_max = r_factor_range[1];
-        }else{
-                std::cerr << "Invalid config file: missing 'r_factor_range' key." << std::endl;
-                return 1;
-        }
-        if (config.contains("Nbins")){
-                Nbins = config["Nbins"];
-                if (Nbins<0){
-                        std::cerr << "Invalid config file: 'Nbins' must be positive." << std::endl;
-                        return 1;
-                }
-        }else{
-                std::cerr << "Invalid config file: missing 'Nbins' key." << std::endl;
-                return 1;
-        }        
-	
-	if (config.contains("nlogBins")){
-                nlogBins = config["nlogBins"];
-                if (nlogBins<0){
-                        std::cerr << "Invalid config file: 'nlogBins' must be positive." << std::endl;
-                        return 1;
-                }
-        }else{
-                std::cerr << "Invalid config file: missing 'nlogBins' key." << std::endl;
-                return 1;
-        }
- 
-         if (config.contains("nvar_md")){
+        if (config.contains("nvar_md")){
                 nvar_md = config["nvar_md"];
                 if (nvar_md<0){
                         std::cerr << "Invalid config file: 'nvar_md' must be positive." << std::endl;
@@ -313,7 +351,7 @@ int Config::load(const std::string& filename) {
                 std::cerr << "Invalid config file: missing 'nvar_md' key." << std::endl;
                 return 1;
         }
-        if (config.contains("nvar_mb")){
+         if (config.contains("nvar_mb")){
                 nvar_mb = config["nvar_mb"];
                 if (nvar_mb<0){
                         std::cerr << "Invalid config file: 'nvar_mb' must be positive." << std::endl;
@@ -322,19 +360,10 @@ int Config::load(const std::string& filename) {
         }else{
                 std::cerr << "Invalid config file: missing 'nvar_mb' key." << std::endl;
                 return 1;
-        } if (config.contains("nvar_time")){
-                nvar_time = config["nvar_time"];
-                if (nvar_mb<0){
-                        std::cerr << "Invalid config file: 'nvar_time' must be positive." << std::endl;
-                        return 1;
-                }
-        }else{
-                std::cerr << "Invalid config file: missing 'nvar_time' key." << std::endl;
-                return 1;
         }
 	         if (config.contains("ntries")){
-                ntries = config["ntries"].template get<std::vector<int>>();
-                if (ntries[0]<=0 || ntries[1]<=0){
+                ntries = config["ntries"];
+                if (ntries<=0){
                         std::cerr << "Invalid config file: 'ntries' must be positive." << std::endl;
                         return 1;
                 }
@@ -343,8 +372,31 @@ int Config::load(const std::string& filename) {
                 return 1;
         }
 	
+	if (config.contains("Fits")) {
+                Fits = config["Fits"].template get<std::vector<std::string>>();
+                if (int(Fits.size())==ncontr){
+                        std::cerr << "Invalid config file: no fits chosen " << std::endl;
+                        return 1;
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'Fits' key." << std::endl;
+                return 1;
+        }	 
+	for (auto fit: Fits){
+                if (dictionaryChooseFit.find(fit) != dictionaryChooseFit.end()) {
+                        int_choose_fits.push_back(dictionaryChooseFit.at(fit));
+
+                } else {
+                        std::cerr << "Fit '" << fit << "' not found. Chose 'frac', 'BM', 'DM+BMfixed', 'shapes' or 'all'" << std::endl;
+                        return 1;
+                }
+        }
 	if (config.contains("tolerance")) {
                 tolerance = config["tolerance"].template get<std::vector<double>>();
+                if(tolerance.size()!=Fits.size()){
+                        std::cerr << " You have to provide the same number of Fits and tolerances\n";
+                        return 1;
+                }
         } else {
                 std::cerr << "Invalid config file: missing 'tolerance' key." << std::endl;
                 return 1;
@@ -391,31 +443,92 @@ int Config::load(const std::string& filename) {
         }
 
 	if (config.contains("fixVect")) {
-                fixVect = config["fixVect"].template get<std::vector<std::vector<std::string>>>();
+                fixVect = config["fixVect"].template get<std::vector<std::string>>();
         } else {
                 std::cerr << "Invalid config file: missing 'fixVect' key." << std::endl;
                 return 1;
         }
 
 	
-        if (config.contains("varname")) {
-                varname = config["varname"].template get<std::vector<std::pair<std::string, double>>>();
-                //for (auto it = entry.begin(); it!=entry.end();++it){
-                        //double target = it.value().template get<double>();
-                        //varname[it.key()] = target;
-			//varname.insert(*it);
-		//}
+	if (config.contains("fracInit")) {
+                fracInit = config["fracInit"].template get<std::vector<double>>();
+		if( int(fracInit.size())!=ncontr){
+			std::cerr << "Invalid config file: vector 'fracInit' should have " << ncontr << " elements.";
+		        return 1;	
+		}
         } else {
-                std::cerr << "Invalid config file: missing 'varname' key." << std::endl;
+                std::cerr << "Invalid config file: missing 'fracInit' key." << std::endl;
                 return 1;
+        }
+        if (config.contains("contrName")) {
+                contrName = config["contrName"].template get<std::vector<std::string>>();
+		if( int(contrName.size())!=ncontr){
+			std::cerr << "Invalid config file: vector 'contrName' should have " << ncontr << " elements.";
+		        return 1;	
+		}
+        } else {
+                std::cerr << "Invalid config file: missing 'contrName' key." << std::endl;
+                return 1;
+        }
+	if (config.contains("varname_md")) {
+                varname_md = config["varname_md"].template get<std::vector<std::string>>();
+                if( int(varname_md.size())!=nvar_md){
+                        std::cerr << "Invalid config file: vector 'varname_md' should have " << nvar_md << " elements.";
+                        return 1;
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'varname_md' key." << std::endl;
+                return 1;
+        }
+	if (config.contains("varname_mb")) {
+                varname_mb = config["varname_mb"].template get<std::vector<std::string>>();
+                if( int(varname_mb.size())!=nvar_mb){
+                        std::cerr << "Invalid config file: vector 'varname_mb' should have " << nvar_mb<< " elements.";
+                        return 1;
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'varname_mb' key." << std::endl;
+                return 1;
+        }
+
+	std::string MC_directory_MD;
+        if (config.contains("MC_directory_MD")) {
+                MC_directory_MD = config["MC_directory_MD"].template get<std::string>();
+                if (stat(MC_directory_MD.c_str(), &sb)!=0){
+                        std::cerr << "Invalid config file: MC_directory_MD " << MC_directory_MD << " does not exist." << std::endl;
+                        return 1;
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'MC_directory_MD' key." << std::endl;
+                return 1;
+        }
+	std::string MC_directory_MB;
+        if (config.contains("MC_directory_MB")) {
+                MC_directory_MB= config["MC_directory_MB"].template get<std::string>();
+                if (stat(MC_directory_MB.c_str(), &sb)!=0){
+                        std::cerr << "Invalid config file: MC_directory_MB " << MC_directory_MB << " does not exist." << std::endl;
+                        return 1;
+                }
+        } else {
+                std::cerr << "Invalid config file: missing 'MC_directory_MB' key." << std::endl;
+                return 1;
+        }
+
+        if(!isMC) {
+                // Initial fit parameter values taken from 1D fits to MC and Side Bands
+                read_MC(MC_MD, dMC_MD, MC_directory_MD, nvar_md);
+                read_MC(MC_MB, dMC_MB, MC_directory_MB, nvar_mb);
         }
 
         if (config.contains("replace_var")) {
                 json entry = config["replace_var"];
                 for (auto it = entry.begin(); it!=entry.end();++it){
-                        std::string target = it.value().template get<std::string>();
-                        replace_var[it.key()] = target;
+                        std::string aim = it.value().template get<std::string>();
+                        replace_var[it.key()] = aim;
 		}
+                for (const auto& rep_var: replace_var){
+                        fixVect.push_back(rep_var.first);
+                }
         } else {
                 std::cerr << "Invalid config file: missing 'replace_var' key." << std::endl;
                 return 1;

@@ -1,0 +1,7 @@
+.vscode
+.ipynb_checkpoints
+*.pcm
+*.d
+*.so
+*.o
+

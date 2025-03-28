@@ -3,8 +3,8 @@
 for i in `seq 0 4`
 do	
 	mkdir -p trees
-	JSON=config_temp.json
-	cp config_inter.json $JSON
+	JSON=trees/config_temp.json
+	cp configs/config_inter.json $JSON
 
 	# Define the key to be replaced and the new value
    	KEY="randSeed"

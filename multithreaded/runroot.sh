@@ -1,7 +1,7 @@
 #!/bin/bash
 mkdir -p results/fit2D_$1
 JSON_FILE="config_example.json"
-cp -r fit2D_mass config_example.json root.sh D_M_results B_M_results results/fit2D_$1
+cp -r fit2D_mass configs/config_example.json root.sh D_M_results B_M_results results/fit2D_$1
 cd results/fit2D_$1
 
 
