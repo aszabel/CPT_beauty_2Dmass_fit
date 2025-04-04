@@ -10,11 +10,14 @@ using namespace cpt_b0_analysis;
 
 
 bool Config::isMC = false;
+bool Config::is2D = true;
 bool Config::binned = false;
 bool Config::calc_sWeights = false;
 bool Config::start_from_previous = false;
 int Config::sign = -1;
-std::string Config::input_file = "";
+std::string Config::category = "";
+int Config::int_category = 0;
+std::vector<std::string> Config::input_files = {};
 std::string Config::chainName = "";
 std::string Config::previous_result_file = "";
 
@@ -52,6 +55,7 @@ std::vector<std::string> Config::BMshapes = {};
 
 std::vector<std::string> Config::fixVect = {};
 std::vector<double> Config::fracInit = {};
+std::vector<std::vector<double>> Config::init_values = {};
 
 std::vector<std::string> Config::contrName = {};
 std::vector<std::string> Config::varname_md = {};
@@ -149,56 +153,43 @@ int Config::load(const std::string& filename) {
         }
 
         if (config.contains("isMC")) {
-                if (config["isMC"].template get<std::string>() == std::string("true"))
-                        isMC = true;
-                else if (config["isMC"].template get<std::string>() == std::string("false"))
-                        isMC = false;
-                else {
-                        std::cerr << "Invalid config file: allowed values for the 'isMC' key are 'true' or 'false'." << std::endl;
-                        return 1;
-                }
+                isMC = config["isMC"];
         } else {
                 std::cerr << "Invalid config file: missing 'isMC' key." << std::endl;
                 return 1;
         }
 
-        if (config.contains("binned")) {
-                if (config["binned"].template get<std::string>() == std::string("true"))
-                        binned = true;
-                else if (config["binned"].template get<std::string>() == std::string("false"))
-                        binned = false;
-                else {
-                        std::cerr << "Invalid config file: allowed values for the 'binned' key are 'true' or 'false'." << std::endl;
+        if (config.contains("category")) {
+                category = config["category"].template get<std::string>();
+                if (dictionaryChooseCategory.find(category) != dictionaryChooseCategory.end()) {
+                        int_category = dictionaryChooseCategory.at(category);
+                } else {
+                        std::cerr << "Category '" << category << "' not found. Chose '2D', '1D_DM', '1D_BM'" << std::endl;
                         return 1;
                 }
+                if (int_category > 0)
+                        is2D = false;
+        } else {
+                std::cerr << "Invalid config file: missing 'fitType' key." << std::endl;
+                return 1;
+        }
+
+        if (config.contains("binned")) {
+                binned = config["binned"];
         } else {
                 std::cerr << "Invalid config file: missing 'binned' key." << std::endl;
                 return 1;
         }
 
         if (config.contains("calc_sWeights")) {
-                if (config["calc_sWeights"].template get<std::string>() == std::string("true"))
-                        calc_sWeights = true;
-                else if (config["calc_sWeights"].template get<std::string>() == std::string("false"))
-                        calc_sWeights = false;
-                else {
-                        std::cerr << "Invalid config file: allowed values for the 'calc_sWeights' key are 'true' or 'false'." << std::endl;
-                        return 1;
-                }
-        } else {
+                calc_sWeights = config["calc_sWeights"];
+        } else if (is2D) {
                 std::cerr << "Invalid config file: missing 'calc_sWeights' key." << std::endl;
                 return 1;
         }
 
         if (config.contains("start_from_previous")) {
-                if (config["start_from_previous"].template get<std::string>() == std::string("true"))
-                        start_from_previous = true;
-                else if (config["start_from_previous"].template get<std::string>() == std::string("false"))
-                        start_from_previous = false;
-                else {
-                        std::cerr << "Invalid config file: allowed values for the 'start_from_previous' key are 'true' or 'false'." << std::endl;
-                        return 1;
-                }
+                start_from_previous = config["start_from_previous"];
         } else {
                 std::cerr << "Invalid config file: missing 'start_from_previous' key." << std::endl;
                 return 1;
@@ -301,16 +292,18 @@ int Config::load(const std::string& filename) {
 
         if (config.contains("nentries")){
                 nentries = config["nentries"];
-        }else{
+        } else if (is2D) {
                 std::cerr << "Invalid config file: missing 'nentries' key." << std::endl;
                 return 1;
         }
 
-        if (config.contains("input_file")) {
-                input_file = config["input_file"].template get<std::string>();
-                if (stat(input_file.c_str(), &sb)!=0){
-                        std::cerr << "Invalid config file: Input file " << input_file << " does not exist." << std::endl;
-                        return 1;
+        if (config.contains("input_files")) {
+                input_files = config["input_files"].template get<std::vector<std::string>>();
+                for (auto file: input_files){
+                        if (stat(file.c_str(), &sb)!=0){
+                                std::cerr << "Invalid config file: Input file " << file << " does not exist." << std::endl;
+                                return 1;
+                        }
                 }
         } else {
                 std::cerr << "Invalid config file: missing 'input_file' key." << std::endl;
@@ -361,13 +354,14 @@ int Config::load(const std::string& filename) {
                 std::cerr << "Invalid config file: missing 'nvar_mb' key." << std::endl;
                 return 1;
         }
-	         if (config.contains("ntries")){
+
+        if (config.contains("ntries")){
                 ntries = config["ntries"];
                 if (ntries<=0){
                         std::cerr << "Invalid config file: 'ntries' must be positive." << std::endl;
                         return 1;
                 }
-        }else{
+        } else if (is2D) {
                 std::cerr << "Invalid config file: missing 'ntries' key." << std::endl;
                 return 1;
         }
@@ -383,12 +377,20 @@ int Config::load(const std::string& filename) {
                 return 1;
         }	 
 	for (auto fit: Fits){
-                if (dictionaryChooseFit.find(fit) != dictionaryChooseFit.end()) {
-                        int_choose_fits.push_back(dictionaryChooseFit.at(fit));
-
+                if (is2D) {
+                        if (dictionaryChooseFit.find(fit) != dictionaryChooseFit.end()) {
+                                int_choose_fits.push_back(dictionaryChooseFit.at(fit));
+                        } else {
+                                std::cerr << "Fit '" << fit << "' not found. Chose 'frac', 'BM', 'DM+BMfixed', 'shapes' or 'all'" << std::endl;
+                                return 1;
+                        }
                 } else {
-                        std::cerr << "Fit '" << fit << "' not found. Chose 'frac', 'BM', 'DM+BMfixed', 'shapes' or 'all'" << std::endl;
-                        return 1;
+                        if (dictionaryChooseFit1D.find(fit) != dictionaryChooseFit1D.end()) {
+                                int_choose_fits.push_back(dictionaryChooseFit1D.at(fit));
+                        } else {
+                                std::cerr << "Fit '" << fit << "' not found. Chose 'signal', 'BuDmunu', 'BsDsMunu', 'B02DpDsm', 'sidebands', 'Bu2D0Dsm'" << std::endl;
+                                return 1;
+                        }
                 }
         }
 	if (config.contains("tolerance")) {
@@ -450,6 +452,24 @@ int Config::load(const std::string& filename) {
         }
 
 	
+        if (!is2D && config.contains("init_values")) {
+                init_values = config["init_values"].template get<std::vector<std::vector<double>>>();
+		if( int(init_values.size())!=ncontr){
+			std::cerr << "Invalid config file: vector 'init_values' should have " << ncontr << " elements.";
+		        return 1;	
+		}
+                int nvars = nvar_md;
+                if (int_category == dictionaryChooseCategory.at("1D_BM"))
+                        nvars = nvar_mb;
+		if( int(init_values[0].size())!=nvars ){
+			std::cerr << "Invalid config file: vector 'init_values[*]' should have " << nvars << " elements.";
+		        return 1;	
+		}
+        } else if (!is2D) {
+                std::cerr << "Invalid config file: missing 'init_values' key." << std::endl;
+                return 1;
+        }
+
 	if (config.contains("fracInit")) {
                 fracInit = config["fracInit"].template get<std::vector<double>>();
 		if( int(fracInit.size())!=ncontr){
@@ -460,6 +480,7 @@ int Config::load(const std::string& filename) {
                 std::cerr << "Invalid config file: missing 'fracInit' key." << std::endl;
                 return 1;
         }
+
         if (config.contains("contrName")) {
                 contrName = config["contrName"].template get<std::vector<std::string>>();
 		if( int(contrName.size())!=ncontr){
@@ -514,7 +535,7 @@ int Config::load(const std::string& filename) {
                 return 1;
         }
 
-        if(!isMC) {
+        if(is2D) {
                 // Initial fit parameter values taken from 1D fits to MC and Side Bands
                 read_MC(MC_MD, dMC_MD, MC_directory_MD, nvar_md);
                 read_MC(MC_MB, dMC_MB, MC_directory_MB, nvar_mb);
@@ -529,7 +550,7 @@ int Config::load(const std::string& filename) {
                 for (const auto& rep_var: replace_var){
                         fixVect.push_back(rep_var.first);
                 }
-        } else {
+        } else if (is2D) {
                 std::cerr << "Invalid config file: missing 'replace_var' key." << std::endl;
                 return 1;
         }

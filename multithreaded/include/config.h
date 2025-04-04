@@ -24,12 +24,25 @@ using namespace cpt_b0_analysis;
 	const std::unordered_map<std::string, const int> dictionaryBMcorr ={
 		{"RCplusGaus", 0}
 	};
+	const std::unordered_map<std::string, const int> dictionaryChooseCategory ={
+		{"2D", 0},
+		{"1D_DM", 1},
+		{"1D_BM", 2},
+	};
 	const std::unordered_map<std::string, const int> dictionaryChooseFit ={
-        	{"frac", 0},
+		{"frac", 0},
 		{"BM", 1},
 		{"DM+BMfixed", 2},
 		{"all", 3},
 		{"shapes", 4}
+	};
+	const std::unordered_map<std::string, const int> dictionaryChooseFit1D ={
+		{"signal", 0},
+		{"BuDmunu", 1},
+		{"BsDsMunu", 2},
+		{"B02DpDsm", 3},
+		{"sidebands", 4},
+		{"Bu2D0Dsm", 5},
 	};
 
 
@@ -42,11 +55,14 @@ public:
 	static std::vector<std::shared_ptr<PDFInterface>> getVectorPDFs(const std::string& domain);
 
 	static bool isMC;
+	static bool is2D;
 	static bool binned;
 	static bool start_from_previous;
 	static bool calc_sWeights;
-    	static int sign;
-    	static std::string input_file;
+	static int sign;
+	static std::string category;
+	static int int_category;
+	static std::vector<std::string> input_files;
     	static std::string previous_result_file;
 
 
@@ -84,6 +100,7 @@ public:
 
 	static std::vector<std::string> fixVect;
 	static std::vector<double> fracInit;
+	static std::vector<std::vector<double>> init_values;
 
 	static std::vector<std::string> contrName;
 	static std::vector<std::string> varname_md;
