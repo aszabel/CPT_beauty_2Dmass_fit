@@ -1,11 +1,12 @@
 {
-  "isMC": "true",	
-  "binned": "false",	
+  "category": "2D",
+  "isMC": true,	
+  "binned": false,	
   "sign":"muplus",
-  "input_file_RD": "/mnt/home/share/lhcb/CPT_beauty/data2016/selected/selected_data2016MagDown.root",
-  "input_fileRD": "/home/szabelskia/LHCb/data2016/tree_missPT_D_M_MagDown25102023_nomassDmuCut/selected_data2016MagDown.root",
-  "input_fileMC": "/mnt/home/aszabelski/missing_mass_fit/unbinned/fit2D_2missPT/validation28102024/generation/toys2M/ToyMC_BM_DM_2.root",
-  "input_file": "/home/szabelskia/LHCb/missing_mass_fit/fitting2D/unbinned/unified_shapes/DM_mcorr_fit_02042024/generation/toys2M/ToyMC_BM_DM_2.root",
+  "__RD_input_files": ["/mnt/home/share/lhcb/CPT_beauty/data2016/selected/selected_data2016MagDown.root"],
+  "__RDLocal_input_files": ["/home/szabelskia/LHCb/data2016/tree_missPT_D_M_MagDown25102023_nomassDmuCut/selected_data2016MagDown.root"],
+  "__MC_input_files": ["/mnt/home/aszabelski/missing_mass_fit/unbinned/fit2D_2missPT/validation28102024/generation/toys2M/ToyMC_BM_DM_2.root"],
+  "input_files": ["/home/szabelskia/LHCb/missing_mass_fit/fitting2D/unbinned/unified_shapes/DM_mcorr_fit_02042024/generation/toys2M/ToyMC_BM_DM_2.root"],
 
   "chainNameRD": "BlindedTree",
   "chainName": "toyMC",
@@ -15,7 +16,7 @@
   "tolerance": [1.0e4], 
   "tol": [5.0e2, 1.0e5],
 
-  "start_from_previous": "true",
+  "start_from_previous": true,
   "previous_result_file": "/home/szabelskia/LHCb/missing_mass_fit/fitting2D/unbinned/unified_shapes/validation09112024_MC/results_binned100kMU_2/fit2D_16/results_1_3.txt",
   
   "MC_directory_MD": "D_M_results",

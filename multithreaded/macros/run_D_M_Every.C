@@ -1,5 +1,4 @@
-void run_D_M_Every(int icontr, int sign, string config_file, bool isUnbinned=true){
-	if (icontr==4) return;
+void run_D_M_Every(string config_file){
 	TStopwatch t;
    	t.Start();
 	gInterpreter->AddIncludePath("../include");
@@ -7,7 +6,7 @@ void run_D_M_Every(int icontr, int sign, string config_file, bool isUnbinned=tru
    	gROOT->ProcessLine(".L ../src/config.cpp+");
    	gROOT->ProcessLine(".L ../../common/src/ChebyshevPDF.cpp+");
    	gROOT->ProcessLine(".L ../../common/src/D_M_fit_shape.cpp+");
-   	gROOT->ProcessLine(Form(".x ../macros/D_M_fit_Every.C(%d, %d, \"%s\", %d)", icontr, sign, config_file.c_str(), isUnbinned));
+   	gROOT->ProcessLine(Form(".x ../macros/D_M_fit_Every.C(\"%s\")", config_file.c_str()));
 	t.Stop();
  	t.Print();
 }

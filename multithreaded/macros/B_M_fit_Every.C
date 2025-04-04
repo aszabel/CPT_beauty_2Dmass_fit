@@ -1,58 +1,46 @@
 #include "D_M_fit_shape.h"
+#include "config.h"
 
 using namespace cpt_b0_analysis;
-void B_M_fit_Every(int choice, int sign, bool isUnbinned=true){
+void B_M_fit_Every(std::string config_file){
 
 	std::string minName = "Minuit2";
  	std::string algoName = "";
-	ROOT::Math::Minimizer* min =
-	ROOT::Math::Factory::CreateMinimizer(minName, algoName);
+	
+
+	gSystem->Exec("mkdir -p B_M_figures B_M_results");
+	// Load config
+	std::cout<<config_file<<endl;
+	if (Config::load(config_file)){
+		std::cerr<< " Bad config file! " << std::endl;
+		return 1;
+	}
+
+	int fit_id = 0;
+	for (auto& choice: Config::int_choose_fits){
+	std::cout<<"##### Running fit: "<<Config::Fits[fit_id]<<endl;
 
 	// set tolerance , etc...
-   	min->SetMaxFunctionCalls(10000000); // for Minuit/Minuit2
+	ROOT::Math::Minimizer* min = ROOT::Math::Factory::CreateMinimizer(minName, algoName);
+   	min->SetMaxFunctionCalls(Config::functionCalls); // for Minuit/Minuit2
    	min->SetMaxIterations(10000);  // for GSL
-   	min->SetTolerance(2.5e0);
-	if(choice==5) min->SetTolerance(2.5e2);
-   	min->SetPrintLevel(2);
+   	min->SetTolerance(Config::tolerance[fit_id]);
+   	min->SetPrintLevel(Config::printLevel);
+	TRandom rand;
+	if (Config::randSeed >-1)
+		rand.SetSeed(Config::randSeed);
 
    	//min->SetStrategy(2);
    	//min->SetPrecision(0.00001);
-   	const int nvar = 7;
-	const int ncontr = 6;
-
-   double minx = 1800.;
-   double maxx = 1940.;
-   double miny = 2700.;
-   double maxy = 8300.;
-	
+  	const int nvar = Config::nvar_md;
+	const int ncontr = Config::ncontr;
 
    	// create funciton wrapper for minmizer
    	// a IMultiGenFunction type
 
-   	TChain ch("BlindedTree");
-	switch (choice){
-		case 0:
-   		ch.Add("/home/szabelskia/LHCb/MC2016/nomassDmuCut/selectedMagDown_B2Dmunu_signal_taustrip_nomassDmuCut/selected_MCsignal25102023.root");
-		break;
-		case 1:
-		ch.Add("/home/szabelskia/LHCb/MC2016/nomassDmuCut/selectedMagDown_B2Dmunu_Bu2Dmunu_taustrip_nomassDmuCut/selected_BuDmunu.root");
-		break;
-		case 2:
-		ch.Add("/home/szabelskia/LHCb/MC2016/nomassDmuCut/selectedMagDown_B2Dmunu_Bs2Dsmunu_taustrip_nomassDmuCut/selected_MCBsDsMunu25102023.root");
-		break;
-		case 3:
-		ch.Add("/home/szabelskia/LHCb/MC2016/nomassDmuCut/selectedMagDown_B2Dmunu_B02DpDsm_taustrip_nomassDmuCut/selected_B02DpDsm.root");
-		break;
-		case 4:
-		ch.Add("/home/szabelskia/LHCb/MC2016/nomassDmuCut/selected_sideband2016MagDown.root");
-		break;
-		case 5:
-		ch.Add("/home/szabelskia/LHCb/MC2016/nomassDmuCut/selectedMagDown_B2Dmunu_Bu2D0Dsm_taustrip_nomassDmuCut/selected_MCBu2D0Dsm.root");
-		break;
-		default:
-		cout << " Unknown channel" << endl;
-		return;
-	}
+	std::cout<<"Load data: "<<Config::input_files[fit_id]<<std::endl;
+   	TChain ch(Config::chainName.c_str());
+	ch.Add(Config::input_files[fit_id].c_str());
 	double B_M, missPT, D_M, mu_PT, mu_P, mu_eta, K_PT;
 	bool charge;
 	ch.SetBranchAddress("B_M", &B_M);
@@ -64,74 +52,81 @@ void B_M_fit_Every(int choice, int sign, bool isUnbinned=true){
    	ch.SetBranchAddress("K_PT", &K_PT);
    	ch.SetBranchAddress("truecharge", &charge);
 
-	std::vector<double> vect_Dmass;
+	std::vector<double> vect_Bmass;
 	int nbins = 40;
-	TH1D *hist = new TH1D("hist", "", nbins, miny, maxy);
-   	for (int i=0; i<ch.GetEntries(); ++i){
+	TH1D *hist = new TH1D("hist", "", nbins, Config::minBMcorr, Config::maxBMcorr);
+
+	int nentries = Config::nentries;
+	if (nentries < 0) nentries = ch.GetEntries(); 
+	if (nentries > ch.GetEntries()){
+		std::cerr << "The value of 'nentries' exceeds the number of events in the file." << std::endl;
+                return 1;
+        }
+	std::cout<<"Events: "<<nentries<<std::endl;
+	double B_MMcorr;
+   	for (int i=0; i<nentries; ++i){
       		ch.GetEntry(i);
-     		if (mu_PT<500 || mu_P<5000 || mu_eta<2 || mu_eta>4.5) continue;
-      		double B_MMcorr = sqrt(B_M * B_M) +2.0*TMath::Abs(missPT);
-      		if (B_MMcorr<miny || B_MMcorr>maxy) continue;
-      		if (D_M<minx || D_M>maxx) continue;
-      		if (int(charge) == sign){
-        	      	vect_Dmass.push_back(B_M+2.0*missPT);
+			if (mu_PT < Config::muPTmin || mu_P < Config::muPmin || mu_eta < Config::eta_min || mu_eta > Config::eta_max)
+      		B_MMcorr = sqrt(B_M * B_M) +2.0*TMath::Abs(missPT);
+			if (B_MMcorr < Config::minBMcorr || B_MMcorr > Config::maxBMcorr)
+				continue;
+			if (D_M < Config::minDM || D_M > Config::maxDM)
+				continue;
+      		if (int(charge) == Config::sign){
+        	      	vect_Bmass.push_back(B_M+2.0*missPT);
               		hist->Fill(B_M+2.0*missPT);
       		}
    	}
-	double  nevents = double(vect_Dmass.size());
-	mb_2misspt_fit mb_shape(miny, maxy);
+	double  nevents = double(vect_Bmass.size());
+	const auto& B_PDFs = Config::getVectorPDFs("Bmass");
 
-	auto fchi2 = [&mb_shape, vect_Dmass](const double *par)->double{
+	auto fchi2 = [&B_PDFs, vect_Bmass, choice](const double *par)->double{
 		double chi2 = 0.0;
-		for (auto dmass: vect_Dmass){
-			double likelihood = mb_shape.func_full(&dmass, par);
+		B_PDFs[choice]->CalcIntegral(par, Config::minBMcorr, Config::maxBMcorr);
+		for (auto bmass: vect_Bmass){
+			double likelihood = B_PDFs[choice]->EvalPDF(&bmass, par);
 			chi2 -= 2.0*log(likelihood);
 		}
 		return chi2;
 	};
-	auto fchi2binned = [&mb_shape, hist, miny, maxy, nevents, nbins](const double *par)->double{
+	auto fchi2binned = [&B_PDFs, hist, nevents, nbins, choice](const double *par)->double{
 		double chi2 = 0;
-		double bin_width = (maxy-miny)/double(nbins);
+		B_PDFs[choice]->CalcIntegral(par, Config::minBMcorr, Config::maxBMcorr);
+		double bin_width = (Config::maxBMcorr-Config::minBMcorr)/double(nbins);
 		   for (int bin=1; bin<=nbins; bin++){
 			   double bincenter = hist->GetBinCenter(bin);
 			   double bincont = hist->GetBinContent(bin);
 			   double err = hist->GetBinError(bin);
-			   double estim = bin_width*double(nevents)*mb_shape.func_full(&bincenter, par);
+			   double estim = bin_width*double(nevents)*B_PDFs[choice]->EvalPDF(&bincenter, par);
 			   if(err!=0.0) chi2+=(bincont-estim)*(bincont-estim)/err/err;
 		   }
 		   return chi2;
 	};
 			   
-	TString varname[nvar] = {"mean_rc", "sigma_rc", "f12_gaus", "mean1_gaus", "sigma1_gaus", "mean2_gaus", "sigma2_gaus"};
-
-        double step = 0.01;
-	double initial [ncontr][nvar] = {
-		5944.83, 1092.15, 0.3, 5183.81, 640.576, 5704.53, 1100,
-		5160.56, 1611.07, 0.719528, 4872.55, 788.412, 5204.5, 806.058,
-		5944.83, 1092.15, 0.3, 5183.81, 640.576, 5704.53, 1100,
-		5944.83, 1092.15, 0.3, 5183.81, 640.576, 5704.53, 1100,
-		5944.83, 1092.15, 0.3, 5183.81, 640.576, 5704.53, 1100,
-		5944.83, 1092.15, 0.3, 5183.81, 640.576, 5704.53, 1100
-	};
-
+	double step = 0.01;
 
 	ROOT::Math::Functor f_binned(fchi2binned, nvar);
 	ROOT::Math::Functor f(fchi2, nvar);
-   	if (isUnbinned) min->SetFunction(f);
-	else min->SetFunction(f_binned);
+   	if (Config::binned) min->SetFunction(f_binned);
+	else min->SetFunction(f);
 
 	for (int ivar=0; ivar<nvar; ivar++){
-		min->SetVariable(ivar, varname[ivar].Data(), initial[choice][ivar], step);
+		min->SetVariable(ivar, Config::varname_mb[ivar].c_str(), Config::init_values[choice][ivar], step);
+		// TODO from config
 		min->SetVariableLowerLimit(ivar, 0.0);
-		min->SetVariableLimits(2, -1.0, 1.0);
+	}
+	min->SetVariableLimits(2, -1.0, 1.0);
+	//list of fixed variables form config
+	for (const auto& fix: Config::fixVect){
+		if (min->VariableIndex(fix) >= 0) {
+			min->FixVariable(min->VariableIndex(fix));
+			std::cout << fix << "  " << min->VariableIndex(fix) << std::endl;
+		}
 	}
 	
    	double CL_normal = ROOT::Math::normal_cdf(1) -  ROOT::Math::normal_cdf(-1);
 
 	min -> SetErrorDef(ROOT::Math::chisquared_quantile(CL_normal, min->NFree()));
-	//min->FixVariable(0);
-	//min->FixVariable(2);
-	//min->FixVariable(6);
 	min->Minimize();
 	//double err_up, err_down;
 	//min->GetMinosError(1, err_up, err_down);
@@ -148,11 +143,12 @@ void B_M_fit_Every(int choice, int sign, bool isUnbinned=true){
    	 	pad1->Draw();
    	 	pad1->cd();
 
-	auto funcDraw = [&mb_shape, min, nevents, miny, maxy, nbins](double *x, double *par)->double{
-		double bin_width = (maxy-miny)/double(nbins);
-		return bin_width*double(nevents)*mb_shape.func_full(x, par);
+	auto funcDraw = [&B_PDFs, min, nevents, nbins, choice](double *x, double *par)->double{
+		B_PDFs[choice]->CalcIntegral(par, Config::minBMcorr, Config::maxBMcorr);
+		double bin_width = (Config::maxBMcorr-Config::minBMcorr)/double(nbins);
+		return bin_width*double(nevents)*B_PDFs[choice]->EvalPDF(x, par);
 	};
-	TF1 *tf1 = new TF1("tf1", funcDraw, miny, maxy, nvar);
+	TF1 *tf1 = new TF1("tf1", funcDraw, Config::minBMcorr, Config::maxBMcorr, nvar);
 	tf1->SetParameters(min->X());
 	hist->DrawClone("ep");
 	tf1->DrawClone("same");
@@ -174,15 +170,16 @@ void B_M_fit_Every(int choice, int sign, bool isUnbinned=true){
     	histpull1D.GetYaxis()->SetLabelSize(0.1);
     	histpull1D.GetXaxis()->SetLabelSize(0.1);
     	histpull1D.DrawClone("hist");
-	gSystem->Exec("mkdir -p B_M_figures B_M_results");
-	TString name[6] = {"signal", "BuDmunu", "BsDsMunu", "B02DpDsm" , "sidebands", "Bu2D0Dsm"};
-	c->SaveAs(Form("B_M_figures/B_M_%s_%d.pdf", name[choice].Data(), sign));
+	c->SaveAs(Form("B_M_figures/B_M_%s_%d.pdf", Config::contrName[choice].c_str(), Config::sign));
 	
-	ofstream outfile(Form("B_M_results/res_%s_%d.txt", name[choice].Data(), sign));
+	ofstream outfile(Form("B_M_results/res_%s_%d.txt", Config::contrName[choice].c_str(), Config::sign));
    	for (int i =0; i< nvar; i++){
         	outfile << min->X()[i] << "  " << min->Errors()[i] << endl;
    	}
    	outfile.close();
+
+	fit_id++;
+	}
 
 }
       

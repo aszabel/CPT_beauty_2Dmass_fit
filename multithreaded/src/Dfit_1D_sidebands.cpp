@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
 
 	// Load data set
 	TChain ch((Config::chainName).c_str());
-	ch.Add(Config::input_file.c_str());
+	ch.Add(Config::input_files[0].c_str());
 	double D_M, mu_PT, mu_P, mu_eta, K_PT, B_M, missPT;
 	double B_MMcorr;
 	bool charge;

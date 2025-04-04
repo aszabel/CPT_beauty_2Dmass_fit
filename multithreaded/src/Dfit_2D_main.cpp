@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
 
 	// Load data set
 	TChain ch((Config::chainName).c_str());
-	ch.Add(Config::input_file.c_str());
+	ch.Add(Config::input_files[0].c_str());
 	double D_M, mu_PT, mu_P, mu_eta, K_PT, B_M, missPT;
 	double B_MMcorr;
 	bool charge;
@@ -426,7 +426,7 @@ while ((itry<=Config::ntries || !goodfit)&&itry<=100){
 
 		std::string fileWeightsName = "Tree_sWeights";
         	std::string TreeName = "Tree_sWeights";
-        	sWeights sW(Config::input_file.c_str(), fileWeightsName.c_str(), TreeName.c_str());
+        	sWeights sW(Config::input_files[0].c_str(), fileWeightsName.c_str(), TreeName.c_str());
         	sW.get_sWeigths(min->X(), Config::sign == 1);
 
 		for (int i = 0; i < Config::ncontr; i++)

@@ -99,6 +99,7 @@ namespace cpt_b0_analysis
 						md_like = D_PDFs[i]->EvalPDF(&mdass, &res[i * Config::nvar_md]);
                 	                	mb_like = B_PDFs[i]->EvalPDF(&mcorr, &res[Config::ncontr * Config::nvar_md + i * Config::nvar_mb]);
 				//std::cout << md_like << "   " << mb_like << "  " << nevents << std::endl;
+				  // TODO REWRITE TO CALCULATE ONCE
 						sum_k += md_like*mb_like*frac[i]*nevents;	
 					}
 					//std::cout << sum_k << " ssssssummmmmmm\n";
@@ -135,7 +136,6 @@ namespace cpt_b0_analysis
 			}
 			vec_Tau.push_back(Tau);
 			vec_sWeights.push_back(sum_n/sum_k);
-			sWeights.push_back(std::make_pair(Tau, sum_n/sum_k));
 		//	std::cout<< sum_n << "  " << sum_k << std::endl;
 		}
 		outtree->Fill();
