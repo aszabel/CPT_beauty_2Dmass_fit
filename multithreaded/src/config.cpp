@@ -368,7 +368,7 @@ int Config::load(const std::string& filename) {
 	
 	if (config.contains("Fits")) {
                 Fits = config["Fits"].template get<std::vector<std::string>>();
-                if (int(Fits.size())==ncontr){
+                if (int(Fits.size())==0){
                         std::cerr << "Invalid config file: no fits chosen " << std::endl;
                         return 1;
                 }

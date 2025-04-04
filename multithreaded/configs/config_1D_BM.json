@@ -1,0 +1,63 @@
+{
+  "category": "1D_BM",
+  "isMC": false,
+  "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
+  "BMshapes": ["RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus"],
+  "binned": false,	
+  "sign":"muplus",
+  "chainName": "BlindedTree",
+  "nentries": -1,
+  "__TOLERANCE__": "Set tolerance per sample choice: MCsignal, BuDmunu, ...",
+  "contrName": ["signal", "BuDmunu", "BsDsMunu", "B02DpDsm", "sidebands", "Bu2D0Dsm"],
+  "Fits": ["signal", "BuDmunu", "BsDsMunu", "B02DpDsm", "sidebands", "Bu2D0Dsm"],
+  "tolerance": [2.5e0, 2.5e0, 2.5e0, 2.5e0, 2.5e0, 2.5e2], 
+  "printLevel": 2,
+  "functionCalls": 1e7,
+  "randSeed": -1,
+  "muPTmin": 500.0,
+  "muPmin": 5000.0,
+  "eta_cut": [2.0, 4.5],
+  "t_cut": [1.0, 15.0],
+  "input_files": [
+    "/mnt/home/share/lhcb/CPT_beauty/MC2016/selected/selectedMagDown_B2Dmunu_signal_taustrip_nomassDmuCut/selected_MCsignal25102023.root",
+    "/mnt/home/share/lhcb/CPT_beauty/MC2016/selected/selectedMagDown_B2Dmunu_Bu2Dmunu_taustrip_nomassDmuCut/selected_BuDmunu.root",
+    "/mnt/home/share/lhcb/CPT_beauty/MC2016/selected/selectedMagDown_B2Dmunu_Bs2Dsmunu_taustrip_nomassDmuCut/selected_MCBsDsMunu25102023.root",
+    "/mnt/home/share/lhcb/CPT_beauty/MC2016/selected/selectedMagDown_B2Dmunu_B02DpDsm_taustrip_nomassDmuCut/selected_B02DpDsm.root",
+    "/mnt/home/share/lhcb/CPT_beauty/data2016/selected_sidebands/selected_sideband2016MagDown.root",
+    "/mnt/home/share/lhcb/CPT_beauty/MC2016/selected/selectedMagDown_B2Dmunu_Bu2D0Dsm_taustrip_nomassDmuCut/selected_MCBu2D0Dsm.root"
+  ],
+
+  "__GLOBAL__": "Here global variables are set",
+  "DM_range": [1800, 1940],
+  "BMcorr_range": [3000, 8000],
+
+  "varname_md": ["sigma", "mean", "sigmaCB", "f12", "alpha", "n", "alpha_h"], 
+  "varname_mb": ["mean_rc", "sigma_rc", "f12_gaus", "mean1_gaus", "sigma1_gaus", "mean2_gaus", "sigma2_gaus"], 
+  "fixVect" : ["sigma", "f12", "n"],
+
+  "nvar_md": 7,
+  "nvar_mb": 7,
+  "ncontr": 6,
+
+  "init_values": [
+		[5944.83, 1092.15, 0.3, 5183.81, 640.576, 5704.53, 1100],
+		[5160.56, 1611.07, 0.719528, 4872.55, 788.412, 5204.5, 806.058],
+		[5944.83, 1092.15, 0.3, 5183.81, 640.576, 5704.53, 1100],
+		[5944.83, 1092.15, 0.3, 5183.81, 640.576, 5704.53, 1100],
+		[5944.83, 1092.15, 0.3, 5183.81, 640.576, 5704.53, 1100],
+		[5944.83, 1092.15, 0.3, 5183.81, 640.576, 5704.53, 1100]
+  ],
+
+  "__KEYS_BELOW_ARE_NOT_USED__": "",
+
+  "start_from_previous": false,
+  "previous_result_file": "",
+  
+  "MC_directory_MD": "D_M_results",
+  "MC_directory_MB": "B_M_results",
+
+  "varLimitsVect":{},
+
+  "fracInit": [0.2, 0.15, 0.15, 0.15, 0.15, 0.15]
+
+}

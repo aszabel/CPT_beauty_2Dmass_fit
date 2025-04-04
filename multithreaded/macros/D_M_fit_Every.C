@@ -121,8 +121,8 @@ void D_M_fit_Every(std::string config_file){
 
 	ROOT::Math::Functor f_binned(fchi2binned, nvar);
 	ROOT::Math::Functor f(fchi2, nvar);
-   	if (Config::binned) min->SetFunction(f);
-	else min->SetFunction(f_binned);
+   	if (Config::binned) min->SetFunction(f_binned);
+	else min->SetFunction(f);
 
 	for (int ivar=0; ivar<nvar; ivar++){
 		min->SetVariable(ivar, Config::varname_md[ivar].c_str(), Config::init_values[choice][ivar], step);
