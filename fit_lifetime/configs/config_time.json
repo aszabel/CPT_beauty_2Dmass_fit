@@ -1,0 +1,68 @@
+{
+  "input_file": "/home/szabelskia/LHCb/data2016/tree_missPT_D_M_MagDown25102023_nomassDmuCut/selected_data2016MagDown.root",
+
+  "r_factor_file": "/home/szabelskia/LHCb/MC2016/studies/k_factor/newMC_r_factor.root",
+
+  "chainName": "BlindedTree",
+
+  "chainNameMC": "toyMC",
+
+
+
+  "Nbins": 250,
+  "nlogBins": 50,
+  "tolerance": [0.01, 1.0e-4], 
+  "ntries": [30, 1],
+  "nentries": 100000,
+  "functionCalls": 1e7,
+  "printLevel": 2,
+  "randSeed": 1,
+
+  "imz_start": 0.0, 
+
+  "muPTmin": 500.0,
+  "muPmin": 5000.0,
+  "eta_cut": [2.0, 4.5],
+  "t_cut": [1.0, 15.0],
+  "draw_cut": [0.99, 1.01],
+
+  "Gamma": 0.6583,
+  "Rez": 0.0,
+  "Imz": 0.0,
+  "eta": 0.99728,
+  "alpha": 9.97901,
+  "beta": -0.13718,
+  "t_shift": -1.24772,
+
+  	"_GLOBAL": "Here glonal bariables are set",
+   "DM_range": [1800, 1940],
+   "BMcorr_range": [3000, 8000],
+   "r_factor_range": [0.0, 2.0],
+   "nvar_md": 7,
+   "nvar_mb": 7,
+   "nvar_time": 10,
+   "ncontr": 6,
+   "varname":   [["rez", 0.0], 
+	   	["imz", 0.0], 
+		["Gamma", 0.6583], 
+		["eta", 0.99728], 
+		["t_shift", -1.24772], 
+		["alpha", 9.97901],
+		["beta", -0.13718], 
+		["t_shift_anti", -1.24772], 
+		["alpha_anti", 9.97901], 
+		["beta_anti", -0.13718]   
+   ],
+
+   "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
+   "BMshapes": ["RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus"],
+
+   "fixVect" : [["rez"],
+	        ["rez", "Gamma", "t_shift", "alpha", "beta"]],
+
+   "replace_var":{	"t_shift_anti": "t_shift",
+	   		"alpha_anti": "alpha",
+			"beta_anti": "beta"},	
+
+   "varLimitsVect":{}
+}
