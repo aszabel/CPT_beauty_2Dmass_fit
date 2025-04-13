@@ -11,7 +11,7 @@ using namespace cpt_b0_analysis;
 
 bool Config::isMC = false;
 bool Config::is2D = true;
-bool Config::binned = false;
+bool Config::binned = true;
 bool Config::calc_sWeights = false;
 bool Config::start_from_previous = false;
 int Config::sign = -1;
@@ -90,6 +90,10 @@ std::vector<std::shared_ptr<PDFInterface>> Config::getVectorPDFs(const std::stri
                         	case 0:
                                 	vPDFs.push_back(std::make_shared<RaisedCosinePlusGaussPDF>());
                                 	break;
+				case 1: 
+                                	vPDFs.push_back(std::make_shared<SkewNormalPlusGausPDF>());
+                                	break;
+						
                         	default:
                                 	std::cerr << "Error while BM_pdf dynamic declaration. Check if shapes from config file refer to the shapes defined in the code." << std::endl;
                                 return std::vector<std::shared_ptr<PDFInterface>>{};

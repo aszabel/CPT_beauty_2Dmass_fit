@@ -1,4 +1,4 @@
-#include "D_M_fit_shape.h"
+#include "M_B_2missPT_fit.h"
 #include "config.h"
 
 using namespace cpt_b0_analysis;
@@ -13,11 +13,12 @@ void B_M_fit_Every(std::string config_file){
 	std::cout<<config_file<<endl;
 	if (Config::load(config_file)){
 		std::cerr<< " Bad config file! " << std::endl;
-		return 1;
+		return;
 	}
 
 	int fit_id = 0;
-	for (auto& choice: Config::int_choose_fits){
+	for (auto& choice: Config::int_choose_fits)
+	{
 	std::cout<<"##### Running fit: "<<Config::Fits[fit_id]<<endl;
 
 	// set tolerance , etc...
@@ -32,7 +33,7 @@ void B_M_fit_Every(std::string config_file){
 
    	//min->SetStrategy(2);
    	//min->SetPrecision(0.00001);
-  	const int nvar = Config::nvar_md;
+  	const int nvar = Config::nvar_mb;
 	const int ncontr = Config::ncontr;
 
    	// create funciton wrapper for minmizer
@@ -60,13 +61,14 @@ void B_M_fit_Every(std::string config_file){
 	if (nentries < 0) nentries = ch.GetEntries(); 
 	if (nentries > ch.GetEntries()){
 		std::cerr << "The value of 'nentries' exceeds the number of events in the file." << std::endl;
-                return 1;
+                return;
         }
 	std::cout<<"Events: "<<nentries<<std::endl;
 	double B_MMcorr;
    	for (int i=0; i<nentries; ++i){
       		ch.GetEntry(i);
 			if (mu_PT < Config::muPTmin || mu_P < Config::muPmin || mu_eta < Config::eta_min || mu_eta > Config::eta_max)
+				continue;	
       		B_MMcorr = sqrt(B_M * B_M) +2.0*TMath::Abs(missPT);
 			if (B_MMcorr < Config::minBMcorr || B_MMcorr > Config::maxBMcorr)
 				continue;
@@ -80,11 +82,16 @@ void B_M_fit_Every(std::string config_file){
 	double  nevents = double(vect_Bmass.size());
 	const auto& B_PDFs = Config::getVectorPDFs("Bmass");
 
+
 	auto fchi2 = [&B_PDFs, vect_Bmass, choice](const double *par)->double{
 		double chi2 = 0.0;
 		B_PDFs[choice]->CalcIntegral(par, Config::minBMcorr, Config::maxBMcorr);
 		for (auto bmass: vect_Bmass){
 			double likelihood = B_PDFs[choice]->EvalPDF(&bmass, par);
+			if (likelihood>=1.0|| likelihood <=0.0)
+			{
+				continue;
+			}
 			chi2 -= 2.0*log(likelihood);
 		}
 		return chi2;
@@ -100,10 +107,10 @@ void B_M_fit_Every(std::string config_file){
 			   double estim = bin_width*double(nevents)*B_PDFs[choice]->EvalPDF(&bincenter, par);
 			   if(err!=0.0) chi2+=(bincont-estim)*(bincont-estim)/err/err;
 		   }
-		   return chi2;
+		   return chi2/double(nbins);
 	};
 			   
-	double step = 0.01;
+	double step = 0.1;
 
 	ROOT::Math::Functor f_binned(fchi2binned, nvar);
 	ROOT::Math::Functor f(fchi2, nvar);
@@ -111,11 +118,17 @@ void B_M_fit_Every(std::string config_file){
 	else min->SetFunction(f);
 
 	for (int ivar=0; ivar<nvar; ivar++){
+		/*if (ivar== 2 || ivar == 3 || ivar == 5 || ivar == 7) 
+			step = 0.01; 
+		else
+			step = 10.0;*/
+		step = 0.01*Config::init_values[choice][ivar]+0.01;
 		min->SetVariable(ivar, Config::varname_mb[ivar].c_str(), Config::init_values[choice][ivar], step);
-		// TODO from config
-		min->SetVariableLowerLimit(ivar, 0.0);
+		//min -> FixVariable(ivar);		
+// TODO from config
 	}
-	min->SetVariableLimits(2, -1.0, 1.0);
+	min->SetVariableLimits(min->VariableIndex("f12"), -1.0, 1.0);
+	min->SetVariableLimits(min->VariableIndex("f12_gaus"), -1.0, 1.0);
 	//list of fixed variables form config
 	for (const auto& fix: Config::fixVect){
 		if (min->VariableIndex(fix) >= 0) {
@@ -146,15 +159,17 @@ void B_M_fit_Every(std::string config_file){
 	auto funcDraw = [&B_PDFs, min, nevents, nbins, choice](double *x, double *par)->double{
 		B_PDFs[choice]->CalcIntegral(par, Config::minBMcorr, Config::maxBMcorr);
 		double bin_width = (Config::maxBMcorr-Config::minBMcorr)/double(nbins);
+		//return double(nevents)*B_PDFs[choice]->EvalPDF(x, par);
 		return bin_width*double(nevents)*B_PDFs[choice]->EvalPDF(x, par);
 	};
 	TF1 *tf1 = new TF1("tf1", funcDraw, Config::minBMcorr, Config::maxBMcorr, nvar);
 	tf1->SetParameters(min->X());
-	hist->DrawClone("ep");
+	hist->Draw("ep");
 	tf1->DrawClone("same");
 	      
 	hist->Sumw2();
     	TH1D histpull1D(*hist);
+	histpull1D.SetName("histpull1D");
     	for (int bin=1; bin<=hist->GetNbinsX(); bin++){
         	double err = hist->GetBinError(bin);
         	if (err==0) continue;
@@ -179,8 +194,11 @@ void B_M_fit_Every(std::string config_file){
    	outfile.close();
 
 	fit_id++;
+	if (hist)
+		delete hist;
+	if(c)
+		delete c;
 	}
-
 }
       
 

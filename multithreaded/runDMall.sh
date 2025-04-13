@@ -6,7 +6,7 @@ JSON_FILE="config_1D_DM.json"
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-source $DIR/setup.sh
+#source $DIR/setup.sh
 mkdir -p results/D_M_results
 mkdir -p results/B_M_results
 

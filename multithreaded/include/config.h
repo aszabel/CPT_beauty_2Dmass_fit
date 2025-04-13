@@ -22,7 +22,8 @@ using namespace cpt_b0_analysis;
 	};
 
 	const std::unordered_map<std::string, const int> dictionaryBMcorr ={
-		{"RCplusGaus", 0}
+		{"RCplusGaus", 0},
+		{"SNplusGaus", 1}
 	};
 	const std::unordered_map<std::string, const int> dictionaryChooseCategory ={
 		{"2D", 0},

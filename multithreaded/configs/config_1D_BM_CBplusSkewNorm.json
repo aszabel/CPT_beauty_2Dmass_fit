@@ -2,7 +2,7 @@
   "category": "1D_BM",
   "isMC": false,
   "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
-  "BMshapes": ["RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus"],
+  "BMshapes": ["SNplusGaus", "SNplusGaus", "SNplusGaus", "SNplusGaus", "SNplusGaus", "SNplusGaus"],
   "binned": false,	
   "sign":"muplus",
   "chainName": "BlindedTree",
@@ -10,8 +10,8 @@
   "__TOLERANCE__": "Set tolerance per sample choice: MCsignal, BuDmunu, ...",
   "contrName": ["signal", "BuDmunu", "BsDsMunu", "B02DpDsm", "sidebands", "Bu2D0Dsm"],
   "Fits": ["signal", "BuDmunu", "BsDsMunu", "B02DpDsm", "sidebands", "Bu2D0Dsm"],
-  "tolerance": [2.5e0, 2.5e0, 2.5e0, 2.5e0, 2.5e0, 2.5e2], 
-  "printLevel": 2,
+  "tolerance": [5.0e0, 1.0e1, 5.0e0, 1.0e0, 1.0e0, 1.0e0], 
+  "printLevel": 1,
   "functionCalls": 1e7,
   "randSeed": -1,
   "muPTmin": 500.0,
@@ -29,25 +29,24 @@
 
   "__GLOBAL__": "Here global variables are set",
   "DM_range": [1800, 1940],
-  "BMcorr_range": [3000, 8000],
+  "BMcorr_range": [3000.0, 8000.0],
 
   "varname_md": ["sigma", "mean", "sigmaCB", "f12", "alpha", "n", "alpha_h"], 
-  "varname_mb": ["mean_rc", "sigma_rc", "f12_gaus", "mean1_gaus", "sigma1_gaus", "mean2_gaus", "sigma2_gaus"], 
-  "fixVect" : ["sigma", "f12", "n"],
+  "varname_mb": ["sigma", "mean", "alpha", "n", "signma_skew", "skew", "mean_skew", "f12"], 
+  "fixVect" : ["n", "skew"],
 
   "nvar_md": 7,
-  "nvar_mb": 7,
+  "nvar_mb": 8,
   "ncontr": 6,
-
   "init_values": [
-		[5944.83, 1092.15, 0.3, 5183.81, 640.576, 5704.53, 1100],
-		[5160.56, 1611.07, 0.719528, 4872.55, 788.412, 5204.5, 806.058],
-		[5944.83, 1092.15, 0.3, 5183.81, 640.576, 5704.53, 1100],
-		[5944.83, 1092.15, 0.3, 5183.81, 640.576, 5704.53, 1100],
-		[5944.83, 1092.15, 0.3, 5183.81, 640.576, 5704.53, 1100],
-		[5944.83, 1092.15, 0.3, 5183.81, 640.576, 5704.53, 1100]
-  ],
-
+	  	[616.874, 6664.99, 1.23544, 4, 1019.74, -3, 6347.19, 0.0485676],
+		[349.657, 4116.25, 0.933414, 1.0, 893.87, -1.55032, 5759.88, 0.0603037],
+		[821.033, 5366.62, 1.71316, 4, 803.974, -2.10132, 6289.14, 0.414641],
+		[500.0, 4000, 1.0, 2.0, 1500, -3.0, 6290.6, 0.5],
+	  	[864.117, 4502.76, 0.842985, 3, 678.114, -0.699315, 5925.12, 0.591565],
+	  	[500.0, 4000, 2.0, 2.0, 1500, -3.0, 6290.6, 0.5]
+  	],
+  "__line_3_init_values": [500.0, 4000, 1.0, 4.0, 1500, -3.0, 6290.6, 0.5],
   "__KEYS_BELOW_ARE_NOT_USED__": "",
 
   "start_from_previous": false,

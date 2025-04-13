@@ -8,12 +8,12 @@ void D_M_fit_Every(std::string config_file){
  	std::string algoName = "";
 
 	
-	gSystem->Exec("mkdir -p D_M_figures D_M_results");
+	//gSystem->Exec("mkdir -p D_M_figures D_M_results");
 	// Load config
 	std::cout<<config_file<<endl;
 	if (Config::load(config_file)){
 		std::cerr<< " Bad config file! " << std::endl;
-		return 1;
+		return;
 	}
 
 	int fit_id = 0;
@@ -59,7 +59,7 @@ void D_M_fit_Every(std::string config_file){
 	if (nentries < 0) nentries = ch.GetEntries(); 
 	if (nentries > ch.GetEntries()){
 		std::cerr << "The value of 'nentries' exceeds the number of events in the file." << std::endl;
-                return 1;
+                return;
         }
 	std::cout<<"Events: "<<nentries<<std::endl;
 	double B_MMcorr;

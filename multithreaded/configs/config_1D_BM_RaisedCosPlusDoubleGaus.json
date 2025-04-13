@@ -1,17 +1,17 @@
 {
-  "category": "1D_DM",
-  "isMC": false,
+  "category": "1D_BM",
+  "isMC": true,
   "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
   "BMshapes": ["RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus"],
-  "binned": true,	
+  "binned": false,	
   "sign":"muplus",
   "chainName": "BlindedTree",
   "nentries": -1,
   "__TOLERANCE__": "Set tolerance per sample choice: MCsignal, BuDmunu, ...",
   "contrName": ["signal", "BuDmunu", "BsDsMunu", "B02DpDsm", "sidebands", "Bu2D0Dsm"],
-  "Fits": ["signal", "BuDmunu", "BsDsMunu", "B02DpDsm", "Bu2D0Dsm"],
-  "tolerance": [1.0e-5, 1.0e-5, 0.01, 1.0e-5, 1.0e-5], 
-  "printLevel": 2,
+  "Fits": ["signal", "BuDmunu", "BsDsMunu", "B02DpDsm", "sidebands", "Bu2D0Dsm"],
+  "tolerance": [1.0e0, 2.5e1, 2.5e1, 2.5e1, 1.0e0, 1.0e0], 
+  "printLevel": 1,
   "functionCalls": 1e7,
   "randSeed": -1,
   "muPTmin": 500.0,
@@ -29,7 +29,7 @@
 
   "__GLOBAL__": "Here global variables are set",
   "DM_range": [1800, 1940],
-  "BMcorr_range": [3000, 8000],
+  "BMcorr_range": [3000.0, 8000.0],
 
   "varname_md": ["sigma", "mean", "sigmaCB", "f12", "alpha", "n", "alpha_h"], 
   "varname_mb": ["mean_rc", "sigma_rc", "f12_gaus", "mean1_gaus", "sigma1_gaus", "mean2_gaus", "sigma2_gaus"], 
@@ -39,13 +39,14 @@
   "nvar_mb": 7,
   "ncontr": 6,
 
+
   "init_values": [
-    [1, 1870.23, 5.88232, 0.0, 2.0, 1.0, 2.12662],
-    [1, 1870.23, 5.0, 0.0, 1.75869, 1.0, 2.12662],
-    [1, 1880.59, 50.893, 0.0, 2.0, 1.0, 1.8],
-    [1, 1870.23, 5.0, 0.0, 1.75869, 1.0, 1.662],
-    [0, 0, 0, 0, 0, 0, 0],
-    [1, 1870.23, 5.88232, 0.0, 1.75869, 1.0, 2.12662]
+		[5894.33, 1069.92, 0.788361, 4942.66, 417.202, 5478.72, 893.963],
+		[5013.54, 1846.08, 0.701658, 4965.36, 1072.52, 5344.74, 517.629],
+		[5851.96, 1095.69, 0.616916, 4990.5, 487.325, 5476.3, 976.718],
+		[4664.21, 2040, 0.90337, 4662.95, 478.28, 4665.2, 1194.71],
+		[4187.93, 1633.7, 0.212447, 5233.58, 622.843, 5414.18, 1263.51],
+		[4634.01, 2238.55, 0.8, 4601.18, 851.903, 5781.62, 1175.88]
   ],
 
   "__KEYS_BELOW_ARE_NOT_USED__": "",
