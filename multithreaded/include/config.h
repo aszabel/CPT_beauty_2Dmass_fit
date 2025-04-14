@@ -65,6 +65,8 @@ public:
 	static int int_category;
 	static std::vector<std::string> input_files;
     	static std::string previous_result_file;
+    	static std::string MC_directory_MD;
+    	static std::string MC_directory_MB;
 
 
     	static int nentries;

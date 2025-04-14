@@ -20,6 +20,8 @@ int Config::int_category = 0;
 std::vector<std::string> Config::input_files = {};
 std::string Config::chainName = "";
 std::string Config::previous_result_file = "";
+std::string Config::MC_directory_MD = "";
+std::string Config::MC_directory_MB = "";
 
 int Config::nentries = -1;
 
@@ -516,24 +518,14 @@ int Config::load(const std::string& filename) {
                 return 1;
         }
 
-	std::string MC_directory_MD;
         if (config.contains("MC_directory_MD")) {
                 MC_directory_MD = config["MC_directory_MD"].template get<std::string>();
-                if (stat(MC_directory_MD.c_str(), &sb)!=0){
-                        std::cerr << "Invalid config file: MC_directory_MD " << MC_directory_MD << " does not exist." << std::endl;
-                        return 1;
-                }
         } else {
                 std::cerr << "Invalid config file: missing 'MC_directory_MD' key." << std::endl;
                 return 1;
         }
-	std::string MC_directory_MB;
         if (config.contains("MC_directory_MB")) {
                 MC_directory_MB= config["MC_directory_MB"].template get<std::string>();
-                if (stat(MC_directory_MB.c_str(), &sb)!=0){
-                        std::cerr << "Invalid config file: MC_directory_MB " << MC_directory_MB << " does not exist." << std::endl;
-                        return 1;
-                }
         } else {
                 std::cerr << "Invalid config file: missing 'MC_directory_MB' key." << std::endl;
                 return 1;

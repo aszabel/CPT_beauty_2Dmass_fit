@@ -54,8 +54,8 @@
   "start_from_previous": false,
   "previous_result_file": "",
   
-  "MC_directory_MD": "D_M_results",
-  "MC_directory_MB": "B_M_results",
+  "MC_directory_MD": "D_M_results_RaisedCosinePlusGaus",
+  "MC_directory_MB": "B_M_results_RaisedCosinePlusGaus",
 
   "varLimitsVect":{},
 

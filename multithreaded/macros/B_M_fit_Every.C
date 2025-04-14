@@ -8,7 +8,6 @@ void B_M_fit_Every(std::string config_file){
  	std::string algoName = "";
 	
 
-	gSystem->Exec("mkdir -p B_M_figures B_M_results");
 	// Load config
 	std::cout<<config_file<<endl;
 	if (Config::load(config_file)){
@@ -16,6 +15,7 @@ void B_M_fit_Every(std::string config_file){
 		return;
 	}
 
+	gSystem->Exec(Form("mkdir -p %s %s_figures", Config::MC_directory_MB.c_str(), Config::MC_directory_MB.c_str()));
 	int fit_id = 0;
 	for (auto& choice: Config::int_choose_fits)
 	{
@@ -185,9 +185,9 @@ void B_M_fit_Every(std::string config_file){
     	histpull1D.GetYaxis()->SetLabelSize(0.1);
     	histpull1D.GetXaxis()->SetLabelSize(0.1);
     	histpull1D.DrawClone("hist");
-	c->SaveAs(Form("B_M_figures/B_M_%s_%d.pdf", Config::contrName[choice].c_str(), Config::sign));
+	c->SaveAs(Form("%s_figures/B_M_%s_%d.pdf", Config::MC_directory_MB.c_str(), Config::contrName[choice].c_str(), Config::sign));
 	
-	ofstream outfile(Form("B_M_results/res_%s_%d.txt", Config::contrName[choice].c_str(), Config::sign));
+	ofstream outfile(Form("%s/res_%s_%d.txt", Config::MC_directory_MB.c_str(),Config::contrName[choice].c_str(), Config::sign));
    	for (int i =0; i< nvar; i++){
         	outfile << min->X()[i] << "  " << min->Errors()[i] << endl;
    	}
