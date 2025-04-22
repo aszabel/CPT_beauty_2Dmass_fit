@@ -15,7 +15,16 @@ void B_M_fit_Every(std::string config_file){
 		return;
 	}
 
-	gSystem->Exec(Form("mkdir -p %s %s_figures", Config::MC_directory_MB.c_str(), Config::MC_directory_MB.c_str()));
+
+	TString binning = "";
+	if (Config::binned)
+		binning = "binned";
+	else 	
+		binning = "unbinned";
+
+	TString path_results = Form("%s_%s", Config::MC_directory_MB.c_str(), binning.Data());
+
+	gSystem->Exec(Form("mkdir -p %s %s_figures", path_results.Data(), path_results.Data()));
 	int fit_id = 0;
 	for (auto& choice: Config::int_choose_fits)
 	{
@@ -185,9 +194,9 @@ void B_M_fit_Every(std::string config_file){
     	histpull1D.GetYaxis()->SetLabelSize(0.1);
     	histpull1D.GetXaxis()->SetLabelSize(0.1);
     	histpull1D.DrawClone("hist");
-	c->SaveAs(Form("%s_figures/B_M_%s_%d.pdf", Config::MC_directory_MB.c_str(), Config::contrName[choice].c_str(), Config::sign));
+	c->SaveAs(Form("%s_figures/B_M_%s_%d.pdf", path_results.Data(), Config::contrName[choice].c_str(), Config::sign));
 	
-	ofstream outfile(Form("%s/res_%s_%d.txt", Config::MC_directory_MB.c_str(),Config::contrName[choice].c_str(), Config::sign));
+	ofstream outfile(Form("%s/res_%s_%d.txt", path_results.Data(),Config::contrName[choice].c_str(), Config::sign));
    	for (int i =0; i< nvar; i++){
         	outfile << min->X()[i] << "  " << min->Errors()[i] << endl;
    	}

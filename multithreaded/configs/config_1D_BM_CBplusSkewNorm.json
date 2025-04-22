@@ -3,7 +3,7 @@
   "isMC": false,
   "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
   "BMshapes": ["SNplusGaus", "SNplusGaus", "SNplusGaus", "SNplusGaus", "SNplusGaus", "SNplusGaus"],
-  "binned": false,	
+  "binned": true,	
   "sign":"muplus",
   "chainName": "BlindedTree",
   "nentries": -1,
