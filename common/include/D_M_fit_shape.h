@@ -21,6 +21,23 @@ namespace cpt_b0_analysis
 		double IntGaus;
 		double IntDCB;
 	};
+
+
+	class JohnsonPlusGaussPDF : public PDFInterface
+	{
+	public:
+		JohnsonPlusGaussPDF();
+		JohnsonPlusGaussPDF(const JohnsonPlusGaussPDF& other)=default;
+		JohnsonPlusGaussPDF(JohnsonPlusGaussPDF&&)=default;
+		~JohnsonPlusGaussPDF() {};
+
+		void CalcIntegral(const double *par, double min, double max);
+		double EvalPDF(const double *xx, const double *par);
+
+	private:
+		double IntGaus;
+		double IntJSU;
+	};
 }
 
 #endif

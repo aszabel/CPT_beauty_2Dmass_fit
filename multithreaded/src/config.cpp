@@ -80,6 +80,10 @@ std::vector<std::shared_ptr<PDFInterface>> Config::getVectorPDFs(const std::stri
                         	case 1:
                                 	vPDFs.push_back(std::make_shared<ChebyshevPDF>());
                                 	break;
+                                case 2:
+                                        vPDFs.push_back(std::make_shared<JohnsonPlusGaussPDF>());
+                                        break;
+
                         	default:
                                 	std::cerr << "Error while DM_pdf dynamic declaration. Check if shapes from config file refer to the shapes defined in the code." << std::endl;
                                 	return std::vector<std::shared_ptr<PDFInterface>>{};

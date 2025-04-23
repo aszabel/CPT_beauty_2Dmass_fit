@@ -4,19 +4,32 @@
 using namespace cpt_b0_analysis;
 void D_M_fit_Every(std::string config_file){
 
+        // Load config
+        std::cout<<config_file<<endl;
+        if (Config::load(config_file)){
+        	std::cerr<< " Bad config file! " << std::endl;
+                return;
+        }
+        
+
+
 	std::string minName = "Minuit2";
  	std::string algoName = "";
 
+       TString binning = "";
+        if (Config::binned)
+                binning = "binned";
+        else
+                binning = "unbinned";
+
+
+        TString path_results = Form("%s_%s", Config::MC_directory_MD.c_str(), binning.Data());
+
+        gSystem->Exec(Form("mkdir -p %s %s_figures", path_results.Data(), path_results.Data()));
 	
-	//gSystem->Exec("mkdir -p D_M_figures D_M_results");
-	// Load config
-	std::cout<<config_file<<endl;
-	if (Config::load(config_file)){
-		std::cerr<< " Bad config file! " << std::endl;
-		return;
-	}
 
 	int fit_id = 0;
+	std::cout << Config::int_choose_fits.size() << " size fits " << std::endl;
 	for (auto& choice: Config::int_choose_fits){
 	std::cout<<"##### Running fit: "<<Config::Fits[fit_id]<<endl;
 	// set tolerance , etc...
@@ -65,15 +78,16 @@ void D_M_fit_Every(std::string config_file){
 	double B_MMcorr;
    	for (int i=0; i<nentries; ++i){
       		ch.GetEntry(i);
-			if (mu_PT < Config::muPTmin || mu_P < Config::muPmin || mu_eta < Config::eta_min || mu_eta > Config::eta_max)
+		if (mu_PT < Config::muPTmin || mu_P < Config::muPmin || mu_eta < Config::eta_min || mu_eta > Config::eta_max)
+			continue;	
       		B_MMcorr = sqrt(B_M * B_M) +2.0*TMath::Abs(missPT);
-			if (B_MMcorr < Config::minBMcorr || B_MMcorr > Config::maxBMcorr)
-				continue;
+		if (B_MMcorr < Config::minBMcorr || B_MMcorr > Config::maxBMcorr)
+			continue;
 			if (D_M < Config::minDM || D_M > Config::maxDM)
-				continue;
+			continue;
       		if (int(charge) == Config::sign){
-				vect_Dmass.push_back(D_M);
-				hist->Fill(D_M);
+			vect_Dmass.push_back(D_M);
+			hist->Fill(D_M);
       		}
    	}
 	double  nevents = double(vect_Dmass.size());
@@ -128,6 +142,8 @@ void D_M_fit_Every(std::string config_file){
 		min->SetVariable(ivar, Config::varname_md[ivar].c_str(), Config::init_values[choice][ivar], step);
 		//min->SetVariableLowerLimit(ivar, 0.0);
 	}
+	if (Config::init_values[choice][3]<1.0e-6)
+			min->FixVariable(0);
 	//list of fixed variables form config
 	for (const auto& fix: Config::fixVect){
 		if (min->VariableIndex(fix) >= 0) {
@@ -167,6 +183,7 @@ void D_M_fit_Every(std::string config_file){
 	};
 	TF1 *tf1 = new TF1("tf1", funcDraw, Config::minDM, Config::maxDM, nvar);
 	tf1->SetParameters(min->X());
+	cout << tf1->Integral(Config::minDM, Config::maxDM)<< " <<<<=====\n";
 	hist->DrawClone("ep");
 	tf1->DrawClone("same");
 	      
@@ -187,9 +204,9 @@ void D_M_fit_Every(std::string config_file){
     	histpull1D.GetYaxis()->SetLabelSize(0.1);
     	histpull1D.GetXaxis()->SetLabelSize(0.1);
     	histpull1D.DrawClone("hist");
-	c->SaveAs(Form("D_M_figures/D_M_%s_%d.pdf", Config::contrName[choice].c_str(), Config::sign));
+	c->SaveAs(Form("%s_figures/D_M_%s_%d.pdf", path_results.Data(), Config::contrName[choice].c_str(), Config::sign));
 	
-	ofstream outfile(Form("D_M_results/res_%s_%d.txt", Config::contrName[choice].c_str(), Config::sign));
+	ofstream outfile(Form("%s/res_%s_%d.txt", path_results.Data(), Config::contrName[choice].c_str(), Config::sign));
    	for (int i =0; i< nvar; i++){
         	outfile << min->X()[i] << "  " << min->Errors()[i] << endl;
    	}

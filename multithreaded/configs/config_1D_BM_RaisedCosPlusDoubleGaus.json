@@ -3,7 +3,7 @@
   "isMC": true,
   "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
   "BMshapes": ["RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus"],
-  "binned": false,	
+  "binned": true,	
   "sign":"muplus",
   "chainName": "BlindedTree",
   "nentries": -1,
@@ -54,7 +54,7 @@
   "start_from_previous": false,
   "previous_result_file": "",
   
-  "MC_directory_MD": "D_M_results_RaisedCosinePlusGaus",
+  "MC_directory_MD": "D_M_results_DCBplusGaus",
   "MC_directory_MB": "B_M_results_RaisedCosinePlusGaus",
 
   "varLimitsVect":{},

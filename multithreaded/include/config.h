@@ -18,7 +18,8 @@ using namespace cpt_b0_analysis;
 	//mapping string values of shape vector onto integer values to use switch afterwards
 	const std::unordered_map<std::string, const int> dictionaryDM ={
 		{"DCBplusGaus", 0},
-		{"Chebyshev", 1}
+		{"Chebyshev", 1},
+		{"JSUplusGaus", 2}
 	};
 
 	const std::unordered_map<std::string, const int> dictionaryBMcorr ={
@@ -65,8 +66,6 @@ public:
 	static int int_category;
 	static std::vector<std::string> input_files;
     	static std::string previous_result_file;
-    	static std::string MC_directory_MD;
-    	static std::string MC_directory_MB;
 
 
     	static int nentries;
@@ -115,6 +114,9 @@ public:
 	static std::vector<std::vector<double>> dMC_MD;
 	static std::vector<std::vector<double>> MC_MB;
 	static std::vector<std::vector<double>> dMC_MB;
+
+	static std::string MC_directory_MD;
+	static std::string MC_directory_MB;
 	
 
 private:
