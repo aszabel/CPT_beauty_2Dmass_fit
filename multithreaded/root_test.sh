@@ -52,13 +52,13 @@ do
 	for j in `seq 0 1`
 	do	
 		cd $HOME
-		best1=$(root -b -q -l "check_toys.C(\"${RESULTS[0]}\", ${sign})" | tail -n 1)
+		#best1=$(root -b -q -l "check_toys.C(\"${RESULTS[0]}\", ${sign})" | tail -n 1)
 
-		best=$(echo $best1| awk '{print $NF}')
-		OLD_value="fit2D_xxxx"
-		NEW_value="fit2D_"$best
-		echo $NEW_value
-		sed -i "s/$OLD_value/${NEW_value}/" "${JSON_FILE[$j]}"
+		#best=$(echo $best1| awk '{print $NF}')
+		#OLD_value="fit2D_xxxx"
+		#NEW_value="fit2D_"$best
+		#echo $NEW_value
+		#sed -i "s/$OLD_value/${NEW_value}/" "${JSON_FILE[$j]}"
 		#for i in `seq 1 ${Nfits[$j]}`
 		#do
 		#	cd $HOME
