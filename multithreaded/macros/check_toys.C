@@ -1,5 +1,5 @@
 //void check_fits(int &best, int itoy){
-void check_toys(string results){
+void check_toys(string results, int sign){
 	double min_chi2 = 1.0e45;
 	double chi2;
 	int status;
@@ -9,9 +9,9 @@ void check_toys(string results){
 	for (int i=1; i<=nfits; i++){
 	//ifstream resin(Form("results/fit2D_%d/results_1_3.txt", i));
 	
-		double res[(7+7)*(nfrac)+2*nfrac];
-		double dres[(7+7)*(nfrac)+2*nfrac];
-	ifstream resin(Form("%s/fit2D_%d/results_0_0.txt", results.c_str(), i));
+		double res[(7+8)*(nfrac)+2*nfrac];
+		double dres[(7+8)*(nfrac)+2*nfrac];
+	ifstream resin(Form("%s/fit2D_%d/results_%d_0.txt", results.c_str(), i, sign));
 		resin>>status>>chi2;
 
 		int j=0;
@@ -24,7 +24,7 @@ void check_toys(string results){
   
 		resin.close();
 		
-		int n0 = (nfrac) * (7 + 7);
+		int n0 = (nfrac) * (7 + 8);
 		if ((status==0||status==1) && chi2<min_chi2 && res[n0+1]<0.2 && res[n0+2] <0.2 && res[n0+3]<0.2&& res[n0+5]<0.2){// && i!=10){
 			min_chi2 = chi2;
 			best = i;

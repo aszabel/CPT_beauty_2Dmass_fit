@@ -4,8 +4,8 @@
   "binned": false,	
   "calc_sWeights": true,	
   "sign":"muplus",
-  "__RD_input_files": ["/mnt/home/share/lhcb/CPT_beauty/data2016/selected/selected_data2016MagDown.root"],
-  "input_files": ["/home/szabelskia/LHCb/data2016/tree_missPT_D_M_MagDown25102023_nomassDmuCut/selected_data2016MagDown.root"],
+  "input_files": ["/mnt/home/share/lhcb/CPT_beauty/data2016/selected/selected_data2016MagDown.root"],
+  "__input_files": ["/home/szabelskia/LHCb/data2016/tree_missPT_D_M_MagDown25102023_nomassDmuCut/selected_data2016MagDown.root"],
   "__MC_input_files": ["/mnt/home/aszabelski/missing_mass_fit/unbinned/fit2D_2missPT/generation_pureMC/gen_change_frac/getTimes/toys2M_plus005_20012025/ToyMC_BM_DM_xxx.root"],
   "__MCLocal_input_files": ["/home/szabelskia/LHCb/missing_mass_fit/fitting2D/unbinned/unified_shapes/DM_mcorr_fit_02042024/generation/toys2M/ToyMC_BM_DM_2.root"],
   "__BS_input_files": ["/mnt/home/aszabelski/missing_mass_fit/unbinned/fit2D_2missPT/bootstrap/bootstrap_data/boot_strap_yyy.root"],
@@ -16,17 +16,17 @@
 
   "Fits": ["all"],
   "Fits_uu": ["DM+BMfixed", "all"],
-  "tolerance": [5.0e3], 
+  "tolerance": [5.0e5], 
   "tol": [5.0e2, 1.0e5],
   "ntries": 5,
 
   "start_from_previous": true,
   "previous_result_file": "results_binned100kMU_2/fit2D_1/results_0_0.txt",
   
-  "MC_directory_MD": "D_M_results",
-  "MC_directory_MB": "B_M_results",
+  "MC_directory_MD": "../../results/D_M_results_DCBplusGaus_unbinned",
+  "MC_directory_MB": "../../results/B_M_results_RaisedCosinePlusGaus_unbinned",
 
-  "nentries": 1e5,
+  "nentries": -1,
 
   "functionCalls": 1e7,
   "printLevel": 2,
@@ -40,12 +40,13 @@
   	"_GLOBAL": "Here glonal bariables are set",
    "DM_range": [1800, 1940],
    "BMcorr_range": [3000, 8000],
-   "nvar_md": 7,
+   "nvar_md": 8,
    "nvar_mb": 7,
    "ncontr": 6,
+   "n_sideband": 2,
 
    "contrName": ["signal", "BuDmunu", "BsDsMunu", "B02DpDsm", "sidebands", "Bu2D0Dsm"],
-   "varname_md": ["sigma", "mean", "sigmaCB", "f12", "alpha", "n", "alpha_h"], 
+   "varname_md": ["sigma", "mean", "sigmaCB", "f12", "alpha", "n", "alpha_h", "n2"], 
    "varname_mb": ["mean_rc", "sigma_rc", "f12_gaus", "mean1_gaus", "sigma1_gaus", "mean2_gaus", "sigma2_gaus"], 
    "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
    "BMshapes": ["RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus"],

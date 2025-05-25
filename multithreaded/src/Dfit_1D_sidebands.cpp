@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
 {
 	// The first, fundamental operation to be performed in order to make ROOT
 	// thread-aware.
-	ROOT::EnableThreadSafety();
+	//ROOT::EnableThreadSafety();
 
 	// Increase printout precision
 	// std::cout<<std::setprecision(40);
@@ -158,7 +158,8 @@ int main(int argc, char *argv[])
 	std::string minName = "Minuit2";
 	std::string algoName = "";
 	int loop_count = 0;
-	for (auto& int_choose_fit: Config::int_choose_fits){
+	for (auto& int_choose_fit: Config::int_choose_fits)
+	{
 		ROOT::Math::Minimizer *min =
 			ROOT::Math::Factory::CreateMinimizer(minName, algoName);
 
@@ -177,7 +178,7 @@ int main(int argc, char *argv[])
 				if (i!=4){
 		       			min->FixVariable(i * Config::nvar_md + ivar);
 				}else{
-					if (ivar>2) 
+					if (ivar>=Config::n_sideband) 
 						min->FixVariable(i * Config::nvar_md + ivar);
 				}
 				if (start_scratch) 
@@ -381,6 +382,7 @@ int main(int argc, char *argv[])
 		for (int i=0; i<Config::ncontr; i++)
 			std::cout << frac_res[i] << "  frac" << i << "  " << double(frac_indeces[i])/double(vect_2D.size()) << std::endl;
 	}
+	std::cout<<loop_count << "return 000000000\n";
 	return 0;
 }
 
@@ -478,7 +480,6 @@ std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr
 			//double bin_width_mb = (Config::maxBMcorr-Config::minBMcorr)/double(nbins_mb);
 			double bin_width_md = (Config::maxDM-Config::minDM)/double(nbins_md);
 			//double histev = hist1D.Integral();
-#pragma omp parallel for
 			for (int bin_md=1; bin_md<=nbins_md; bin_md++)
 			{
 				//for (int bin_mb=1; bin_mb<=nbins_mb; bin_mb++)
@@ -508,7 +509,6 @@ std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr
 					
 		// Main loop that calculates the chi2
 // Main loop that calculates the chi2 - run in parallel using OpenMP
-#pragma omp parallel for
 		for (long int e = 0; e < emax; e++)
 		{
 			double mdass = std::get<0>(vect_2D[e]);

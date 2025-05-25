@@ -2,8 +2,8 @@
 #SBATCH --ntasks=1			# Number of processes
 #SBATCH --time=24:00:00			# Time limit hrs:min:sec
 
-#JSON_FILE="config_1D_BM_CBplusSkewNorm.json"
-JSON_FILE="config_1D_BM_RaisedCosPlusDoubleGaus.json"
+JSON_FILE="config_1D_BM_CBplusSkewNorm.json"
+#JSON_FILE="config_1D_BM_RaisedCosPlusDoubleGaus.json"
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 

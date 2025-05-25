@@ -7,7 +7,7 @@
   "calc_sWeights": false,	
   "sign":"muminus",
   "__RD_input_files": ["/mnt/home/share/lhcb/CPT_beauty/data2016/selected/selected_data2016MagDown.root"],
-  "input_files": ["/home/szabelskia/LHCb/data2016/tree_missPT_D_M_MagDown25102023_nomassDmuCut/selected_data2016MagDown.root"],
+  "input_files": ["/mnt/home/share/lhcb/CPT_beauty/data2016/selected/selected_data2016MagDown.root"],
   "__MC_input_files": ["/mnt/home/aszabelski/missing_mass_fit/unbinned/fit2D_2missPT/generation_pureMC/gen_change_frac/getTimes/toys2M_plus005_2001225/ToyMC_BM_DM_xxx.root"],
   "__MCLocal_input_files": ["/home/szabelskia/LHCb/missing_mass_fit/fitting2D/unbinned/unified_shapes/DM_mcorr_fit_02042024/generation/toys2M/ToyMC_BM_DM_2.root"],
   "__BS_input_files": ["/mnt/home/aszabelski/missing_mass_fit/unbinned/fit2D_2missPT/bootstrap/bootstrap_data/boot_strap_yyy.root"],
@@ -20,10 +20,10 @@
   "tolerance": [1.0e-3], 
   "tol": [0.1],
   
-  "MC_directory_MD": "D_M_results",
-  "MC_directory_MB": "B_M_results",
+  "MC_directory_MD": "../../results/D_M_results_DCBplusGaus_unbinned",
+  "MC_directory_MB": "../../results/B_M_results_RaisedCosinePlusGaus_unbinned",
 
-  "nentries": 100000,
+  "nentries": -1,
   "ntries": 1,
 
   "functionCalls": 1e7,
@@ -38,12 +38,13 @@
   	"_GLOBAL": "Here glonal bariables are set",
    "DM_range": [1800, 1940],
    "BMcorr_range": [3000, 8000],
-   "nvar_md": 7,
+   "nvar_md": 8,
    "nvar_mb": 0,
    "ncontr": 6,
+   "n_sideband": 2,
 
    "contrName": ["signal", "BuDmunu", "BsDsMunu", "B02DpDsm", "sidebands", "Bu2D0Dsm"],
-   "varname_md": ["sigma", "mean", "sigmaCB", "f12", "alpha", "n", "alpha_h"], 
+   "varname_md": ["sigma", "mean", "sigmaCB", "f12", "alpha", "n", "alpha_h", "n2"], 
    "varname_mb": [], 
    "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
    "BMshapes": ["RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus"],

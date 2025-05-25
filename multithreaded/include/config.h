@@ -19,7 +19,8 @@ using namespace cpt_b0_analysis;
 	const std::unordered_map<std::string, const int> dictionaryDM ={
 		{"DCBplusGaus", 0},
 		{"Chebyshev", 1},
-		{"JSUplusGaus", 2}
+		{"JSUplusGaus", 2},
+		{"Exponent", 3}
 	};
 
 	const std::unordered_map<std::string, const int> dictionaryBMcorr ={
@@ -91,6 +92,7 @@ public:
     	static int nvar_md;
     	static int nvar_mb;
     	static int ncontr;
+    	static int n_sideband;
     	static int ntries;
 
 	static std::vector<std::string> Fits;

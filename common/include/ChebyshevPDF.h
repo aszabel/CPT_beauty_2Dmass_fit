@@ -19,6 +19,22 @@ namespace cpt_b0_analysis
 	private:
 		double IntCheb;
 	};
+
+
+	class ExponentPDF : public PDFInterface
+	{
+	public:
+		ExponentPDF();
+		ExponentPDF(const ExponentPDF&) = default;
+		ExponentPDF(ExponentPDF&&) = default;
+		~ExponentPDF() {};
+
+		void CalcIntegral(const double *par, double min, double max);
+		double EvalPDF(const double *xx, const double *par);
+
+	private:
+		double IntExp;
+	};
 }
 
 #endif

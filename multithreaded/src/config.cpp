@@ -45,6 +45,7 @@ double Config::maxBMcorr = 8300.;
 int Config::nvar_md = 7;
 int Config::nvar_mb = 7;
 int Config::ncontr = 6;
+int Config::n_sideband = 2;
 int Config::ntries = 1;
 
 std::vector<int> Config::int_choose_fits = {};
@@ -83,7 +84,10 @@ std::vector<std::shared_ptr<PDFInterface>> Config::getVectorPDFs(const std::stri
                                 case 2:
                                         vPDFs.push_back(std::make_shared<JohnsonPlusGaussPDF>());
                                         break;
-
+				case 3:
+                                	vPDFs.push_back(std::make_shared<ExponentPDF>());
+                                	break;
+                                
                         	default:
                                 	std::cerr << "Error while DM_pdf dynamic declaration. Check if shapes from config file refer to the shapes defined in the code." << std::endl;
                                 	return std::vector<std::shared_ptr<PDFInterface>>{};
@@ -344,6 +348,18 @@ int Config::load(const std::string& filename) {
                 std::cerr << "Invalid config file: missing 'BMcorr_range' key." << std::endl;
                 return 1;
         }
+
+       if (config.contains("n_sideband")){
+                n_sideband = config["n_sideband"];
+                if (n_sideband<0){
+                        std::cerr << "Invalid config file: 'n_sideband' must be positive." << std::endl;
+                        return 1;
+                }
+        }else{
+                std::cerr << "Invalid config file: missing 'n_sideband' key." << std::endl;
+                return 1;
+        }
+
         if (config.contains("nvar_md")){
                 nvar_md = config["nvar_md"];
                 if (nvar_md<0){

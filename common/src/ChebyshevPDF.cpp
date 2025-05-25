@@ -36,4 +36,31 @@ namespace cpt_b0_analysis
 		IntCheb = (1.0 - a2) * max + 0.5 * a1 * max * max + 2. / 3. * a2 * max * max * max - (1.0 - a2) * min - 0.5 * a1 * min * min - 2. / 3. * a2 * min * min * min;
 	}
 
+	ExponentPDF::ExponentPDF()
+	{
+		IntExp = 1.0;
+	}
+	double ExponentPDF::EvalPDF(const double *xx, const double *_par)
+	{
+		auto ExpPDF = [this](const double *x, const double *par) -> double
+		{
+			double m_rec = x[0];
+			double slope = par[0];
+			double exp = TMath::Exp(-slope*m_rec);
+			if (IntExp!=0.0)
+				exp /= IntExp;
+			return exp;
+		};
+
+		return ExpPDF(xx, _par);
+	}
+	void ExponentPDF::CalcIntegral( const double *par, double min, double max)
+	{
+		double slope = par[0];
+		if(slope!=0.0)
+			IntExp = -1./slope*TMath::Exp(-slope*max)+1./slope*TMath::Exp(-slope*min);
+		else 
+			IntExp = 1.0;
+	}
+
 }
