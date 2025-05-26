@@ -20,8 +20,8 @@
   "tolerance": [1.0e-3], 
   "tol": [0.1],
   
-  "MC_directory_MD": "results/D_M_results_DCBplusGaus_unbinned",
-  "MC_directory_MB": "results/B_M_results_RaisedCosinePlusGaus_unbinned",
+  "MC_directory_MD": "../../results/D_M_results_JSUplusGaus_unbinned",
+  "MC_directory_MB": "../../results/B_M_results_CBplusSkewNorm_unbinned",
 
   "nentries": 100000,
   "ntries": 1,

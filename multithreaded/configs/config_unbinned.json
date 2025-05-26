@@ -21,12 +21,12 @@
   "ntries": 5,
 
   "start_from_previous": true,
-  "previous_result_file": "results_binned100kMU_2/fit2D_1/results_0_0.txt",
+  "previous_result_file": "best_results_binned/fit2D_best/results_0_0.txt",
   
   "MC_directory_MD": "../../results/D_M_results_DCBplusGaus_unbinned",
   "MC_directory_MB": "../../results/B_M_results_RaisedCosinePlusGaus_unbinned",
 
-  "nentries": -1,
+  "nentries": 1e5,
 
   "functionCalls": 1e7,
   "printLevel": 2,

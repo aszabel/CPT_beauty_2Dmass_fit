@@ -370,9 +370,17 @@ int main(int argc, char *argv[])
                 frac_res[3] = abs(pa[3]);
                 frac_res[4] = abs(pa[4]);
                 frac_res[5] = abs(pa[5]);
-			results << min->X()[4 * Config::nvar_md + 0] << "  " << min->Errors()[4 * Config::nvar_md + 0] << std::endl;
-			results << min->X()[4 * Config::nvar_md + 1] << "  " << min->Errors()[4 * Config::nvar_md + 1] << std::endl;
-			results << min->X()[Config::ncontr * Config::nvar_md + 4] << "  " << min->Errors()[Config::ncontr * Config::nvar_md + 4] << std::endl;
+	
+                results << min->X()[4 * Config::nvar_md + 0] << "  " << min->Errors()[4 * Config::nvar_md + 0] << std::endl;
+                results << min->X()[4 * Config::nvar_md + 1] << "  " << min->Errors()[4 * Config::nvar_md + 1] << std::endl;
+                results << min->X()[Config::ncontr * Config::nvar_md + 4] << "  " << min->Errors()[Config::ncontr * Config::nvar_md + 4] << std::endl;
+
+	
+/*		for (int i = 0; i < e_all; i++)
+                {
+                        results << min->X()[i] << "  " << min->Errors()[i] << std::endl;
+                }
+ */
 
 		results.close();
 	

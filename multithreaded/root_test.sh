@@ -12,6 +12,9 @@ do
 	JSON_FILE="config_inter.json"
 	JSON_FILE2="config_unbinned.json"
 	JSON_SIDE="config_sidebands.json"
+	#JSON_FILE="config_inter_alt.json"
+	#JSON_FILE2="config_unbinned_alt.json"
+	#JSON_SIDE="config_sidebands_exp.json"
 	cp -r root.sh fit2D_mass fit1D_mass configs/$JSON_FILE configs/$JSON_FILE2 configs/$JSON_SIDE root_test.sh  macros/check_toys.C macros/check_toys_final.C toy_res/toy_$m
 	cd toy_res/toy_$m
 
@@ -42,9 +45,8 @@ do
 	./fit1D_mass ${JSON_SIDE}	
 
 
-	JSON_FILE_UNBINNED="config_unbinned.json"
-	JSON_FILE=("config_inter.json" "config_unbinned_best.json")
-	cp $JSON_FILE_UNBINNED ${JSON_FILE[1]} 
+	JSON_FILE_ARRAY=($JSON_FILE "config_unbinned_best.json")
+	cp $JSON_FILE2 ${JSON_FILE_ARRAY[1]} 
 	HOME=${PWD}
 	RESULTS=("results_binned100kMU_2" "results_unbinned100kMU_2")
 	Nfits=(30 5)
@@ -74,9 +76,9 @@ do
 
 
 			# Use sed to replace the old value with the new value
-			sed -i "s/\"$KEY\": $OLD_VALUE/\"$KEY\": $NEW_VALUE/" "${JSON_FILE[$j]}"
+			sed -i "s/\"$KEY\": $OLD_VALUE/\"$KEY\": $NEW_VALUE/" "${JSON_FILE_ARRAY[$j]}"
 
-  			time ./fit2D_mass ${JSON_FILE[$j]}
+  			time ./fit2D_mass ${JSON_FILE_ARRAY[$j]}
 			#sbatch -p INTEL_HASWELL --time=10:00:00 --cpus-per-task=40 --nodes=1 --job-name="fit2Dfull"  --output="outputs/fit2D_${m}_,${i}.log" root.sh ${JSON_FILE[$j]} 
 		#done
 	done

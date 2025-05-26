@@ -1,7 +1,7 @@
 {
   "category": "2D",
   "start_from_previous": false, 
-  "previous_result_file": "dummy/fit2D_/results_1_3.txt",	  
+  "previous_result_file": "",	  
   "isMC": false,	
   "binned": true,	
   "calc_sWeights": true,	

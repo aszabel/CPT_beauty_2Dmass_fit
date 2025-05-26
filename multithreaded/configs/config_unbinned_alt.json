@@ -1,15 +1,12 @@
 {
   "category": "2D",
-  "start_from_previous": false, 
-  "previous_result_file": "dummy/fit2D_/results_1_3.txt",	  
   "isMC": false,	
-  "binned": true,	
+  "binned": false,	
   "calc_sWeights": true,	
-  "sign":"muminus",
-  "__RD_input_files": ["/mnt/home/share/lhcb/CPT_beauty/data2016/selected/selected_data2016MagDown.root"],
+  "sign":"muplus",
   "input_files": ["/mnt/home/share/lhcb/CPT_beauty/data2016/selected/selected_data2016MagDown.root"],
+  "__input_files": ["/home/szabelskia/LHCb/data2016/tree_missPT_D_M_MagDown25102023_nomassDmuCut/selected_data2016MagDown.root"],
   "__MC_input_files": ["/mnt/home/aszabelski/missing_mass_fit/unbinned/fit2D_2missPT/generation_pureMC/gen_change_frac/getTimes/toys2M_plus005_20012025/ToyMC_BM_DM_xxx.root"],
-  "__input_files": ["/mnt/home/aszabelski/missing_mass_fit/unbinned/fit2D_2missPT/validation28102024/generation/toys2M/ToyMC_BM_DM_2.root"],
   "__MCLocal_input_files": ["/home/szabelskia/LHCb/missing_mass_fit/fitting2D/unbinned/unified_shapes/DM_mcorr_fit_02042024/generation/toys2M/ToyMC_BM_DM_2.root"],
   "__BS_input_files": ["/mnt/home/aszabelski/missing_mass_fit/unbinned/fit2D_2missPT/bootstrap/bootstrap_data/boot_strap_yyy.root"],
 
@@ -17,23 +14,21 @@
   "chainNameMC": "toyMCtime",
   "chainNameBS": "BStree",
 
-  "Fits": ["frac"],
-  "Fits4": ["frac","BM", "DM+BMfixed", "all"],
-  "Fits_": ["frac", "DM+BMfixed", "all"],
-  "sss": ["DM+BMfixed", "all"],
+  "Fits": ["all"],
   "Fits_uu": ["DM+BMfixed", "all"],
-  "tolerance": [1.0e2], 
-  "__4_tolerance": [1.0e2, 5.0e3, 1.0e5, 1.0e5], 
-  "__2_1k_tolerance": [1.0e3, 1.0e5], 
-  "__2_500_tolerance": [5.0e2, 1.0e5],
-  "ntries": 3,
+  "tolerance": [5.0e7], 
+  "tol": [5.0e2, 1.0e5],
+  "ntries": 5,
+
+  "start_from_previous": true,
+  "previous_result_file": "best_results_binned/fit2D_best/results_0_0.txt",
   
   "MC_directory_MD": "../../results/D_M_results_JSUplusGaus_unbinned",
   "MC_directory_MB": "../../results/B_M_results_CBplusSkewNorm_unbinned",
 
-  "nentries": -1,
+  "nentries": 1e5,
 
-  "functionCalls": 1e5,
+  "functionCalls": 1e7,
   "printLevel": 2,
   "randSeed": -1,
 
@@ -52,12 +47,11 @@
 
    "contrName": ["signal", "BuDmunu", "BsDsMunu", "B02DpDsm", "sidebands", "Bu2D0Dsm"],
    "varname_md": ["sigma", "mean", "lambda", "f12", "gamma", "delta"], 
-   "varname_mb": ["sigma_mb", "mean_mb", "alpha", "n", "sigma_skew", "skew", "mean_skew", "f12_mb"],   
+   "varname_mb": ["sigma_mb", "mean_mb", "alpha", "n", "sigma_skew", "skew", "mean_skew", "f12_mb"], 
    "DMshapes": ["JSUplusGaus", "JSUplusGaus", "JSUplusGaus", "JSUplusGaus", "Exponent", "JSUplusGaus"],
    "BMshapes": ["SNplusGaus", "SNplusGaus", "SNplusGaus", "SNplusGaus", "SNplusGaus", "SNplusGaus"],
 
-   "fixVect" : ["signal_n", "signal_alpha_h", "BuDmunu_mean", "BuDmunu_f12", "BuDmunu_n", "BuDmunu_alpha_h", "BsDsMunu_sigma", "BsDsMunu_mean", "BsDsMunu_n", "BsDsMunu_alpha_h", "B02DpDsm_mean", "B02DpDsm_alpha", "B02DpDsm_n", "B02DpDsm_alpha_h", "sidebands_sigmaCB", "sidebands_f12", "sidebands_alpha", "sidebands_n", "sidebands_alpha_h", "Bu2D0Dsm_mean", "Bu2D0Dsm_sigmaCB", "Bu2D0Dsm_alpha", "Bu2D0Dsm_n", "Bu2D0Dsm_alpha_h", "BsDsMunu_f12_gaus"],
-   "fixVect_new" : ["signal_n", "signal_alpha_h", "BuDmunu_mean", "BuDmunu_n", "BuDmunu_alpha_h", "BsDsMunu_sigma", "BsDsMunu_mean", "BsDsMunu_n", "BsDsMunu_alpha_h", "B02DpDsm_mean", "B02DpDsm_alpha", "B02DpDsm_n", "B02DpDsm_alpha_h", "sidebands_sigmaCB", "sidebands_f12", "sidebands_alpha", "sidebands_n", "sidebands_alpha_h", "Bu2D0Dsm_mean", "Bu2D0Dsm_sigmaCB", "Bu2D0Dsm_alpha", "Bu2D0Dsm_n", "Bu2D0Dsm_alpha_h"],
+   "fixVect" : ["sidebands_mean", "sidebands_lambda", "sidebands_f12", "sidebands_gamma", "sidebands_delta", "signal_f12",  "BuDmunu_f12", "B0DpDsm_f12", "Bu2D0Dsm_f12", "signal_n", "signal_skew", "signal_f12_mb", "BuDmunu_n", "BuDmunu_skew", "BuDmunu_f12_mb", "BsDsMunu_n", "BsDsMunu_skew", "BsDsMunu_f12_mb", "B02DpDsm_n", "B02DpDsm_skew", "B02DpDsm_f12_mb", "sidebands_n", "sidebands_skew", "sidebands_f12_mb", "Bu2D0Dsm_n", "Bu2D0Dsm_skew", "Bu2D0Dsm_f12_mb" ],
 
    "replace_var": {
 			"BuDmunu_mean": "signal_mean", 

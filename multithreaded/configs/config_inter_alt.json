@@ -1,7 +1,7 @@
 {
   "category": "2D",
   "start_from_previous": false, 
-  "previous_result_file": "dummy/fit2D_/results_1_3.txt",	  
+  "previous_result_file": "",	  
   "isMC": false,	
   "binned": true,	
   "calc_sWeights": true,	
@@ -53,11 +53,12 @@
    "contrName": ["signal", "BuDmunu", "BsDsMunu", "B02DpDsm", "sidebands", "Bu2D0Dsm"],
    "varname_md": ["sigma", "mean", "lambda", "f12", "gamma", "delta"], 
    "varname_mb": ["sigma_mb", "mean_mb", "alpha", "n", "sigma_skew", "skew", "mean_skew", "f12_mb"],   
+    "__varname_mb": ["mean_rc", "sigma_rc", "f12_gaus", "mean1_gaus", "sigma1_gaus", "mean2_gaus", "sigma2_gaus"],
    "DMshapes": ["JSUplusGaus", "JSUplusGaus", "JSUplusGaus", "JSUplusGaus", "Exponent", "JSUplusGaus"],
    "BMshapes": ["SNplusGaus", "SNplusGaus", "SNplusGaus", "SNplusGaus", "SNplusGaus", "SNplusGaus"],
+   "__BMshapes": ["RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus"],
 
    "fixVect" : ["signal_n", "signal_alpha_h", "BuDmunu_mean", "BuDmunu_f12", "BuDmunu_n", "BuDmunu_alpha_h", "BsDsMunu_sigma", "BsDsMunu_mean", "BsDsMunu_n", "BsDsMunu_alpha_h", "B02DpDsm_mean", "B02DpDsm_alpha", "B02DpDsm_n", "B02DpDsm_alpha_h", "sidebands_sigmaCB", "sidebands_f12", "sidebands_alpha", "sidebands_n", "sidebands_alpha_h", "Bu2D0Dsm_mean", "Bu2D0Dsm_sigmaCB", "Bu2D0Dsm_alpha", "Bu2D0Dsm_n", "Bu2D0Dsm_alpha_h", "BsDsMunu_f12_gaus"],
-   "fixVect_new" : ["signal_n", "signal_alpha_h", "BuDmunu_mean", "BuDmunu_n", "BuDmunu_alpha_h", "BsDsMunu_sigma", "BsDsMunu_mean", "BsDsMunu_n", "BsDsMunu_alpha_h", "B02DpDsm_mean", "B02DpDsm_alpha", "B02DpDsm_n", "B02DpDsm_alpha_h", "sidebands_sigmaCB", "sidebands_f12", "sidebands_alpha", "sidebands_n", "sidebands_alpha_h", "Bu2D0Dsm_mean", "Bu2D0Dsm_sigmaCB", "Bu2D0Dsm_alpha", "Bu2D0Dsm_n", "Bu2D0Dsm_alpha_h"],
 
    "replace_var": {
 			"BuDmunu_mean": "signal_mean", 
@@ -65,7 +66,8 @@
 			"Bu2D0Dsm_mean": "signal_mean"
 		},
 
-   "varLimitsVect":{	"signal_f12":  [-1.0, 1.0], 
+   "varLimitsVect":{},
+   "__varlim":  {	"signal_f12":  [-1.0, 1.0], 
 			"BuDmunu_f12": [-1.0, 1.0], 
 			"BsDsMunu_f12":[-1.0, 1.0], 
 			"B02DpDsm_f12":[-1.0, 1.0], 
@@ -78,9 +80,9 @@
 			"Bu2D0Dsm_f12_mb": [-1.0, 1.0]
 		},
 
-   "_old_fracInit": [0.531364, 0.123454, 0.00900857, 0.0171418, 0.317511],
-   "fracInit_org": [0.544221, 0.128957, 0.0182142, 0.0354018, 0.238786],
-   "fracInitMC": [0.5, 0.06, 0.027, 0.06, 0.24],
-   "fracInit": [0.2, 0.15, 0.15, 0.15, 0.15, 0.15]
+   "__old_fracInit": [0.531364, 0.123454, 0.00900857, 0.0171418, 0.317511],
+   "__fracInit_org": [0.544221, 0.128957, 0.0182142, 0.0354018, 0.238786],
+   "__fracInitMC": [0.5, 0.06, 0.027, 0.06, 0.24],
+   "fracInit": [0.58, 0.09, 0.01, 0.01, 0.30, 0.01]
 
 }

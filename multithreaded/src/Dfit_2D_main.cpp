@@ -161,10 +161,12 @@ int main(int argc, char *argv[])
 	std::string algoName = "";
 	int itry = 1;
 	bool goodfit = false;
+        int last_fit = -1;
 while ((itry<=Config::ntries || !goodfit)&&itry<=100){
 	bool start_scratch = true;
 	int loop_count = 0;
 	for (auto& int_choose_fit: Config::int_choose_fits){
+		last_fit = int_choose_fit;
 		ROOT::Math::Minimizer *min =
 			ROOT::Math::Factory::CreateMinimizer(minName, algoName);
 
@@ -229,6 +231,7 @@ while ((itry<=Config::ntries || !goodfit)&&itry<=100){
 		for (int i = 0; i < Config::ncontr; i++)
 		{
 			min->SetVariable((Config::nvar_md + Config::nvar_mb) * Config::ncontr + i, (TString::Format("par_frac%d", i)).Data(), Config::fracInit[i], 0.001);
+			min->FixVariable((Config::nvar_md + Config::nvar_mb) * Config::ncontr + Config::ncontr-1);
                 	//min->SetVariableLimits((Config::nvar_md + Config::nvar_mb) * Config::ncontr + i, -1.0, 1.0);
 			if (start_scratch) 
 				starting_point[(Config::nvar_md + Config::nvar_mb) * Config::ncontr + i] = Config::fracInit[i];
@@ -286,8 +289,8 @@ while ((itry<=Config::ntries || !goodfit)&&itry<=100){
 		}
 
 		double frac_sidebands = -0.270922;
-		if (int_choose_fit==dictionaryChooseFit.at("BM")){
-			std::ifstream sideband_input(Form("../../results1D_DM_%d_%d.txt", Config::sign, int_choose_fit)); 
+		if (int_choose_fit==dictionaryChooseFit.at("frac")){
+			std::ifstream sideband_input(Form("results1D_DM_%d_1.txt", Config::sign)); 
 			double a1 = -0.00102346;
 			double a2 = 1.32508e-07;
 			double dD = 0.0;
@@ -296,8 +299,10 @@ while ((itry<=Config::ntries || !goodfit)&&itry<=100){
 			sideband_input>>a2>>dD;
 			sideband_input>>frac_sidebands>>dD;
 			std::cout << "========================================\n read data " << a1 << "  " << a2 << "  " << frac_sidebands << std::endl;
-			min->SetVariableValue(4 * Config::nvar_md+0, a1);
-			min->SetVariableValue(4 * Config::nvar_md+1, a2);
+			double a_pair[] = {a1, a2};
+			for (int ivar = 0; ivar<Config::n_sideband; ivar++)
+				min->SetVariableValue(4 * Config::nvar_md+ivar, a_pair[ivar]);
+			min->SetVariableValue(Config::ncontr*(Config::nvar_md+Config::nvar_mb)+4, frac_sidebands);
 		}
 		double sumc = abs(frac_sidebands);
 		for (int icontr=0; icontr<Config::ncontr; icontr++){
@@ -417,7 +422,6 @@ while ((itry<=Config::ntries || !goodfit)&&itry<=100){
 			start_scratch = false;
 		}
 		for (int i = 0; i < n_all; i++)
-		//for (int i = 0; i < (nvar_md + nvar_mb) * ncontr + ncontr; i++)
 		{
 			results << min->X()[i] << "  " << min->Errors()[i] << std::endl;
 			if(previous_fit) starting_point[i] = min->X()[i];
@@ -453,6 +457,50 @@ while ((itry<=Config::ntries || !goodfit)&&itry<=100){
 	}
 	itry++;
 }
+       double min_chi2 = 1.0e45;
+        double chi2;
+        int status;
+        int best = -1;
+	TString result_dir;
+	if (Config::binned)
+		result_dir = "results_binned100kMU_2";
+	else 	
+		result_dir = "results_unbinned100kMU_2";
+        for (int i=1; i<=itry; i++){
+           double res[(Config::nvar_md+Config::nvar_mb)*Config::ncontr+2*Config::ncontr];
+               double dres[(Config::nvar_md+Config::nvar_mb)*Config::ncontr+2*Config::ncontr];
+        std::ifstream resin(Form("%s/fit2D_%d/results_%d_%d.txt", result_dir.Data(), i, Config::sign, last_fit));
+                resin>>status>>chi2;
+
+                int j=0;
+                double  x, dx;
+                while (resin>>x>>dx){
+                        res[j] = abs(x);
+                        dres[j] = dx;
+                        j++;
+                }
+
+                resin.close();
+
+                int n0 = (Config::ncontr) * (Config::nvar_md + Config::nvar_mb);
+                if ((status==0||status==1) && chi2<min_chi2){// && res[n0+1]<0.2 && res[n0+2] <0.2 && res[n0+3]<0.2&& res[n0+5]<0.2){// && i!=10){
+                        min_chi2 = chi2;
+                        best = i;
+                }
+        }
+                TString path, best_path;
+                if (Config::binned){
+                        path = TString::Format("results_binned100kMU_2/fit2D_%d/", best);
+                        best_path="best_results_binned/fit2D_best";
+                }
+                else{
+                        path = TString::Format("results_unbinned100kMU_2/fit2D_%d/", best);
+                        best_path="best_results_unbinned/fit2D_best/";
+                }
+                gSystem->Exec(TString::Format("mkdir -p  %s", best_path.Data()).Data());
+                gSystem->Exec(TString::Format("cp -r  %s/* %s", path.Data(), best_path.Data()).Data());
+        
+
 	return 0;
 }
 
@@ -475,15 +523,15 @@ std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr
 
 		double chi2 = 0.0;
 		double sum_frac = 0.0;
-		for (int i=0; i < Config::ncontr; i++){
+		for (int i=0; i < Config::ncontr-1; i++){
 			frac[i] = abs(pa[i]);
 			sum_frac+=frac[i];
 		}
-		double tmp = 1.0e5*(sum_frac-1.0)*(sum_frac-1.0);
+		frac[Config::ncontr-1] = abs(1.0-sum_frac);
+		double tmp = 1.0e10*(sum_frac-1.0)*(sum_frac-1.0);
 		if(!Config::binned) 
 			tmp *= emax;
 		chi2 += tmp;
-		//frac[Config::ncontr-1] = abs(1.0-sum_frac);
 
 	        /*frac[0] = 1.0 - abs(pa[0]);
                 frac[1] = abs(pa[0]) * (1.0 - abs(pa[1]));
@@ -548,7 +596,6 @@ std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr
 		double *vect_chi2 = new double[vect_2D.size()]; // Per event results - required to efficiently calculate a Kahan compensated sum
 		for (int jj = 0; jj<int(vect_2D.size()); jj++)
 				vect_chi2[jj] = 0.0;
-		double test_chi2 = 0.0; 
 		if (Config::binned)
 		{
 			double bin_width_mb = (Config::maxBMcorr-Config::minBMcorr)/double(nbins_mb);
@@ -568,16 +615,17 @@ std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr
 						double mb_val = B_PDFs_get[i]->EvalPDF(&mcorr, &param[Config::ncontr * Config::nvar_md + i * Config::nvar_mb]);
 						sum_contr += histev*bin_width_md*bin_width_mb*frac[i]*mb_val*md_val; 
 						//std::cout << sum_contr << "  sumcontr  " << frac[i] << "  " << md_val << "  " << mb_val << std::endl;
+						if ( frac[i] <0.0 || frac[i] >1.0){
+							chi2+=1e15;
+							continue;
+						}
 					}
 					double cont = (double)hist2D.GetBinContent(bin_md, bin_mb);
 					double err  = (double)hist2D.GetBinError(bin_md, bin_mb);
 					if (err !=0.0)
 					{ 
 						vect_chi2[bin_md-1]+=0.5*(sum_contr-cont)*(sum_contr-cont)/err/err;
-						test_chi2+=0.5*(sum_contr-cont)*(sum_contr-cont)/err/err;
-						//std::cout << bin_md << "   "  << bin_mb << "  " << cont << "  " << sum_contr << "  " << sum_contr/cont << std::endl; 
 					}
-					//std::cout << test_chi2 << " chi2 \n";
 				}
 			}
 		}else{
@@ -636,7 +684,8 @@ std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr
 		chi2 += chi2_threads;
 		// std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 		// std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
-		if (!Config::binned) chi2 += log(double(emax));		//Extended ML 
+		if (!Config::binned) 
+			chi2 += log(double(emax));		//Extended ML 
 
 		 
 		

@@ -3,7 +3,7 @@
   "isMC": false,
   "DMshapes": ["JSUplusGaus", "JSUplusGaus", "JSUplusGaus", "JSUplusGaus", "Chebyshev", "JSUplusGaus"],
   "BMshapes": ["RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus"],
-  "binned": true,	
+  "binned": false,	
   "sign":"muplus",
   "chainName": "BlindedTree",
   "nentries": -1,
