@@ -18,7 +18,7 @@
   "Fits_uu": ["DM+BMfixed", "all"],
   "tolerance": [5.0e7], 
   "tol": [5.0e2, 1.0e5],
-  "ntries": 5,
+  "ntries": 1,
 
   "start_from_previous": true,
   "previous_result_file": "best_results_binned/fit2D_best/results_0_0.txt",
@@ -26,7 +26,7 @@
   "MC_directory_MD": "../../results/D_M_results_JSUplusGaus_unbinned",
   "MC_directory_MB": "../../results/B_M_results_CBplusSkewNorm_unbinned",
 
-  "nentries": 1e5,
+  "nentries": 5e5,
 
   "functionCalls": 1e7,
   "printLevel": 2,

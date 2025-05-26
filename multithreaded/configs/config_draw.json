@@ -3,7 +3,7 @@
   "isMC": false,	
   "binned": false,	
   "calc_sWeights": true,	
-  "sign":"muplus",
+  "sign":"muminus",
   "input_files": ["/mnt/home/share/lhcb/CPT_beauty/data2016/selected/selected_data2016MagDown.root"],
   "__input_files": ["/home/szabelskia/LHCb/data2016/tree_missPT_D_M_MagDown25102023_nomassDmuCut/selected_data2016MagDown.root"],
   "__MC_input_files": ["/mnt/home/aszabelski/missing_mass_fit/unbinned/fit2D_2missPT/generation_pureMC/gen_change_frac/getTimes/toys2M_plus005_20012025/ToyMC_BM_DM_xxx.root"],
@@ -20,11 +20,11 @@
   "tol": [5.0e2, 1.0e5],
   "ntries": 1,
 
-  "start_from_previous": true,
-  "previous_result_file": "best_results_binned/fit2D_best/results_0_0.txt",
+  "start_from_previous": false,
+  "previous_result_file": "",
   
-  "MC_directory_MD": "../../results/D_M_results_DCBplusGaus_unbinned",
-  "MC_directory_MB": "../../results/B_M_results_RaisedCosinePlusGaus_unbinned",
+  "MC_directory_MD": "../results/D_M_results_DCBplusGaus_unbinned",
+  "MC_directory_MB": "../results/B_M_results_RaisedCosinePlusGaus_unbinned",
 
   "nentries": 5e5,
 
