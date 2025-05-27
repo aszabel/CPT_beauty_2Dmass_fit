@@ -26,11 +26,11 @@
   "MC_directory_MD": "../results/D_M_results_JSUplusGaus_unbinned",
   "MC_directory_MB": "../results/B_M_results_CBplusSkewNorm_unbinned",
 
-  "nentries": 5e5,
+  "nentries": -1,
 
   "functionCalls": 1e7,
   "printLevel": 2,
-  "randSeed": 3,
+  "randSeed": 2,
 
   "muPTmin": 500.0,
   "muPmin": 5000.0,

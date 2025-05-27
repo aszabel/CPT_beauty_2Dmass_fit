@@ -18,7 +18,7 @@
   "Fits_uu": ["DM+BMfixed", "all"],
   "tolerance": [5.0e7], 
   "tol": [5.0e2, 1.0e5],
-  "ntries": 1,
+  "ntries": 3,
 
   "start_from_previous": true,
   "previous_result_file": "best_results_binned/fit2D_best/results_0_0.txt",
@@ -26,7 +26,7 @@
   "MC_directory_MD": "../../results/D_M_results_JSUplusGaus_unbinned",
   "MC_directory_MB": "../../results/B_M_results_CBplusSkewNorm_unbinned",
 
-  "nentries": 5e5,
+  "nentries": -1,
 
   "functionCalls": 1e7,
   "printLevel": 2,
@@ -51,7 +51,7 @@
    "DMshapes": ["JSUplusGaus", "JSUplusGaus", "JSUplusGaus", "JSUplusGaus", "Exponent", "JSUplusGaus"],
    "BMshapes": ["SNplusGaus", "SNplusGaus", "SNplusGaus", "SNplusGaus", "SNplusGaus", "SNplusGaus"],
 
-   "fixVect" : ["sidebands_mean", "sidebands_lambda", "sidebands_f12", "sidebands_gamma", "sidebands_delta", "signal_f12",  "BuDmunu_f12", "B0DpDsm_f12", "Bu2D0Dsm_f12", "signal_n", "signal_skew", "signal_f12_mb", "BuDmunu_n", "BuDmunu_skew", "BuDmunu_f12_mb", "BsDsMunu_n", "BsDsMunu_skew", "BsDsMunu_f12_mb", "B02DpDsm_n", "B02DpDsm_skew", "B02DpDsm_f12_mb", "sidebands_n", "sidebands_skew", "sidebands_f12_mb", "Bu2D0Dsm_n", "Bu2D0Dsm_skew", "Bu2D0Dsm_f12_mb" ],
+   "fixVect" : ["sidebands_mean", "sidebands_lambda", "sidebands_f12", "sidebands_gamma", "sidebands_delta", "signal_f12",  "BuDmunu_f12", "B0DpDsm_f12", "Bu2D0Dsm_f12", "signal_n", "signal_skew", "BuDmunu_n", "BuDmunu_skew", "BsDsMunu_n", "BsDsMunu_skew", "B02DpDsm_n", "B02DpDsm_skew", "sidebands_n", "sidebands_skew", "Bu2D0Dsm_n", "Bu2D0Dsm_skew" ],
 
    "replace_var": {
 			"BuDmunu_mean": "signal_mean", 

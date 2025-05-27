@@ -9,12 +9,12 @@ do
         m=$(($t*1+$k))
 
 	mkdir -p toy_res/toy_$m
-	#JSON_FILE="config_inter.json"
-	#JSON_FILE2="config_unbinned.json"
-	#JSON_SIDE="config_sidebands.json"
-	JSON_FILE="config_inter_alt.json"
-	JSON_FILE2="config_unbinned_alt.json"
-	JSON_SIDE="config_sidebands_exp.json"
+	JSON_FILE="config_inter.json"
+	JSON_FILE2="config_unbinned.json"
+	JSON_SIDE="config_sidebands.json"
+	#JSON_FILE="config_inter_alt.json"
+	#JSON_FILE2="config_unbinned_alt.json"
+	#JSON_SIDE="config_sidebands_exp.json"
 	cp -r root.sh fit2D_mass fit1D_mass configs/$JSON_FILE configs/$JSON_FILE2 configs/$JSON_SIDE root_test.sh  macros/check_toys.C macros/check_toys_final.C toy_res/toy_$m
 	cd toy_res/toy_$m
 

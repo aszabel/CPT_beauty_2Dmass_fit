@@ -16,9 +16,9 @@
 
   "Fits": ["all"],
   "Fits_uu": ["DM+BMfixed", "all"],
-  "tolerance": [5.0e5], 
+  "tolerance": [5.0e7], 
   "tol": [5.0e2, 1.0e5],
-  "ntries": 1,
+  "ntries": 3,
 
   "start_from_previous": true,
   "previous_result_file": "best_results_binned/fit2D_best/results_0_0.txt",
@@ -26,7 +26,7 @@
   "MC_directory_MD": "../../results/D_M_results_DCBplusGaus_unbinned",
   "MC_directory_MB": "../../results/B_M_results_RaisedCosinePlusGaus_unbinned",
 
-  "nentries": 5e5,
+  "nentries": -1,
 
   "functionCalls": 1e7,
   "printLevel": 2,
@@ -51,7 +51,7 @@
    "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
    "BMshapes": ["RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus"],
 
-   "fixVect" : ["signal_n", "signal_alpha_h", "BuDmunu_mean", "BuDmunu_f12", "BuDmunu_n", "BuDmunu_alpha_h", "BsDsMunu_sigma", "BsDsMunu_mean", "BsDsMunu_n", "BsDsMunu_alpha_h", "B02DpDsm_mean", "B02DpDsm_alpha", "B02DpDsm_n", "B02DpDsm_alpha_h", "sidebands_sigmaCB", "sidebands_f12", "sidebands_alpha", "sidebands_n", "sidebands_alpha_h", "Bu2D0Dsm_mean", "Bu2D0Dsm_sigmaCB", "Bu2D0Dsm_alpha", "Bu2D0Dsm_n", "Bu2D0Dsm_alpha_h", "BsDsMunu_f12_gaus"],
+   "fixVect" : ["signal_n", "signal_n2", "signal_alpha_h", "BuDmunu_mean", "BuDmunu_f12", "BuDmunu_n", "BuDmunu_n2", "BuDmunu_alpha_h", "BsDsMunu_sigma", "BsDsMunu_mean", "BsDsMunu_n", "BsDsMunu_n2", "BsDsMunu_alpha_h", "B02DpDsm_mean", "B02DpDsm_alpha", "B02DpDsm_n", "B02DpDsm_n2", "B02DpDsm_alpha_h", "sidebands_sigmaCB", "sidebands_f12", "sidebands_alpha", "sidebands_n", "sidebands_n2", "sidebands_alpha_h", "Bu2D0Dsm_mean", "Bu2D0Dsm_sigmaCB", "Bu2D0Dsm_alpha", "Bu2D0Dsm_n", "Bu2D0Dsm_n2", "Bu2D0Dsm_alpha_h", "BsDsMunu_f12_gaus"],
    "fixVect_new" : ["signal_n", "signal_alpha_h", "BuDmunu_mean", "BuDmunu_n", "BuDmunu_alpha_h", "BsDsMunu_sigma", "BsDsMunu_mean", "BsDsMunu_n", "BsDsMunu_alpha_h", "B02DpDsm_mean", "B02DpDsm_alpha", "B02DpDsm_n", "B02DpDsm_alpha_h", "sidebands_sigmaCB", "sidebands_f12", "sidebands_alpha", "sidebands_n", "sidebands_alpha_h", "Bu2D0Dsm_mean", "Bu2D0Dsm_sigmaCB", "Bu2D0Dsm_alpha", "Bu2D0Dsm_n", "Bu2D0Dsm_alpha_h"],
 
    "replace_var": {

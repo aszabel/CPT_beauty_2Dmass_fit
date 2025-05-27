@@ -26,11 +26,11 @@
   "MC_directory_MD": "../results/D_M_results_DCBplusGaus_unbinned",
   "MC_directory_MB": "../results/B_M_results_RaisedCosinePlusGaus_unbinned",
 
-  "nentries": 5e5,
+  "nentries": -1,
 
   "functionCalls": 1e7,
   "printLevel": 2,
-  "randSeed": -1,
+  "randSeed": 1,
 
   "muPTmin": 500.0,
   "muPmin": 5000.0,

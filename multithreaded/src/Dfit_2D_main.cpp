@@ -184,19 +184,19 @@ while ((itry<=Config::ntries || !goodfit)&&itry<=100){
 				min->SetVariable(i * Config::nvar_md + ivar, (TString::Format("%s_%s", Config::contrName[i].c_str(), Config::varname_md[ivar].c_str())).Data(), Config::MC_MD[i][ivar], Config::dMC_MD[i][ivar] + 1.0e-11);
 				if (((int_choose_fit == dictionaryChooseFit.at("BM")|| int_choose_fit == dictionaryChooseFit.at("frac")) && i!=-1)){
 		       			min->FixVariable(i * Config::nvar_md + ivar);
-				}else{
-					if (ivar>4) 
-						min->FixVariable(i * Config::nvar_md + ivar);
-				}
+				}//else{
+				//	if (ivar>4) 
+			       //			min->FixVariable(i * Config::nvar_md + ivar);
+				//}
 				if (start_scratch) 
 					starting_point[i * Config::nvar_md + ivar] = Config::MC_MD[i][ivar];
 
-				if (ivar==3)
+				/*if (ivar==3)
 				{
 					min->SetVariableValue(i * Config::nvar_md + ivar, 0.0);
 					min->FixVariable(i * Config::nvar_md + ivar);
 					starting_point[i * Config::nvar_md + ivar] = 0.0;
-				}
+				}*/
 			}
 
 		}

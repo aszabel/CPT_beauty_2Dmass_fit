@@ -26,7 +26,7 @@
   "__4_tolerance": [1.0e2, 5.0e3, 1.0e5, 1.0e5], 
   "__2_1k_tolerance": [1.0e3, 1.0e5], 
   "__2_500_tolerance": [5.0e2, 1.0e5],
-  "ntries": 3,
+  "ntries": 15,
   
   "MC_directory_MD": "../../results/D_M_results_JSUplusGaus_unbinned",
   "MC_directory_MB": "../../results/B_M_results_CBplusSkewNorm_unbinned",
