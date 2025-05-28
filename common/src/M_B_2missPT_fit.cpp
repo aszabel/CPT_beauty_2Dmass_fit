@@ -100,14 +100,14 @@ namespace cpt_b0_analysis
 
 			double skew_norm = 2.*ROOT::Math::gaussian_pdf(xm, sigma, 0.0)*ROOT::Math::normal_cdf(skew*xm/sigma,1.0, 0.0);
                         return skew_norm;
-        };
+        	};
 
 
 	}
 
         double SkewNormalPlusGausPDF::EvalPDF(const double *xx, const double *par)
         {
-                               auto gaussian = [this](const double *x, const double *par) -> double
+                auto gaussian = [this](const double *x, const double *par) -> double
                 {
 			double m_rec = x[0];
 			double sigma = par[0];

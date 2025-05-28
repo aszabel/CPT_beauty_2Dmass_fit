@@ -1,6 +1,7 @@
 #include "D_M_fit_shape.h"
 #include "M_B_2missPT_fit.h"
 #include "ChebyshevPDF.h"
+#include <cmath>
 
 
 using namespace cpt_b0_analysis;
@@ -8,6 +9,7 @@ using namespace cpt_b0_analysis;
 
 void Draw_pull(TCanvas *c, TH1D *hist, TF1 *func[], TF1 *tf1_sum);
 
+double LikelihoodRatioTest(TH1* h_data, TH1* h_mc);
 
 
 using namespace cpt_b0_analysis;
@@ -58,13 +60,121 @@ void Draw_details(std::string config_file){
    }
         double  nevents = double(hist2D->Integral());
 
+	TH1D *h_tau_signal_sweighted = new TH1D("h_tau_sw", "time signal MC vs sweighted", nbins, Config::tMin, Config::tMax);
+	TH1D *h_MC_signal = new TH1D("h_tau_mc", "time signal MC vs sweighted", nbins, Config::tMin, Config::tMax);
+
+        std::string fileWeightsName = "Tree_sWeights";
+        std::string TreeName = "Tree_sWeights";
+        std::vector<double> *vec_Tau_ptr = nullptr;
+        std::vector<double> *vec_sWeights_ptr = nullptr;
+
+	std::string sign_name = "";
+	if (Config::sign == 1)
+		sign_name = "plus";
+	else
+		sign_name = "minus";
+        TFile weightFile_plus(Form("../toy_res/toy_%d/%s_%s.root", Config::randSeed, fileWeightsName.c_str(), sign_name.c_str()), "readonly");
+        TTree *tree_sWeights = (TTree*)weightFile_plus.Get(TreeName.c_str());
+        tree_sWeights -> SetBranchAddress("vec_Tau", &vec_Tau_ptr);
+        tree_sWeights -> SetBranchAddress("vec_sWeights", &vec_sWeights_ptr);
+
+        tree_sWeights -> GetEntry(0);
+
+        auto *vec_Tau = vec_Tau_ptr->data();
+        auto *vec_sWeights = vec_sWeights_ptr->data();
+
+
+
+        for (int e=0; e<int(vec_Tau_ptr->size()); e++){
+                h_tau_signal_sweighted->Fill(vec_Tau[e], vec_sWeights[e]);
+        }
+   TChain chMC(Config::chainName.c_str());
+   chMC.Add("/mnt/home/share/lhcb/CPT_beauty/MC2016/selected/selectedMagDown_B2Dmunu_signal_taustrip_nomassDmuCut/selected_MCsignal25102023.root");
+
+   double tau;
+
+   chMC.SetBranchAddress("B_M", &B_M);
+   chMC.SetBranchAddress("missPT", &missPT);
+   chMC.SetBranchAddress("D_M", &D_M);
+   chMC.SetBranchAddress("mu_PT", &mu_PT);
+   chMC.SetBranchAddress("mu_P", &mu_P);
+   chMC.SetBranchAddress("mu_eta", &mu_eta);
+   chMC.SetBranchAddress("K_PT", &K_PT);
+   chMC.SetBranchAddress("truecharge", &charge);
+   chMC.SetBranchAddress("Tau", &tau);
+
+   
+
+   for (int i=0; i<chMC.GetEntries(); ++i){
+      chMC.GetEntry(i);
+      if (mu_PT<Config::muPTmin || mu_P<Config::muPmin || mu_eta< Config::eta_min || mu_eta>Config::eta_max) continue;
+      double B_MMcorr = B_M +2.0*missPT;
+      if (B_MMcorr<Config::minBMcorr || B_MMcorr> Config::maxBMcorr) continue;
+      if (D_M<Config::minDM || D_M>Config::maxDM) continue;
+      if (int(charge) == Config::sign){
+              h_MC_signal->Fill(tau);
+      }
+   }
+        h_MC_signal->Scale(h_tau_signal_sweighted->Integral()/h_MC_signal->Integral());
+
+		TCanvas *c_mc = new TCanvas("c_mc", "", 500, 500);
+	        TPad *mc_pad1 = new TPad("mc_pad1", "", 0.0, 0.3, 1.0, 1.0);
+        	        mc_pad1->SetLogy();
+                	mc_pad1->Draw();
+               		mc_pad1->cd();
+
+        		h_tau_signal_sweighted->SetStats(kFALSE);
+        		h_tau_signal_sweighted->SetMinimum(1.0);
+        		h_tau_signal_sweighted->DrawClone("ep");
+			h_MC_signal->DrawClone("same hist");
+	
+
+			//h_tau_signal_sweighted->Scale(1./h_tau_signal_sweighted->Integral());
+			//h_MC_signal->Scale(1./h_MC_signal->Integral());
+			//double p_value = h_tau_signal_sweighted->KolmogorovTest(h_MC_signal, "X");  
+			double p_value = h_MC_signal->KolmogorovTest(h_tau_signal_sweighted, "X");  
+
+			cout << p_value << " <=====  p-value K-S \n";
+
+
+			p_value =  h_tau_signal_sweighted->Chi2Test(h_MC_signal, "WW");
+			cout << p_value << " <=====  p-value chi2 test \n";
+
+
+                        p_value = LikelihoodRatioTest(h_tau_signal_sweighted, h_MC_signal);
+	
+		        TH1D histpull1D(*h_tau_signal_sweighted);
+        		histpull1D.SetMinimum();
+       			 for (int bin=1; bin<=h_tau_signal_sweighted->GetNbinsX(); bin++){
+                		double err = h_tau_signal_sweighted->GetBinError(bin);
+				double err2 = h_MC_signal->GetBinError(bin);
+				err = TMath::Sqrt(err*err+err2*err2);
+                		if (err==0.0) continue;
+                		double diff  = h_tau_signal_sweighted->GetBinContent(bin)-h_MC_signal->GetBinContent(bin);
+                		histpull1D.SetBinContent(bin, diff/err);
+       			 }
+			
+        	c_mc->cd();
+      	  	TPad *mc_pad2 = new TPad("mc_pad2", "", 0.0, 0.0, 1.0, 0.3);
+        	mc_pad2->Draw();
+       		 mc_pad2->cd();
+       		 histpull1D.SetStats(kFALSE);
+        	histpull1D.SetFillColor(kBlue);
+        	histpull1D.GetYaxis()->SetLabelSize(0.1);
+        	histpull1D.GetXaxis()->SetLabelSize(0.1);
+        	histpull1D.DrawClone("hist");	
+
+        	c_mc->SaveAs("../results/swtau_signalMC.pdf");
+        	c_mc->SaveAs("../results/swtau_signalMC.C");
+
+
+
    	double res[(Config::nvar_md+Config::nvar_mb)*Config::ncontr+Config::ncontr];
         TString resname = Form("../toy_res/toy_%d/best_results_unbinned/fit2D_best/results_%d_3.txt",Config::randSeed, Config::sign);
         cout << resname << endl;
 	ifstream input(resname.Data());
 	double x, dx;
 	int i=0;
-	cout << " Hereeeeeeeeeeeee\n";
 	input>>x>>dx;
 	cout << x << endl; 
 	while (input>>x>>dx){
@@ -198,15 +308,15 @@ void Draw_details(std::string config_file){
 		hist2D->DrawClone("ep");
 		tf2_sum2D->DrawClone("surf same");
 
-        		TH2D histpull2D(*hist2D);
-        		histpull2D.SetMinimum();
+        		TH2D *histpull2D = (TH2D*)hist2D->Clone("histpull2D");
+        		histpull2D->SetMinimum();
 			TH1D *hpull1D = new TH1D("hpull1D", "", 50, -15., 15.);
         		for (int binx=1; binx<=hist2D->GetNbinsX(); binx++){
                 		for (int biny=1; biny<=hist2D->GetNbinsY(); biny++){
                         		double err = hist2D->GetBinError(binx, biny);
                         		if (err==0.0) continue;
                         		double diff  = hist2D->GetBinContent(binx, biny)-tf2_sum2D->Eval(hist2D->GetXaxis()->GetBinCenter(binx), hist2D->GetYaxis()->GetBinCenter(biny));
-                       			 histpull2D.SetBinContent(binx, biny, diff/err);
+                       			 histpull2D->SetBinContent(binx, biny, diff/err);
 					 hpull1D->Fill(diff/err);
                 		}
         		}
@@ -214,16 +324,18 @@ void Draw_details(std::string config_file){
 			      TPad *pad2 = new TPad("pad2", "", 0.0, 0.0, 1.0, 0.3);
         pad2->Draw();
         pad2->cd();
-        histpull2D.SetStats(kFALSE);
-        histpull2D.SetFillColor(kBlue);
-        histpull2D.GetXaxis()->SetLabelSize(0.15);
-        histpull2D.GetXaxis()->SetNdivisions(4);
-        histpull2D.GetYaxis()->SetLabelSize(0.15);
-        histpull2D.GetYaxis()->SetNdivisions(4);
-        histpull2D.GetZaxis()->SetLabelSize(0.15);
-        histpull2D.GetZaxis()->SetNdivisions(4);
-        histpull2D.DrawClone("surf");
+        histpull2D->SetStats(kFALSE);
+        histpull2D->SetFillColor(kBlue);
+        histpull2D->GetXaxis()->SetLabelSize(0.15);
+        histpull2D->GetXaxis()->SetNdivisions(4);
+        histpull2D->GetYaxis()->SetLabelSize(0.15);
+        histpull2D->GetYaxis()->SetNdivisions(4);
+        histpull2D->GetZaxis()->SetLabelSize(0.15);
+        histpull2D->GetZaxis()->SetNdivisions(4);
+        histpull2D->DrawClone("surf");
         
+	c2D->cd();
+	c2D->Update();
         c2D->SaveAs("../results/fit2D.pdf");
         c2D->SaveAs("../results/fit2D.C");
 /*
@@ -255,6 +367,7 @@ void Draw_details(std::string config_file){
 		hpull1D->Draw("hist");
         
 		cpull1D->SaveAs("../results/pull1D.pdf");
+		cpull1D->SaveAs("../results/pull1D.C");
 
 		
 
@@ -269,6 +382,23 @@ void Draw_details(std::string config_file){
 		Draw_pull(c_mb, histMB, funcMB, tf1_sumMB);
         	c_mb->SaveAs("../results/fitMB.pdf");
         	c_mb->SaveAs("../results/fitMB.C");
+
+		TFile *histout = new TFile ("../results/output_hists.root", "recreate");
+		hpull1D->Write();
+		histMD->Write();
+		histMB->Write();
+		for (int i = 0; i<Config::ncontr; ++i){
+			funcMD[i]->Write();
+			funcMB[i]->Write();
+		}
+		histpull2D->Write();
+		hist2D->Write();
+                tf2_sum2D->Write();		
+                tf1_sumMD->Write();		
+                tf1_sumMB->Write();		
+		h_tau_signal_sweighted->Write();
+		h_MC_signal->Write();
+		histout->Close();
    }
 
 void Draw_pull(TCanvas *c, TH1D *hist, TF1 *func[], TF1 *tf1_sum){    		
@@ -314,3 +444,40 @@ void Draw_pull(TCanvas *c, TH1D *hist, TF1 *func[], TF1 *tf1_sum){
         histpull1D.GetXaxis()->SetLabelSize(0.1);
         histpull1D.DrawClone("hist");
 }
+
+double LikelihoodRatioTest(TH1* h_data, TH1* h_mc) {
+    if (h_data->GetNbinsX() != h_mc->GetNbinsX()) {
+        std::cerr << "Histograms must have the same binning!" << std::endl;
+        return -1;
+    }
+
+    double scale = h_data->Integral() / h_mc->Integral();
+    TH1* h_mc_scaled = (TH1*) h_mc->Clone("h_mc_scaled");
+    h_mc_scaled->Scale(scale);
+
+    double logL_data = 0.0;
+    double logL_mc = 0.0;
+
+    for (int i = 1; i <= h_data->GetNbinsX(); ++i) {
+        double n_obs = h_data->GetBinContent(i);
+        double n_exp = h_mc_scaled->GetBinContent(i);
+
+        if (n_exp <= 0) continue;
+
+        if (n_obs > 0)
+            logL_mc += n_obs * std::log(n_exp) - n_exp - std::lgamma(n_obs + 1);
+        else
+            logL_mc += -n_exp;
+
+        logL_data += n_obs > 0 ? n_obs * std::log(n_obs) - n_obs - std::lgamma(n_obs + 1)
+                               : -n_obs;
+    }
+
+    double LR = -2.0 * (logL_mc - logL_data);
+
+    std::cout << "Likelihood Ratio: -2ln(L_MC / L_Data) = " << LR << std::endl;
+
+    delete h_mc_scaled;
+    return LR;
+}
+

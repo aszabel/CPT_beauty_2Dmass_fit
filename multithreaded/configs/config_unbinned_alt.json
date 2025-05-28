@@ -69,7 +69,13 @@
 			"BsDsMunu_f12_mb":[-1.0, 1.0], 
 			"B02DpDsm_f12_mb":[-1.0, 1.0], 
 			"sidebands_f12_mb":[-1.0, 1.0],
-			"Bu2D0Dsm_f12_mb": [-1.0, 1.0]
+			"Bu2D0Dsm_f12_mb": [-1.0, 1.0],
+			"signal_sigma_skew":[1.0e-9, 1.0e9], 
+			"BuDmunu_sigma_skew":[1.0e-9, 1.0e9], 
+			"BsDsMunu_sigma_skew":[1.0e-9, 1.0e9], 
+			"B02DpDsm_sigma_skew":[1.0e-9, 1.0e9], 
+			"sidebands_sigma_skew":[1.0e-9, 1.0e9],
+			"Bu2D0Dsm_sigma_skew": [1.0e-9, 1.0e9]
 		},
 
    "_old_fracInit": [0.531364, 0.123454, 0.00900857, 0.0171418, 0.317511],
