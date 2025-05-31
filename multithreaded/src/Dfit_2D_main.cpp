@@ -231,7 +231,7 @@ while ((itry<=Config::ntries || !goodfit)&&itry<=100){
 		for (int i = 0; i < Config::ncontr; i++)
 		{
 			min->SetVariable((Config::nvar_md + Config::nvar_mb) * Config::ncontr + i, (TString::Format("par_frac%d", i)).Data(), Config::fracInit[i], 0.001);
-			min->FixVariable((Config::nvar_md + Config::nvar_mb) * Config::ncontr + Config::ncontr-1);
+			min->FixVariable((Config::nvar_md + Config::nvar_mb) * Config::ncontr + 1);
                 	//min->SetVariableLimits((Config::nvar_md + Config::nvar_mb) * Config::ncontr + i, -1.0, 1.0);
 			if (start_scratch) 
 				starting_point[(Config::nvar_md + Config::nvar_mb) * Config::ncontr + i] = Config::fracInit[i];
@@ -423,8 +423,20 @@ while ((itry<=Config::ntries || !goodfit)&&itry<=100){
 		}
 		for (int i = 0; i < n_all; i++)
 		{
-			results << min->X()[i] << "  " << min->Errors()[i] << std::endl;
-			if(previous_fit) starting_point[i] = min->X()[i];
+			if (i!=(Config::nvar_md+Config::nvar_mb)*Config::ncontr+1){
+				results << min->X()[i] << "  " << min->Errors()[i] << std::endl;
+				if(previous_fit) starting_point[i] = min->X()[i];
+			}else{                                       //case of frac1 which is fixed
+				double sumfrac = 0.0;
+				for(int j=0; j<Config::ncontr; j++){
+					if (j==1) continue; 
+					sumfrac+=abs(min->X()[(Config::nvar_md+Config::nvar_mb)*Config::ncontr+j]);
+				}
+				double frac1 = 1.0-sumfrac;
+				results << frac1 << "  " << 0.0 << std::endl;
+				if(previous_fit) starting_point[i] = frac1;
+			}
+					 
 
 		}
 
@@ -442,12 +454,13 @@ while ((itry<=Config::ntries || !goodfit)&&itry<=100){
 		// Q: Why do we recalculate fractions? What does the minuti minimize - what is stored in `pa` ???
 		// The parameters pa[] define the fractions, we have 6 fractions but 5 independent parameters. The parametrisation is arbitrary
  		double frac_res[Config::ncontr];
-                frac_res[0] = abs(pa[0]);
-                frac_res[1] = abs(pa[1]);
-                frac_res[2] = abs(pa[2]);
-                frac_res[3] = abs(pa[3]);
-                frac_res[4] = abs(pa[4]);
-                frac_res[5] = abs(pa[5]);
+		double sumfrac = 0.0;
+		for (int i=0; i<Config::ncontr;i++){
+			if (i==1) continue;
+			frac_res[i] = abs(pa[i]);
+			sumfrac+= frac_res[i];
+		}
+		frac_res[1] = 1.0-sumfrac; 
 	
 		if (min){
 			delete min;
@@ -523,11 +536,13 @@ std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr
 
 		double chi2 = 0.0;
 		double sum_frac = 0.0;
-		for (int i=0; i < Config::ncontr-1; i++){
+		for (int i=0; i < Config::ncontr; i++){
+			if (i==1) continue;
 			frac[i] = abs(pa[i]);
 			sum_frac+=frac[i];
 		}
-		frac[Config::ncontr-1] = abs(1.0-sum_frac);
+		frac[1] = abs(1.0-sum_frac);
+		sum_frac += frac[1];
 		double tmp = 1.0e10*(sum_frac-1.0)*(sum_frac-1.0);
 		if(!Config::binned) 
 			tmp *= emax;
@@ -584,7 +599,7 @@ std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr
 					if (dMC_MB[i][ivar] != 0){
 						double tmp = (MC_MB[i][ivar] - param[Config::ncontr * Config::nvar_md + i * Config::nvar_mb + ivar]) * (MC_MB[i][ivar] - param[Config::ncontr * Config::nvar_md + i * Config::nvar_mb + ivar]) /(2.0* (dMC_MB[i][ivar] * dMC_MB[i][ivar])); // use the results of MC fits																							    		    	
 
-						double scale = 1.0e3;
+						double scale = 1.0;
 						//if(int_choose_fit == dictionaryChooseFit.at("BM"))
 						//	scale = 10000.0; 
 						chi2 += scale*tmp;

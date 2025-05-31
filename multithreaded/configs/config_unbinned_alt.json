@@ -51,7 +51,7 @@
    "DMshapes": ["JSUplusGaus", "JSUplusGaus", "JSUplusGaus", "JSUplusGaus", "Exponent", "JSUplusGaus"],
    "BMshapes": ["SNplusGaus", "SNplusGaus", "SNplusGaus", "SNplusGaus", "SNplusGaus", "SNplusGaus"],
 
-   "fixVect" : ["sidebands_mean", "sidebands_lambda", "sidebands_f12", "sidebands_gamma", "sidebands_delta", "signal_f12",  "BuDmunu_f12", "B0DpDsm_f12", "Bu2D0Dsm_f12", "signal_n", "signal_skew", "BuDmunu_n", "BuDmunu_skew", "BsDsMunu_n", "BsDsMunu_skew", "B02DpDsm_n", "B02DpDsm_skew", "sidebands_n", "sidebands_skew", "Bu2D0Dsm_n", "Bu2D0Dsm_skew" ],
+   "fixVect" : ["sidebands_mean", "sidebands_lambda", "sidebands_f12", "sidebands_gamma", "sidebands_delta", "signal_f12",  "BuDmunu_f12", "B0DpDsm_f12", "Bu2D0Dsm_f12", "signal_n", "BuDmunu_n", "BsDsMunu_n", "B02DpDsm_n", "sidebands_n", "Bu2D0Dsm_n" ],
 
    "replace_var": {
 			"BuDmunu_mean": "signal_mean", 

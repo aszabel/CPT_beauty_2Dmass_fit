@@ -131,7 +131,7 @@ void B_M_fit_Every(std::string config_file){
 			step = 0.01; 
 		else
 			step = 10.0;*/
-		step = 0.01*Config::init_values[choice][ivar]+0.01;
+		step = abs(0.01*Config::init_values[choice][ivar])+0.01;
 		min->SetVariable(ivar, Config::varname_mb[ivar].c_str(), Config::init_values[choice][ivar], step);
 		//min -> FixVariable(ivar);		
 // TODO from config

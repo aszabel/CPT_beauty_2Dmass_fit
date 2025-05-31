@@ -58,7 +58,8 @@ namespace cpt_b0_analysis
 				gaus2 /= IntGaus2;
 			return (gaus1 + gaus2);
 		};
-		return (raised_cosine(xx, par) + gaus(xx, par)) / 2.0;
+		double frac = par[7];
+		return ((1.0-frac)*raised_cosine(xx, par) + frac*gaus(xx, par));
 	}
 	void RaisedCosinePlusGaussPDF::CalcIntegral(const double *par, double min, double max)
 	{
