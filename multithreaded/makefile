@@ -3,8 +3,8 @@
 CC=g++
 
 #flags declaration
-CFLAGS= -std=c++17 `root-config --cflags --libs` -fopenmp -Wall -O3 -march=haswell -I ../common/include -I include 
-CFLAGS_COMP= -std=c++17 `root-config --cflags` -fopenmp -Wall -O3 -march=haswell -I ../common/include -I include
+CFLAGS= -std=c++17 `root-config --cflags --libs` -fopenmp -I/mnt/opt/spack/0.20/opt/spack/linux-centos7-ivybridge/gcc-12.3.0/boost-1.82.0-bntx2bbdfbbpoq52tjj5zvl5ddbngidf/include  -Wall -O3 -march=haswell -L/mnt/opt/spack/0.20/opt/spack/linux-centos7-ivybridge/gcc-12.3.0/boost-1.82.0-bntx2bbdfbbpoq52tjj5zvl5ddbngidf/lib -I ../common/include -I include 
+CFLAGS_COMP= -std=c++17 `root-config --cflags` -fopenmp -lboost_math_c99 -Wall -O3 -march=haswell -I/mnt/opt/spack/0.20/opt/spack/linux-centos7-ivybridge/gcc-12.3.0/boost-1.82.0-bntx2bbdfbbpoq52tjj5zvl5ddbngidf/include -I ../common/include -I include 
 #MPICFLAGS= -fopenmp  -std=c++20 --include-directory /mnt/opt/spack-0.17/opt/spack/linux-centos7-ivybridge/gcc-8.3.0/root-6.24.06-f2vmdt3rp2x3mqemsppuq6tvxnztd3sf/include
 
 SRCS1 = src/Dfit_2D_main.cpp 

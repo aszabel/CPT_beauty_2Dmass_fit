@@ -570,7 +570,7 @@ std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr
 					//if (Config::intshapesDM[i] == 1 || ivar == 1) continue;
 					if (dMC_MD[i][ivar] != 0){
 					 	double tmp = (MC_MD[i][ivar] - param[i * Config::nvar_md + ivar]) * (MC_MD[i][ivar] - param[i * Config::nvar_md + ivar]) / (2.0*(dMC_MD[i][ivar] * dMC_MD[i][ivar])); // use the results of MC fits
-						double scale = 1.0;
+						double scale = 1.0e3;
 						chi2 += scale*tmp;
 					}
 				}
@@ -584,7 +584,7 @@ std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr
 					if (dMC_MB[i][ivar] != 0){
 						double tmp = (MC_MB[i][ivar] - param[Config::ncontr * Config::nvar_md + i * Config::nvar_mb + ivar]) * (MC_MB[i][ivar] - param[Config::ncontr * Config::nvar_md + i * Config::nvar_mb + ivar]) /(2.0* (dMC_MB[i][ivar] * dMC_MB[i][ivar])); // use the results of MC fits																							    		    	
 
-						double scale = 1.0e7;
+						double scale = 1.0e3;
 						//if(int_choose_fit == dictionaryChooseFit.at("BM"))
 						//	scale = 10000.0; 
 						chi2 += scale*tmp;

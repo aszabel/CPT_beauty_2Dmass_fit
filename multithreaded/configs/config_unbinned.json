@@ -15,10 +15,10 @@
   "chainNameBS": "BStree",
 
   "Fits": ["all"],
-  "Fits_uu": ["DM+BMfixed", "all"],
-  "tolerance": [5.0e7], 
-  "tol": [5.0e2, 1.0e5],
-  "ntries": 3,
+  "__Fits_uu": ["DM+BMfixed", "all"],
+  "tolerance": [5.0e5], 
+  "__tol": [5.0e2, 1.0e5],
+  "ntries": 5,
 
   "start_from_previous": true,
   "previous_result_file": "best_results_binned/fit2D_best/results_0_0.txt",

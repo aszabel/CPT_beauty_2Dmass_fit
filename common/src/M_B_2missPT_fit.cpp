@@ -6,7 +6,9 @@
 #include "TF1.h"
 #include "Math/WrappedTF1.h"
 #include "Math/GaussIntegrator.h"
-
+#include <Math/DistFunc.h>  // normal_cdf
+#include <boost/math/special_functions/owens_t.hpp>
+// "/mnt/opt/spack-0.17/opt/spack/linux-centos7-ivybridge/gcc-8.3.0/boost-1.77.0-nmmxaya44s52q7bfcltqvqgpkg4y4ybs/include/boost/math/special_functions/owens_t.hpp"
 namespace cpt_b0_analysis
 {
 
@@ -125,18 +127,43 @@ namespace cpt_b0_analysis
 	}
        void SkewNormalPlusGausPDF::CalcIntegral(const double *par, double min, double max)
        {
-	       
+
+		double xmin = min-par[6];
+		double xmax = max-par[6];
+		double sigma_sk = par[4];
+        	double skew  = par[5];
+
+        	double zmin = xmin / sigma_sk;
+        	double zmax = xmax / sigma_sk;
+    		double Phi = ROOT::Math::normal_cdf(zmax)-ROOT::Math::normal_cdf(zmin);
+    		double T = boost::math::owens_t(zmax, skew)-boost::math::owens_t(zmin, skew);
+    		IntSkewNorm = Phi - 2.0 * T;
+
+/*	       
 	       TF1 skewfunc("skewfunc", skew_normal, min, max, 8);
                skewfunc.SetParameters(par);
                ROOT::Math::WrappedTF1 wf1(skewfunc);
                ROOT::Math::GaussIntegrator ig;
                ig.SetFunction(wf1);
                ig.SetRelTolerance(0.01);
-               IntSkewNorm = ig.Integral(min, max);
-	
+               IntSkewNorm = skewfunc.Integral(min, max, 1.0e-8);
+		if (!std::isfinite(IntSkewNorm)){
+			for (int i=0; i<8; i++)
+				std::cout<< par[i] << Form("  par%d \n", i);
+			IntSkewNorm = 1.0;
 
+	}
 		
-       
+		 	
+	
+		double xi = par[6];
+		double sigma = par[4];
+        	double skew  = par[5];
+
+		boost::math::skew_normal dist(xi, sigma, skew);
+
+	 	IntSkewNorm = boost::math::cdf(dist, xmax) - boost::math::cdf(dist, xmin);
+  */     
         
                 double alpha = abs(par[2]+1.0e-6);
                 double n = par[3];
