@@ -3,14 +3,14 @@
   "isMC": false,
   "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
   "BMshapes": ["SNplusGaus", "SNplusGaus", "SNplusGaus", "SNplusGaus", "SNplusGaus", "SNplusGaus"],
-  "binned": false,	
+  "binned": true,	
   "sign":"muplus",
   "chainName": "BlindedTree",
   "nentries": -1,
   "__TOLERANCE__": "Set tolerance per sample choice: MCsignal, BuDmunu, ...",
   "contrName": ["signal", "BuDmunu", "BsDsMunu", "B02DpDsm", "sidebands", "Bu2D0Dsm"],
   "Fits": ["signal", "BuDmunu", "BsDsMunu", "B02DpDsm", "sidebands", "Bu2D0Dsm"],
-  "tolerance": [5.0e0, 1.0e1, 5.0e0, 1.0e0, 1.0e0, 1.0e0], 
+  "tolerance": [1.0e0, 1.0e1, 5.0e0, 1.0e0, 5.0e0, 1.0e0], 
   "printLevel": 1,
   "functionCalls": 1e7,
   "randSeed": -1,
@@ -33,7 +33,7 @@
 
   "varname_md": ["sigma", "mean", "sigmaCB", "f12", "alpha", "n", "alpha_h"], 
   "varname_mb": ["sigma", "mean", "alpha", "n", "signma_skew", "skew", "mean_skew", "f12"], 
-  "fixVect" : ["n", "skew"],
+  "fixVect" : ["n"],
 
   "nvar_md": 7,
   "nvar_mb": 8,
@@ -42,7 +42,7 @@
   "init_values": [
 	  	[616.874, 6664.99, 1.23544, 4, 1019.74, -3, 6347.19, 0.0485676],
 		[349.657, 4116.25, 0.933414, 1.0, 893.87, -1.55032, 5759.88, 0.0603037],
-		[821.033, 5366.62, 1.71316, 4, 803.974, -2.10132, 6289.14, 0.414641],
+		[806.341, 5328.69, 1.74578, 4, 676.392, -1.58216, 6224.32, 0.489412],
 		[500.0, 4000, 1.0, 2.0, 1500, -3.0, 6290.6, 0.5],
 	  	[864.117, 4502.76, 0.842985, 3, 678.114, -0.699315, 5925.12, 0.591565],
 	  	[500.0, 4000, 2.0, 2.0, 1500, -3.0, 6290.6, 0.5]

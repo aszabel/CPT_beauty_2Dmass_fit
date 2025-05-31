@@ -51,7 +51,7 @@
    "DMshapes": ["JSUplusGaus", "JSUplusGaus", "JSUplusGaus", "JSUplusGaus", "Exponent", "JSUplusGaus"],
    "BMshapes": ["SNplusGaus", "SNplusGaus", "SNplusGaus", "SNplusGaus", "SNplusGaus", "SNplusGaus"],
 
-   "fixVect" : ["sidebands_mean", "sidebands_lambda", "sidebands_f12", "sidebands_gamma", "sidebands_delta", "signal_f12",  "BuDmunu_f12", "B0DpDsm_f12", "Bu2D0Dsm_f12", "signal_n", "signal_skew", "BuDmunu_n", "BuDmunu_skew", "BsDsMunu_n", "BsDsMunu_skew", "B02DpDsm_n", "B02DpDsm_skew", "sidebands_n", "sidebands_skew", "Bu2D0Dsm_n", "Bu2D0Dsm_skew" ],
+   "fixVect" : ["sidebands_mean", "sidebands_lambda", "sidebands_f12", "sidebands_gamma", "sidebands_delta", "signal_f12",  "BuDmunu_f12", "B0DpDsm_f12", "Bu2D0Dsm_f12", "signal_n", "BuDmunu_n", "BsDsMunu_n", "B02DpDsm_n", "sidebands_n", "Bu2D0Dsm_n" ],
 
    "replace_var": {
 			"BuDmunu_mean": "signal_mean", 
@@ -70,12 +70,12 @@
 			"B02DpDsm_f12_mb":[-1.0, 1.0], 
 			"sidebands_f12_mb":[-1.0, 1.0],
 			"Bu2D0Dsm_f12_mb": [-1.0, 1.0],
-			"signal_sigma_skew":[1.0e-9, 1.0e9], 
-			"BuDmunu_sigma_skew":[1.0e-9, 1.0e9], 
-			"BsDsMunu_sigma_skew":[1.0e-9, 1.0e9], 
-			"B02DpDsm_sigma_skew":[1.0e-9, 1.0e9], 
-			"sidebands_sigma_skew":[1.0e-9, 1.0e9],
-			"Bu2D0Dsm_sigma_skew": [1.0e-9, 1.0e9]
+			"signal_sigma_skew":[1.0, 1.0e4], 
+			"BuDmunu_sigma_skew":[1.0, 1.0e4], 
+			"BsDsMunu_sigma_skew":[1.0, 1.0e4], 
+			"B02DpDsm_sigma_skew":[1.0, 1.0e4], 
+			"sidebands_sigma_skew":[1.0, 1.0e4],
+			"Bu2D0Dsm_sigma_skew": [1.0, 1.0e4]
 		},
 
    "_old_fracInit": [0.531364, 0.123454, 0.00900857, 0.0171418, 0.317511],
