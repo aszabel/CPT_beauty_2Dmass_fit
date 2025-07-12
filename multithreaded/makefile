@@ -9,24 +9,30 @@ CFLAGS_COMP= -std=c++17 `root-config --cflags` -fopenmp -lboost_math_c99 -Wall -
 
 SRCS1 = src/Dfit_2D_main.cpp 
 SRCS2 = src/Dfit_1D_sidebands.cpp 
+SRCS3 = src/LikelihoodRatio2D.cpp
 COMMON = ../common/src/D_M_fit_shape.cpp ../common/src/M_B_2missPT_fit.cpp ../common/src/ChebyshevPDF.cpp ../common/src/sweights.cpp
 COMMON_NAMES = $(notdir ${COMMON})
 CONFIG = src/config.cpp
 OBJS1 = $(SRCS1:.cpp=.o)
 OBJS2 = $(SRCS2:.cpp=.o)
+OBJS3 = $(SRCS3:.cpp=.o)
 OBJS_CONFIG = $(CONFIG:.cpp=.o)
 OBJS_COMMON = $(COMMON_NAMES:%.cpp=common/%.o)
 
 TARGET1 = fit2D_mass 
 TARGET2 = fit1D_mass
+TARGET3 = LikeRatio
 
-all: $(TARGET1) $(TARGET2)
+all: $(TARGET1) $(TARGET2) $(TARGET3)
 
 # Linking
 $(TARGET1): $(OBJS1) $(OBJS_COMMON) $(CONFIG)
 	$(CC) $(CFLAGS)  -o $@ $^
 
 $(TARGET2): $(OBJS2) $(OBJS_COMMON) $(CONFIG)
+	$(CC) $(CFLAGS)  -o $@ $^
+
+$(TARGET3): $(OBJS3) $(OBJS_COMMON) $(CONFIG)
 	$(CC) $(CFLAGS)  -o $@ $^
 
 # Compilation
@@ -39,7 +45,7 @@ common/%.o: ../common/src/%.cpp
 
 # Clean up
 clean:
-	rm -f $(OBJS1) $(OBJS2) $(OBJS_COMMON) $(OBJS_CONFIG) $(TARGET1) $(TARGET2)
+	rm -f $(OBJS1) $(OBJS2) $(OBJS3) $(OBJS_COMMON) $(OBJS_CONFIG) $(TARGET1) $(TARGET2) $(TARGET3)
 
 # Phony targets
 .PHONY: all clean
