@@ -15,6 +15,7 @@ namespace cpt_b0_analysis
 		~DoubleSidedCrystalballPlusGaussPDF() {};
 
 		void CalcIntegral(const double *par, double min, double max);
+		double getIntegral(){return 0.0;};
 		double EvalPDF(const double *xx, const double *par);
 
 	private:
@@ -32,6 +33,7 @@ namespace cpt_b0_analysis
 		~JohnsonPlusGaussPDF() {};
 
 		void CalcIntegral(const double *par, double min, double max);
+		double getIntegral(){return 0.0;};
 		double EvalPDF(const double *xx, const double *par);
 
 	private:

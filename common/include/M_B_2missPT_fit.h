@@ -16,6 +16,7 @@ namespace cpt_b0_analysis
 		~RaisedCosinePlusGaussPDF() {};
 
 		void CalcIntegral(const double *par, double min, double max);
+		double getIntegral(){return 0.0;};
 		double EvalPDF(const double *xx, const double *par);
 
 	private:
@@ -33,6 +34,7 @@ namespace cpt_b0_analysis
 		~SkewNormalPlusGausPDF() {};
 			
 		void CalcIntegral(const double *par, double min, double max);
+		double getIntegral(){return 0.0;};
 		double EvalPDF(const double *xx, const double *par);
 
 	private:
