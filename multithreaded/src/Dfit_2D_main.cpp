@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
 	// Load data set
 	TChain ch((Config::chainName).c_str());
 	ch.Add(Config::input_files[0].c_str());
-	double D_M, mu_PT, mu_P, mu_eta, K_PT, B_M, missPT;
+	double D_M, mu_PT, mu_P, mu_eta, K_PT, B_M, missPT, Tau;
 	double B_MMcorr;
 	bool charge;
 	int frac_index = 100;
@@ -108,6 +108,7 @@ int main(int argc, char *argv[])
 		ch.SetBranchAddress("mu_P", &mu_P);
 		ch.SetBranchAddress("mu_eta", &mu_eta);
 		ch.SetBranchAddress("K_PT", &K_PT);
+		ch.SetBranchAddress("Tau", &Tau);
 		ch.SetBranchAddress("truecharge", &charge);
 	}else{
 		ch.SetBranchAddress("BMcorr", &B_MMcorr);
@@ -138,6 +139,10 @@ int main(int argc, char *argv[])
 			
 		if (D_M < Config::minDM || D_M > Config::maxDM)
 			continue;
+		
+		if (Tau < Config::tMin || Tau > Config::tMax)
+			continue;
+
 		vect_2D.push_back(std::make_pair(D_M, B_MMcorr));
 		hist2D.Fill(D_M, B_MMcorr);
 		
@@ -281,15 +286,16 @@ while ((itry<=Config::ntries || !goodfit)&&itry<=100){
 		for (int ivar=0; ivar<(Config::nvar_md+Config::nvar_mb) * Config::ncontr + Config::ncontr; ivar++){
 			//for (int ivar=0; ivar<(nvar_md+nvar_mb)*ncontr+ncontr; ivar++){
 			double random = 0.0;
-			if (Config::randSeed > -1 && !min->IsFixedVariable(ivar) && int_choose_fit==dictionaryChooseFit.at("all"))
+			if (Config::randSeed > -1 && !min->IsFixedVariable(ivar) && int_choose_fit==dictionaryChooseFit.at("all") && itry!=1)
 				random = rand.Uniform(-1.0, 1.0);
+				
 
 
 			min->SetVariableValue(ivar, starting_point[ivar]*(1.0+0.01*random));
 		}
 
 		double frac_sidebands = -0.270922;
-		if (int_choose_fit==dictionaryChooseFit.at("frac")){
+		if (int_choose_fit==dictionaryChooseFit.at("frac")|| int_choose_fit==dictionaryChooseFit.at("all")){
 			std::ifstream sideband_input(Form("results1D_DM_%d_1.txt", Config::sign)); 
 			double a1 = -0.00102346;
 			double a2 = 1.32508e-07;
@@ -310,7 +316,7 @@ while ((itry<=Config::ntries || !goodfit)&&itry<=100){
 			
 
 
-			if (Config::randSeed > -1 && !min->IsFixedVariable((Config::nvar_md+Config::nvar_mb) * Config::ncontr + icontr) && start_scratch &&!Config::start_from_previous){
+			if (Config::randSeed > -1 && !min->IsFixedVariable((Config::nvar_md+Config::nvar_mb) * Config::ncontr + icontr) && start_scratch &&!Config::start_from_previous && itry!=1){
 				double random = rand.Uniform(0.0, 1.0-sumc);
 				frac_st[icontr] = random;
 				if (icontr<4)
@@ -341,7 +347,7 @@ while ((itry<=Config::ntries || !goodfit)&&itry<=100){
 			}
 			for (int ic=0; ic<Config::ncontr; ic++){
 				double random = 0.0;
-				if (Config::randSeed > -1 && !min->IsFixedVariable((Config::nvar_md+Config::nvar_mb) * Config::ncontr+ic) && (int_choose_fit==dictionaryChooseFit.at("all") ||  int_choose_fit==dictionaryChooseFit.at("frac")))
+				if (Config::randSeed > -1 && !min->IsFixedVariable((Config::nvar_md+Config::nvar_mb) * Config::ncontr+ic) && (int_choose_fit==dictionaryChooseFit.at("all") ||  int_choose_fit==dictionaryChooseFit.at("frac"))&& itry!=1)
 					random = rand.Uniform(-1.0, 1.0);
 				frac_st[ic]=result0[(Config::nvar_md+Config::nvar_mb) * Config::ncontr+ic]*(1.0+0.01*random);
 						}
@@ -411,7 +417,7 @@ while ((itry<=Config::ntries || !goodfit)&&itry<=100){
 		gSystem->Exec(TString::Format("mkdir %s", path.Data()).Data());
 		std::ofstream results(TString::Format("%s/results_%d_%d.txt", path.Data(), Config::sign, int_choose_fit));
 		std::cout<<std::setprecision(25);
-		results << min->Status() << "  " << min->MinValue() << std::endl;
+		results << std::setprecision(25) << min->Status() << "  " << min->MinValue() << std::endl;
 		std::cout<<std::setprecision(10);
 		if (min->Status()!=0&& min->Status()!=1){// || min->MinValue()>24.8e6){
 			std::cout << "Bad status of fit "<< min->Status() << " chi2 is " << min->MinValue() << std::endl;
@@ -585,7 +591,7 @@ std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr
 					//if (Config::intshapesDM[i] == 1 || ivar == 1) continue;
 					if (dMC_MD[i][ivar] != 0){
 					 	double tmp = (MC_MD[i][ivar] - param[i * Config::nvar_md + ivar]) * (MC_MD[i][ivar] - param[i * Config::nvar_md + ivar]) / (2.0*(dMC_MD[i][ivar] * dMC_MD[i][ivar])); // use the results of MC fits
-						double scale = 1.0e3;
+						double scale = 1.0;
 						chi2 += scale*tmp;
 					}
 				}
