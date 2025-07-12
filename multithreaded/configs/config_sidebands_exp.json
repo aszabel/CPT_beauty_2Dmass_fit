@@ -23,7 +23,7 @@
   "MC_directory_MD": "../../results/D_M_results_JSUplusGaus_unbinned",
   "MC_directory_MB": "../../results/B_M_results_CBplusSkewNorm_unbinned",
 
-  "nentries": 100000,
+  "nentries": -1,
   "ntries": 1,
 
   "functionCalls": 1e7,
