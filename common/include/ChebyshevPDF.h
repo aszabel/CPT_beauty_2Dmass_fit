@@ -15,6 +15,7 @@ namespace cpt_b0_analysis
 
 		void CalcIntegral(const double *par, double min, double max);
 		double EvalPDF(const double *xx, const double *par);
+		double getIntegral();
 
 	private:
 		double IntCheb;
@@ -31,6 +32,7 @@ namespace cpt_b0_analysis
 
 		void CalcIntegral(const double *par, double min, double max);
 		double EvalPDF(const double *xx, const double *par);
+		double getIntegral();
 
 	private:
 		double IntExp;

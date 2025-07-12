@@ -35,6 +35,9 @@ namespace cpt_b0_analysis
 
 		IntCheb = (1.0 - a2) * max + 0.5 * a1 * max * max + 2. / 3. * a2 * max * max * max - (1.0 - a2) * min - 0.5 * a1 * min * min - 2. / 3. * a2 * min * min * min;
 	}
+	double ChebyshevPDF::getIntegral(){
+		return IntCheb;
+	}
 
 	ExponentPDF::ExponentPDF()
 	{
@@ -63,4 +66,7 @@ namespace cpt_b0_analysis
 			IntExp = 1.0;
 	}
 
+	double ExponentPDF::getIntegral(){
+		return IntExp;
+	}
 }
