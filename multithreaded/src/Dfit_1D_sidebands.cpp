@@ -11,6 +11,9 @@
 #include "TString.h"
 #include "TMath.h"
 #include "TRandom.h"
+#include "TF1.h"
+#include "TPad.h"
+#include "TCanvas.h"
 #include "Math/Minimizer.h"
 #include "Math/Factory.h"
 #include "Math/Functor.h"
@@ -58,6 +61,7 @@ bool avx = true;
 std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr<PDFInterface>>& D_PDFs_get, const std::vector<std::shared_ptr<PDFInterface>>& B_PDFs_get, std::vector<std::pair<double, double>> vect_2D, const std::vector<std::vector<double>>& MC_MD, const std::vector<std::vector<double>>& dMC_MD, const std::vector<std::vector<double>>& MC_MB, const std::vector<std::vector<double>>& dMC_MB, const std::vector<std::pair<int, int>>& replaceIndexVect, int int_choose_fit, TH1D hist1D);
 
 
+void Draw_pull(TCanvas *c, TH1D hist, TF1 *tf1_sum);
 
 int main(int argc, char *argv[])
 {
@@ -94,8 +98,9 @@ int main(int argc, char *argv[])
 	double B_MMcorr;
 	bool charge;
 	int frac_index = 100;
-	const int nbins = 50;
-	TH1D hist1D("hist1D", "", nbins, Config::minDM, Config::maxDM);
+	const int nbins = 100;
+	TH1D hist1D ("hist1D", "", nbins, Config::minDM, Config::maxDM);
+	double bin_width = (Config::maxDM-Config::minDM)/double(nbins);
 
 	std::vector<std::pair<double, double>> vect_2D = {};
 	if (!Config::isMC){
@@ -173,7 +178,7 @@ int main(int argc, char *argv[])
 		for (int i = 0; i < Config::ncontr; i++)
 		{
 			for (int ivar = 0; ivar < Config::nvar_md; ivar++)
-		{
+			{
 				min->SetVariable(i * Config::nvar_md + ivar, (TString::Format("%s_%s", Config::contrName[i].c_str(), Config::varname_md[ivar].c_str())).Data(), Config::MC_MD[i][ivar], Config::dMC_MD[i][ivar] + 1.0e-11);
 				if (i!=4){
 		       			min->FixVariable(i * Config::nvar_md + ivar);
@@ -384,14 +389,63 @@ int main(int argc, char *argv[])
 
 		results.close();
 	
+		for (int i=0; i<Config::ncontr; i++)
+			std::cout << frac_res[i] << "  frac" << i << "  " << double(frac_indeces[i])/double(vect_2D.size()) << std::endl;
+
+		D_PDFs[4].get()->CalcIntegral(&min->X()[4 * Config::nvar_md], hist1D.GetBinLowEdge(hist1D.FindBin(1830)), hist1D.GetBinLowEdge(hist1D.FindBin(1910)));
+		double integral_signal_range = D_PDFs[4].get()->getIntegral();
+                std::cout << integral_signal_range << " intsig\n";
+		D_PDFs[4].get()->CalcIntegral(&min->X()[4 * Config::nvar_md], Config::minDM, Config::maxDM);
+		double integral_full_range = D_PDFs[4].get()->getIntegral();
+                std::cout << integral_full_range << " intfull\n";
+
+		double nevents = (double)hist1D.Integral();	
+		TF1 *sidebandtf1 = new TF1("stf1", [D_PDFs, nevents, integral_full_range, integral_signal_range, bin_width](double *x, double *par)->double{return bin_width*nevents*integral_full_range/(integral_full_range-integral_signal_range)*D_PDFs[4].get()->EvalPDF(x, par);}, Config::minDM, Config::maxDM, Config::n_sideband);
+		sidebandtf1->SetParameters(&min->X()[4 * Config::nvar_md]);
+
+		std::cout << sidebandtf1 -> Integral(Config::minDM, Config::maxDM) << " intside "<< sidebandtf1 -> Integral(hist1D.GetBinLowEdge(hist1D.FindBin(1830)), hist1D.GetBinLowEdge(hist1D.FindBin(1910))) << " nevents "  << nevents << std::endl;
+
+		TCanvas *c = new TCanvas("x", "", 500, 500);
+		Draw_pull(c, hist1D, sidebandtf1);
+		c->SaveAs("sideband.pdf"); 
 		if (min){
 			delete min;
 		}
-		for (int i=0; i<Config::ncontr; i++)
-			std::cout << frac_res[i] << "  frac" << i << "  " << double(frac_indeces[i])/double(vect_2D.size()) << std::endl;
 	}
-	std::cout<<loop_count << "return 000000000\n";
 	return 0;
+}
+
+void Draw_pull(TCanvas *c, TH1D hist, TF1 *tf1_sum){
+        c->cd();
+        TPad *pad1 = new TPad("pad1", "", 0.0, 0.3, 1.0, 1.0);
+                pad1->SetLogy();
+                pad1->Draw();
+                pad1->cd();
+
+        hist.SetStats(kFALSE);
+        hist.SetMinimum(1.0);
+        hist.DrawClone("ep");
+        tf1_sum->SetLineColor(kBlack);
+        tf1_sum->DrawClone("same");
+
+        //hist->Sumw2();
+        TH1D histpull1D(hist);
+        histpull1D.SetMinimum();
+        for (int bin=1; bin<=hist.GetNbinsX(); bin++){
+                double err = hist.GetBinError(bin);
+                if (err==0.0) continue;
+                double diff  = hist.GetBinContent(bin)-tf1_sum->Eval(hist.GetBinCenter(bin));
+                histpull1D.SetBinContent(bin, diff/err);
+        }
+       c->cd();
+        TPad *pad2 = new TPad("pad2", "", 0.0, 0.0, 1.0, 0.3);
+        pad2->Draw();
+        pad2->cd();
+        histpull1D.SetStats(kFALSE);
+        histpull1D.SetFillColor(kBlue);
+        histpull1D.GetYaxis()->SetLabelSize(0.1);
+        histpull1D.GetXaxis()->SetLabelSize(0.1);
+        histpull1D.DrawClone("hist");
 }
 
 
