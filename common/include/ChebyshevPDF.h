@@ -14,8 +14,9 @@ namespace cpt_b0_analysis
 		~ChebyshevPDF() {};
 
 		void CalcIntegral(const double *par, double min, double max);
-		double EvalPDF(const double *xx, const double *par);
+		double EvalPDF(const double *xx, const double *par, const int component=-1);
 		double getIntegral();
+		int getComponentCount(){return 0;};
 
 	private:
 		double IntCheb;
@@ -31,8 +32,9 @@ namespace cpt_b0_analysis
 		~ExponentPDF() {};
 
 		void CalcIntegral(const double *par, double min, double max);
-		double EvalPDF(const double *xx, const double *par);
+		double EvalPDF(const double *xx, const double *par, const int component=-1);
 		double getIntegral();
+		int getComponentCount(){return 0;};
 
 	private:
 		double IntExp;

@@ -12,8 +12,9 @@ namespace cpt_b0_analysis
 		PDFInterface(PDFInterface&&) = default;
 		virtual ~PDFInterface() {}
 		virtual void CalcIntegral(const double *par, double min, double max) = 0; // "= 0" part makes this method pure virtual, and also makes this class abstract.
-		virtual double EvalPDF(const double *par, const double *x) = 0;
+		virtual double EvalPDF(const double *par, const double *x, const int component=-1) = 0;
 		virtual double getIntegral() = 0;
+		virtual int getComponentCount() = 0;
 	};
 
 }

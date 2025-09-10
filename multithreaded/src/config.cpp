@@ -101,7 +101,7 @@ std::vector<std::shared_ptr<PDFInterface>> Config::getVectorPDFs(const std::stri
                                 	vPDFs.push_back(std::make_shared<RaisedCosinePlusGaussPDF>());
                                 	break;
 				case 1: 
-                                	vPDFs.push_back(std::make_shared<SkewNormalPlusGausPDF>());
+                                	vPDFs.push_back(std::make_shared<SkewNormalPlusCBPDF>());
                                 	break;
 						
                         	default:

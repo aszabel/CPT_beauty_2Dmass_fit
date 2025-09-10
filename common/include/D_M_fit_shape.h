@@ -16,7 +16,8 @@ namespace cpt_b0_analysis
 
 		void CalcIntegral(const double *par, double min, double max);
 		double getIntegral(){return 0.0;};
-		double EvalPDF(const double *xx, const double *par);
+		int getComponentCount(){return 0;};
+		double EvalPDF(const double *xx, const double *par, const int component=-1);
 
 	private:
 		double IntGaus;
@@ -34,7 +35,8 @@ namespace cpt_b0_analysis
 
 		void CalcIntegral(const double *par, double min, double max);
 		double getIntegral(){return 0.0;};
-		double EvalPDF(const double *xx, const double *par);
+		int getComponentCount(){return 0;};
+		double EvalPDF(const double *xx, const double *par, const int component=-1);
 
 	private:
 		double IntGaus;

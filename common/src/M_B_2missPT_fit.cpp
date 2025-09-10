@@ -8,7 +8,7 @@
 #include "Math/GaussIntegrator.h"
 #include <Math/DistFunc.h>  // normal_cdf
 #include <boost/math/special_functions/owens_t.hpp>
-// "/mnt/opt/spack-0.17/opt/spack/linux-centos7-ivybridge/gcc-8.3.0/boost-1.77.0-nmmxaya44s52q7bfcltqvqgpkg4y4ybs/include/boost/math/special_functions/owens_t.hpp"
+
 namespace cpt_b0_analysis
 {
 
@@ -19,7 +19,7 @@ namespace cpt_b0_analysis
 		IntGaus2 = 1.0;
 	}
 
-	double RaisedCosinePlusGaussPDF::EvalPDF(const double *xx, const double *par)
+	double RaisedCosinePlusGaussPDF::EvalPDF(const double *xx, const double *par, const int component)
 	{
 		auto raised_cosine = [this](const double *x, const double *par) -> double
 		{
@@ -35,35 +35,46 @@ namespace cpt_b0_analysis
 				cos /= IntCos;
 			return cos;
 		};
-		auto gaus = [this](const double *x, const double *par) -> double
+		auto gaus = [this](const double *x, const double *par, const int idx) -> double
 		{
 			const double m_rec = x[0];
-			double norm1 = 1.0 - abs(par[2]);
-			if (norm1<=1.0e-6) 
-				norm1 = 0.0;
-			double mean1 = abs(par[3]);
-			double sigma1 = abs(par[4]);
-			double gaus1 = ROOT::Math::gaussian_pdf(m_rec, sigma1, mean1);
-			gaus1 *= norm1;
-			if (abs(IntGaus1) >= 1.0e-6)
-				gaus1 /= IntGaus1;
-			double norm2 = abs(par[2]);
-			if (norm2<=1.0e-9) 
-				norm2 = 0.0;
-			double mean2 = abs(par[5]);
-			double sigma2 = abs(par[6]);
-			double gaus2 = ROOT::Math::gaussian_pdf(m_rec, sigma2, mean2);
-			gaus2 *= norm2;
-			if (IntGaus2 != 0.0)
-				gaus2 /= IntGaus2;
-			return (gaus1 + gaus2);
+			double norm = 0.0;
+			if (idx == 0)
+				norm = 1.0 - abs(par[2]);
+			else
+				norm = abs(par[2]);
+			if (norm<=1.0e-9) 
+				norm = 0.0;
+
+			double mean = abs(par[3 + idx * 2]);
+			double sigma = abs(par[4 + idx * 2]);
+			double gaus = ROOT::Math::gaussian_pdf(m_rec, sigma, mean);
+			gaus *= norm;
+
+			if (idx == 0) {
+				if (abs(IntGaus1) >= 1.0e-6)
+					gaus /= IntGaus1;
+			} else {
+				if (IntGaus2 != 0.0)
+					gaus /= IntGaus2;
+			}
+
+			return gaus;
 		};
 		double frac = par[7];
-		return ((1.0-frac)*raised_cosine(xx, par) + frac*gaus(xx, par));
+
+		if (component == 0)
+			return (1.0-frac)*raised_cosine(xx, par);
+		else if (component == 1)
+			return frac*gaus(xx, par, 0);
+		else if (component == 2)
+			return frac*gaus(xx, par, 1);
+		else
+			return ((1.0-frac)*raised_cosine(xx, par) + frac*(gaus(xx, par, 0) + gaus(xx, par, 1)));
 	}
+
 	void RaisedCosinePlusGaussPDF::CalcIntegral(const double *par, double min, double max)
 	{
-
 		double s = abs(par[1]);
 		double mean = par[0];
 		double minnB = mean - s;
@@ -91,27 +102,26 @@ namespace cpt_b0_analysis
 			IntGaus2 = 0.0;
 	}
 
-	SkewNormalPlusGausPDF::SkewNormalPlusGausPDF()
+	SkewNormalPlusCBPDF::SkewNormalPlusCBPDF()
 	{
 		IntSkewNorm = 1.0;
 		IntCB = 1.0;
-	       	skew_normal = [this](const double *x, const double *par) -> double
-                {
-			double xm = x[0]-par[6];
-		        double sigma = par[4];
-        		double skew  = par[5];
-
-			double skew_norm = 2.*ROOT::Math::gaussian_pdf(xm, sigma, 0.0)*ROOT::Math::normal_cdf(skew*xm/sigma,1.0, 0.0);
-                        return skew_norm;
-        	};
-
-
 	}
+	
+	double SkewNormalPlusCBPDF::skew_normal(const double *x, const double *par)
+	{
+		double xm = x[0]-par[6];
+		double sigma = par[4];
+		double skew  = par[5];
 
-        double SkewNormalPlusGausPDF::EvalPDF(const double *xx, const double *par)
-        {
-                auto gaussian = [this](const double *x, const double *par) -> double
-                {
+		double skew_norm = 2.*ROOT::Math::gaussian_pdf(xm, sigma, 0.0)*ROOT::Math::normal_cdf(skew*xm/sigma,1.0, 0.0);
+		return skew_norm;
+	};
+
+	double SkewNormalPlusCBPDF::EvalPDF(const double *xx, const double *par, const int component)
+	{
+		auto gaussian = [this](const double *x, const double *par) -> double
+		{
 			double m_rec = x[0];
 			double sigma = par[0];
 			double alpha = abs(par[2])+1.0e-6;
@@ -122,56 +132,57 @@ namespace cpt_b0_analysis
 				CB /= IntCB;
 			return CB;
 		};
-                if (IntSkewNorm == 0.0)
-                                return 0.0;
-		return abs(1.0-par[7])*skew_normal(xx, par)/IntSkewNorm+abs(par[7])*gaussian(xx, par);
-	}
-       void SkewNormalPlusGausPDF::CalcIntegral(const double *par, double min, double max)
-       {
+		if (IntSkewNorm == 0.0)
+			return 0.0;
 
+		if (component == 0)
+			return abs(1.0-par[7])*skew_normal(xx, par)/IntSkewNorm;
+		else if (component == 1)
+			return abs(par[7])*gaussian(xx, par);
+		else
+			return abs(1.0-par[7])*skew_normal(xx, par)/IntSkewNorm+abs(par[7])*gaussian(xx, par);
+	}
+
+	void SkewNormalPlusCBPDF::CalcIntegral(const double *par, double min, double max)
+	{
 		double xmin = min-par[6];
 		double xmax = max-par[6];
 		double sigma_sk = par[4];
-        	double skew  = par[5];
+		double skew  = par[5];
 
-        	double zmin = xmin / sigma_sk;
-        	double zmax = xmax / sigma_sk;
-    		double Phi = ROOT::Math::normal_cdf(zmax)-ROOT::Math::normal_cdf(zmin);
-    		double T = boost::math::owens_t(zmax, skew)-boost::math::owens_t(zmin, skew);
-    		IntSkewNorm = Phi - 2.0 * T;
+		double zmin = xmin / sigma_sk;
+		double zmax = xmax / sigma_sk;
+		double Phi = ROOT::Math::normal_cdf(zmax)-ROOT::Math::normal_cdf(zmin);
+		double T = boost::math::owens_t(zmax, skew)-boost::math::owens_t(zmin, skew);
+		IntSkewNorm = Phi - 2.0 * T;
 
-/*	       
-	       TF1 skewfunc("skewfunc", skew_normal, min, max, 8);
-               skewfunc.SetParameters(par);
-               ROOT::Math::WrappedTF1 wf1(skewfunc);
-               ROOT::Math::GaussIntegrator ig;
-               ig.SetFunction(wf1);
-               ig.SetRelTolerance(0.01);
-               IntSkewNorm = skewfunc.Integral(min, max, 1.0e-8);
+/*
+		TF1 skewfunc("skewfunc", skew_normal, min, max, 8);
+		skewfunc.SetParameters(par);
+		ROOT::Math::WrappedTF1 wf1(skewfunc);
+		ROOT::Math::GaussIntegrator ig;
+		ig.SetFunction(wf1);
+		ig.SetRelTolerance(0.01);
+		IntSkewNorm = skewfunc.Integral(min, max, 1.0e-8);
 		if (!std::isfinite(IntSkewNorm)){
 			for (int i=0; i<8; i++)
 				std::cout<< par[i] << Form("  par%d \n", i);
 			IntSkewNorm = 1.0;
-
-	}
-		
-		 	
-	
+		}
 		double xi = par[6];
 		double sigma = par[4];
-        	double skew  = par[5];
-
+		double skew  = par[5];
 		boost::math::skew_normal dist(xi, sigma, skew);
-
 	 	IntSkewNorm = boost::math::cdf(dist, xmax) - boost::math::cdf(dist, xmin);
-  */     
-        
-                double alpha = abs(par[2]+1.0e-6);
-                double n = par[3];
-                double mean = par[1];
-                double sigma = par[0];
+*/
 
-                IntCB = TMath::Abs(-ROOT::Math::crystalball_integral(2.0*mean-min, alpha, n, sigma, mean) + ROOT::Math::crystalball_integral(2.0*mean-max, alpha, n, sigma, mean));
-      }
+		double alpha = abs(par[2]+1.0e-6);
+		double n = par[3];
+		double mean = par[1];
+		double sigma = par[0];
 
+		IntCB = TMath::Abs(-ROOT::Math::crystalball_integral(2.0*mean-min, alpha, n, sigma, mean) + ROOT::Math::crystalball_integral(2.0*mean-max, alpha, n, sigma, mean));
+	}
 }
+
+// vim: tabstop=4 softtabstop=0 noexpandtab shiftwidth=4

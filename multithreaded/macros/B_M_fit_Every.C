@@ -63,7 +63,7 @@ void B_M_fit_Every(std::string config_file){
    	ch.SetBranchAddress("truecharge", &charge);
 
 	std::vector<double> vect_Bmass;
-	int nbins = 40;
+	int nbins = 100;
 	TH1D *hist = new TH1D("hist", "", nbins, Config::minBMcorr, Config::maxBMcorr);
 
 	int nentries = Config::nentries;
@@ -175,6 +175,19 @@ void B_M_fit_Every(std::string config_file){
 	tf1->SetParameters(min->X());
 	hist->Draw("ep");
 	tf1->DrawClone("same");
+
+    std::vector<int> colors = {4,6,7,8,9,30,40,41,38,42,46,28,39};
+	for (int i=0; i<B_PDFs[choice]->getComponentCount(); i++) {
+    	auto funcDrawComponent = [&B_PDFs, min, nevents, nbins, choice, i](double *x, double *par)->double{
+    		double bin_width = (Config::maxBMcorr-Config::minBMcorr)/double(nbins);
+    		//return double(nevents)*B_PDFs[choice]->EvalPDF(x, par);
+    		return bin_width*double(nevents)*B_PDFs[choice]->EvalPDF(x, par, i);
+    	};
+        TF1 *tfc = new TF1((std::string("tfc_") + std::to_string(i)).c_str(), funcDrawComponent, Config::minBMcorr, Config::maxBMcorr, nvar);
+        tfc->SetParameters(min->X());
+        tfc->SetLineColor(colors[i]);
+        tfc->DrawClone("same");
+    }
 	      
 	hist->Sumw2();
     	TH1D histpull1D(*hist);

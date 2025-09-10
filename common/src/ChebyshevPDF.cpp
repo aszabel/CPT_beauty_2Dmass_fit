@@ -14,7 +14,7 @@ namespace cpt_b0_analysis
 	{
 		IntCheb = 1.0;
 	}
-	double ChebyshevPDF::EvalPDF(const double *xx, const double *_par)
+	double ChebyshevPDF::EvalPDF(const double *xx, const double *_par, const int component)
 	{
 		auto DebPDF = [this](const double *x, const double *par) -> double
 		{
@@ -43,7 +43,7 @@ namespace cpt_b0_analysis
 	{
 		IntExp = 1.0;
 	}
-	double ExponentPDF::EvalPDF(const double *xx, const double *_par)
+	double ExponentPDF::EvalPDF(const double *xx, const double *_par, const int component)
 	{
 		auto ExpPDF = [this](const double *x, const double *par) -> double
 		{

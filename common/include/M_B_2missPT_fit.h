@@ -17,7 +17,8 @@ namespace cpt_b0_analysis
 
 		void CalcIntegral(const double *par, double min, double max);
 		double getIntegral(){return 0.0;};
-		double EvalPDF(const double *xx, const double *par);
+		int getComponentCount(){return 3;}; // RaisedCosine + 2 x Gauss
+		double EvalPDF(const double *xx, const double *par, const int component=-1);
 
 	private:
 		double IntCos;
@@ -25,24 +26,25 @@ namespace cpt_b0_analysis
 		double IntGaus2;
 	};
 
-	class SkewNormalPlusGausPDF : public PDFInterface
+	class SkewNormalPlusCBPDF : public PDFInterface
 	{
 	public:
-		SkewNormalPlusGausPDF();
-		SkewNormalPlusGausPDF(const SkewNormalPlusGausPDF &other)=default;
-		SkewNormalPlusGausPDF(SkewNormalPlusGausPDF&&)=default;
-		~SkewNormalPlusGausPDF() {};
+		SkewNormalPlusCBPDF();
+		SkewNormalPlusCBPDF(const SkewNormalPlusCBPDF &other)=default;
+		SkewNormalPlusCBPDF(SkewNormalPlusCBPDF&&)=default;
+		~SkewNormalPlusCBPDF() {};
 			
 		void CalcIntegral(const double *par, double min, double max);
 		double getIntegral(){return 0.0;};
-		double EvalPDF(const double *xx, const double *par);
+		int getComponentCount(){return 2;}; // SkewNormal + CB
+		double EvalPDF(const double *xx, const double *par, const int component = -1);
 
 	private:
 		double IntSkewNorm;
 		double IntCB;
-		std::function<double(const double*, const double*)> skew_normal;
+		double skew_normal(const double*, const double*);
 	};
 }
-	
 
 #endif
+// vim: tabstop=4 softtabstop=0 noexpandtab shiftwidth=4

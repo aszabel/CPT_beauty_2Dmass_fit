@@ -15,7 +15,7 @@ namespace cpt_b0_analysis
 		IntGaus = 1.0;
 		IntDCB = 1.0;
 	}
-	double DoubleSidedCrystalballPlusGaussPDF::EvalPDF(const double *xx, const double *_par)
+	double DoubleSidedCrystalballPlusGaussPDF::EvalPDF(const double *xx, const double *_par, const int component)
 	{
 		auto gausPDF = [this](const double *x, const double *par) -> double
 		{
@@ -84,7 +84,7 @@ namespace cpt_b0_analysis
                 IntJSU = 1.0;
                 IntGaus = 1.0;
         }
-        double JohnsonPlusGaussPDF::EvalPDF(const double *xx, const double *_par)
+        double JohnsonPlusGaussPDF::EvalPDF(const double *xx, const double *_par, const int component)
         {
 		auto gausPDF = [this](const double *x, const double *par) -> double
                 {
