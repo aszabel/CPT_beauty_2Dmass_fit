@@ -2,8 +2,8 @@
 #SBATCH --ntasks=1			# Number of processes
 #SBATCH --time=24:00:00			# Time limit hrs:min:sec
 
-#JSON_FILE="config_1D_BM_CBplusSkewNorm.json"
-JSON_FILE="config_1D_BM_RaisedCosPlusDoubleGaus.json"
+INPUT=$(realpath "$1")
+JSON_FILE=$(basename "$INPUT")
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -13,7 +13,7 @@ mkdir -p results
 cd results
 for sign in muplus muminus
 do
-	cp $DIR/configs/$JSON_FILE $JSON_FILE.$sign
+	cp $INPUT $JSON_FILE.$sign
 	# Define the key to be replaced and the new value
 	KEY="sign"
 	NEW_VALUE=$sign
