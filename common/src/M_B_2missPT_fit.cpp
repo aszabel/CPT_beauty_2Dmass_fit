@@ -114,8 +114,9 @@ namespace cpt_b0_analysis
 		double sigma = par[4];
 		double skew  = par[5];
 
-		double skew_norm = 2.*ROOT::Math::gaussian_pdf(xm, sigma, 0.0)*ROOT::Math::normal_cdf(skew*xm/sigma,1.0, 0.0);
-		return skew_norm;
+		if (skew == 0.0) return ROOT::Math::gaussian_pdf(xm, sigma, 0.0);
+
+		return 2.*ROOT::Math::gaussian_pdf(xm, sigma, 0.0)*ROOT::Math::normal_cdf(skew*xm/sigma,1.0, 0.0);
 	};
 
 	double SkewNormalPlusCBPDF::EvalPDF(const double *xx, const double *par, const int component)
@@ -153,8 +154,13 @@ namespace cpt_b0_analysis
 		double zmin = xmin / sigma_sk;
 		double zmax = xmax / sigma_sk;
 		double Phi = ROOT::Math::normal_cdf(zmax)-ROOT::Math::normal_cdf(zmin);
-		double T = boost::math::owens_t(zmax, skew)-boost::math::owens_t(zmin, skew);
-		IntSkewNorm = Phi - 2.0 * T;
+
+		if (skew == 0) {
+			IntSkewNorm = Phi;
+		} else {
+			double T = boost::math::owens_t(zmax, skew)-boost::math::owens_t(zmin, skew);
+			IntSkewNorm = Phi - 2.0 * T;
+		}
 
 /*
 		TF1 skewfunc("skewfunc", skew_normal, min, max, 8);
