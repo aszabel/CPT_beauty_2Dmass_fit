@@ -165,9 +165,34 @@ for (auto& choice: Config::int_choose_fits)
 
 	min -> SetErrorDef(ROOT::Math::chisquared_quantile(CL_normal, min->NFree()));
 	min->Minimize();
+	min->Hesse();
 	//double err_up, err_down;
 	//min->GetMinosError(1, err_up, err_down);
 	//cout << "Minos mean " << err_up << "  " << err_down << endl;
+
+	// Print correlation matrix
+	cout<<"Correlation matrix:"<<endl;
+	size_t headerWidths[nvar];
+	size_t max_header = 0;
+	for (int i=0; i<nvar; i++){
+		const auto& name = Config::varname_mb[i];
+		headerWidths[i] = name.size() > 7 ? name.size() : 7;
+		if (max_header < name.size()) max_header = name.size();
+	}
+	for (int i=0; i<nvar; i++){
+		if (i == 0) {
+			cout<<std::setw(max_header) << " " <<std::setw(0);
+			for (int j=0; j<nvar; j++){
+				cout<<" | "<<std::setw(headerWidths[j])<<Config::varname_mb[j];
+			}
+			cout<<endl;
+		}
+		cout<<std::setw(max_header)<<Config::varname_mb[i];
+		for (int j=0; j<nvar; j++){
+			cout<<std::setw(0)<<" | "<<std::setw(headerWidths[j])<<std::setprecision(3)<<min->Correlation(i, j);
+		}
+		cout<<endl;
+	}
 
 	for (int i=0; i<nvar; i++){
 		cout << min->X()[i] << ", ";
