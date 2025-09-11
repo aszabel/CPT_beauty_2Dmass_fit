@@ -120,7 +120,7 @@ namespace cpt_b0_analysis
 
 	double SkewNormalPlusCBPDF::EvalPDF(const double *xx, const double *par, const int component)
 	{
-		auto gaussian = [this](const double *x, const double *par) -> double
+		auto crystal_ball = [this](const double *x, const double *par) -> double
 		{
 			double m_rec = x[0];
 			double sigma = par[0];
@@ -138,9 +138,9 @@ namespace cpt_b0_analysis
 		if (component == 0)
 			return abs(1.0-par[7])*skew_normal(xx, par)/IntSkewNorm;
 		else if (component == 1)
-			return abs(par[7])*gaussian(xx, par);
+			return abs(par[7])*crystal_ball(xx, par);
 		else
-			return abs(1.0-par[7])*skew_normal(xx, par)/IntSkewNorm+abs(par[7])*gaussian(xx, par);
+			return abs(1.0-par[7])*skew_normal(xx, par)/IntSkewNorm+abs(par[7])*crystal_ball(xx, par);
 	}
 
 	void SkewNormalPlusCBPDF::CalcIntegral(const double *par, double min, double max)
