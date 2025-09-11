@@ -5,6 +5,7 @@
 *.so
 *.o
 *ACLiC_dict*
+*.log
 fit_lifetime/fit2time
 multithreaded/fit1D_mass
 multithreaded/fit2D_mass

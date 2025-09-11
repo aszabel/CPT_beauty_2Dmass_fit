@@ -32,8 +32,10 @@
   "BMcorr_range": [3000.0, 8000.0],
 
   "varname_md": ["sigma", "mean", "sigmaCB", "f12", "alpha", "n", "alpha_h"], 
-  "varname_mb": ["sigma", "mean", "alpha", "n", "signma_skew", "skew", "mean_skew", "f12"],
-  "fixVect" : ["signal_n", "BuDmunu_n", "BsDsMunu_n", "B02DpDsm_n", "sidebands_n", "Bu2D0Dsm_n"],
+  "varname_mb": ["sigma", "mean", "alpha", "n", "sigma_skew", "skew", "mean_skew", "f12"],
+  "fixVect" : [
+    "signal_n", "BuDmunu_n", "BsDsMunu_n", "B02DpDsm_n", "sidebands_n", "Bu2D0Dsm_n"
+  ],
 
   "nvar_md": 7,
   "nvar_mb": 8,
@@ -53,9 +55,66 @@
 
   "varLimitsVect":{
     "signal_f12":  [-1.0, 1.0],
+    "sidebands_f12":  [-1.0, 1.0],
     "BuDmunu_f12": [-1.0, 1.0],
     "BsDsMunu_f12":[-1.0, 1.0],
     "B02DpDsm_f12":[-1.0, 1.0],
+    "Bu2D0Dsm_f12":[-1.0, 1.0]
+  },
+
+  "scanLimitsVect":{
+    "signal_sigma": [100, 3000],
+    "signal_mean": [1000, 10000],
+    "signal_alpha": [0.1, 5.0],
+    "signal_n": [1, 1],
+    "signal_sigma_skew": [100, 3000],
+    "signal_skew": [-5, 0],
+    "signal_mean_skew": [1000, 10000],
+    "signal_f12":  [-1.0, 1.0],
+
+    "sidebands_sigma": [100, 3000],
+    "sidebands_mean": [1000, 10000],
+    "sidebands_alpha": [0.1, 5.0],
+    "sidebands_n": [1, 1],
+    "sidebands_sigma_skew": [100, 3000],
+    "sidebands_skew": [-5, 0],
+    "sidebands_mean_skew": [1000, 10000],
+    "sidebands_f12":  [-1.0, 1.0],
+
+    "BuDmunu_sigma": [100, 3000],
+    "BuDmunu_mean": [1000, 10000],
+    "BuDmunu_alpha": [0.1, 5.0],
+    "BuDmunu_n": [1, 1],
+    "BuDmunu_sigma_skew": [100, 3000],
+    "BuDmunu_skew": [-5, 0],
+    "BuDmunu_mean_skew": [1000, 10000],
+    "BuDmunu_f12": [-1.0, 1.0],
+
+    "BsDsMunu_sigma": [100, 3000],
+    "BsDsMunu_mean": [1000, 10000],
+    "BsDsMunu_alpha": [0.1, 5.0],
+    "BsDsMunu_n": [1, 1],
+    "BsDsMunu_sigma_skew": [100, 3000],
+    "BsDsMunu_skew": [-5, 0],
+    "BsDsMunu_mean_skew": [1000, 10000],
+    "BsDsMunu_f12":[-1.0, 1.0],
+
+    "B02DpDsm_sigma": [100, 3000],
+    "B02DpDsm_mean": [1000, 10000],
+    "B02DpDsm_alpha": [0.1, 5.0],
+    "B02DpDsm_n": [1, 1],
+    "B02DpDsm_sigma_skew": [100, 3000],
+    "B02DpDsm_skew": [-5, 0],
+    "B02DpDsm_mean_skew": [1000, 10000],
+    "B02DpDsm_f12":[-1.0, 1.0],
+
+    "Bu2D0Dsm_sigma": [100, 3000],
+    "Bu2D0Dsm_mean": [1000, 10000],
+    "Bu2D0Dsm_alpha": [0.1, 5.0],
+    "Bu2D0Dsm_n": [1, 1],
+    "Bu2D0Dsm_sigma_skew": [100, 3000],
+    "Bu2D0Dsm_skew": [-5, 0],
+    "Bu2D0Dsm_mean_skew": [1000, 10000],
     "Bu2D0Dsm_f12":[-1.0, 1.0]
   },
 
