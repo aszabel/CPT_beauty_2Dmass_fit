@@ -92,41 +92,7 @@ for (auto& choice: Config::int_choose_fits)
 	double  nevents = double(vect_Bmass.size());
 	const auto& B_PDFs = Config::getVectorPDFs("Bmass");
 
-
-	auto fchi2 = [&B_PDFs, vect_Bmass, choice](const double *par)->double {
-		double chi2 = 0.0;
-		B_PDFs[choice]->CalcIntegral(par, Config::minBMcorr, Config::maxBMcorr);
-		for (auto bmass: vect_Bmass){
-			double likelihood = B_PDFs[choice]->EvalPDF(&bmass, par);
-			if (likelihood>=1.0|| likelihood <=0.0)
-			{
-				continue;
-			}
-			chi2 -= 2.0*log(likelihood);
-		}
-		return chi2;
-	};
-	auto fchi2binned = [&B_PDFs, hist, nevents, nbins, choice](const double *par)->double{
-		double chi2 = 0;
-		B_PDFs[choice]->CalcIntegral(par, Config::minBMcorr, Config::maxBMcorr);
-		double bin_width = (Config::maxBMcorr-Config::minBMcorr)/double(nbins);
-		for (int bin=1; bin<=nbins; bin++){
-			double bincenter = hist->GetBinCenter(bin);
-			double bincont = hist->GetBinContent(bin);
-			double err = hist->GetBinError(bin);
-			double estim = bin_width*double(nevents)*B_PDFs[choice]->EvalPDF(&bincenter, par);
-			if(err!=0.0) chi2+=(bincont-estim)*(bincont-estim)/err/err;
-		}
-		return chi2/double(nbins);
-	};
-
 	double step = 0.1;
-
-	ROOT::Math::Functor f_binned(fchi2binned, nvar);
-	ROOT::Math::Functor f(fchi2, nvar);
-	if (Config::binned) min->SetFunction(f_binned);
-	else min->SetFunction(f);
-
 	for (int ivar=0; ivar<nvar; ivar++){
 		/*if (ivar== 2 || ivar == 3 || ivar == 5 || ivar == 7) 
 			step = 0.01; 
@@ -160,6 +126,40 @@ for (auto& choice: Config::int_choose_fits)
 			std::cout << fix << "  " << min->VariableIndex(fix) << std::endl;
 		}
 	}
+
+	int ndim = min->NFree();
+	auto fchi2 = [&B_PDFs, vect_Bmass, choice](const double *par)->double {
+		double chi2 = 0.0;
+		B_PDFs[choice]->CalcIntegral(par, Config::minBMcorr, Config::maxBMcorr);
+		for (auto bmass: vect_Bmass){
+			double likelihood = B_PDFs[choice]->EvalPDF(&bmass, par);
+			if (likelihood>=1.0|| likelihood <=0.0)
+			{
+				continue;
+			}
+			chi2 -= 2.0*log(likelihood);
+		}
+		return chi2;
+	};
+	auto fchi2binned = [&B_PDFs, hist, nevents, nbins, choice, ndim](const double *par)->double{
+		double chi2 = 0;
+		B_PDFs[choice]->CalcIntegral(par, Config::minBMcorr, Config::maxBMcorr);
+		double bin_width = (Config::maxBMcorr-Config::minBMcorr)/double(nbins);
+		for (int bin=1; bin<=nbins; bin++){
+			double bincenter = hist->GetBinCenter(bin);
+			double bincont = hist->GetBinContent(bin);
+			double err = hist->GetBinError(bin);
+			double estim = bin_width*double(nevents)*B_PDFs[choice]->EvalPDF(&bincenter, par);
+			if(err!=0.0) chi2+=(bincont-estim)*(bincont-estim)/err/err;
+		}
+		return chi2/double(nbins-ndim);
+	};
+
+
+	ROOT::Math::Functor f_binned(fchi2binned, nvar);
+	ROOT::Math::Functor f(fchi2, nvar);
+	if (Config::binned) min->SetFunction(f_binned);
+	else min->SetFunction(f);
 	
 	double CL_normal = ROOT::Math::normal_cdf(1) -  ROOT::Math::normal_cdf(-1);
 
@@ -169,6 +169,14 @@ for (auto& choice: Config::int_choose_fits)
 	//double err_up, err_down;
 	//min->GetMinosError(1, err_up, err_down);
 	//cout << "Minos mean " << err_up << "  " << err_down << endl;
+
+/*
+Contour
+
+TGraph g(n); 
+minimizer->Contour(ipar, jpar, n, g.GetX(), g.GetY() ); 
+g.Draw("AC");
+*/
 
 	// Print correlation matrix
 	cout<<"Correlation matrix:"<<endl;
@@ -251,6 +259,8 @@ for (auto& choice: Config::int_choose_fits)
 	c->SaveAs(Form("%s_figures/B_M_%s_%d.pdf", path_results.Data(), Config::contrName[choice].c_str(), Config::sign));
 
 	ofstream outfile(Form("%s/res_%s_%d.txt", path_results.Data(),Config::contrName[choice].c_str(), Config::sign));
+	outfile << min->Status() << endl;
+	outfile << min->MinValue() << endl;
 	for (int i =0; i< nvar; i++){
 		outfile << min->X()[i] << "  " << min->Errors()[i] << endl;
 	}
