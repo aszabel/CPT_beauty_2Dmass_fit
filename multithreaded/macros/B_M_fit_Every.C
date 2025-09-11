@@ -136,12 +136,23 @@ for (auto& choice: Config::int_choose_fits)
 		//step = abs(0.01*Config::init_values[choice][ivar])+0.01;
 		step = abs(0.1*Config::init_values[choice][ivar])+0.01;
 		//TODO name variables after fit name so that we can fix, set limits per contribution
-		min->SetVariable(ivar, Config::varname_mb[ivar].c_str(), Config::init_values[choice][ivar], step);
+		min->SetVariable(ivar, (Config::Fits[choice] + std::string("_") + Config::varname_mb[ivar]).c_str(), Config::init_values[choice][ivar], step);
 		//min -> FixVariable(ivar);		
-// TODO from config
 	}
-	min->SetVariableLimits(min->VariableIndex("f12"), -1.0, 1.0);
-	min->SetVariableLimits(min->VariableIndex("f12_gaus"), -1.0, 1.0);
+
+	//Set Limits on variables
+	for (auto it=Config::varLimitsMap.begin(); it!=Config::varLimitsMap.end(); ++it)
+	{
+		if (it->first.rfind(Config::Fits[choice], 0) != 0) continue;
+		int index_var = min->VariableIndex(it->first);
+		if (index_var == -1 ){
+			std::cerr<< "Error in limiting parameters: param " << it->first << " not found.\n";
+			return 1;
+		}
+		auto pairlims = it->second;
+		min->SetVariableLimits(index_var, pairlims.first, pairlims.second);
+	}
+
 	//list of fixed variables form config
 	for (const auto& fix: Config::fixVect){
 		if (min->VariableIndex(fix) >= 0) {
