@@ -1,16 +1,17 @@
 {
   "category": "1D_DM",
   "isMC": false,
+  "massVariable": "B_Mcorr",
   "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
   "BMshapes": ["RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus"],
-  "binned": false,	
+  "binned": false,
   "sign":"muplus",
   "chainName": "BlindedTree",
   "nentries": -1,
   "__TOLERANCE__": "Set tolerance per sample choice: MCsignal, BuDmunu, ...",
   "contrName": ["signal", "BuDmunu", "BsDsMunu", "B02DpDsm", "sidebands", "Bu2D0Dsm"],
   "Fits": ["signal", "BuDmunu", "BsDsMunu", "B02DpDsm", "Bu2D0Dsm"],
-  "tolerance": [1.0e-2, 1.0e-2, 1.0e-2, 1.0e-2, 1.0e-2], 
+  "tolerance": [1.0e-2, 1.0e-2, 1.0e-2, 1.0e-2, 1.0e-2],
   "printLevel": 1,
   "functionCalls": 1e7,
   "randSeed": -1,
@@ -31,23 +32,35 @@
   "DM_range": [1800, 1940],
   "BMcorr_range": [3000, 8000],
 
-  "varname_md": ["sigma", "mean", "sigmaCB", "f12", "alpha", "n", "alpha_h", "n2"], 
+  "varname_md": ["f12", "mean", "sigma", "meanCB", "sigmaCB", "alpha", "n", "alpha_h", "n2"],
   "varname_mb": ["mean_rc", "sigma_rc", "f12_gaus", "mean1_gaus", "sigma1_gaus", "mean2_gaus", "sigma2_gaus"], 
-  "fixVect" : ["f12", "n", "n2"],
+  "fixVect" : [
+    "signal_n", "BuDmunu_n", "BsDsMunu_n", "B02DpDsm_n", "Bu2D0Dsm_n",
+    "signal_n2", "BuDmunu_n2", "BsDsMunu_n2", "B02DpDsm_n2", "Bu2D0Dsm_n2"
+  ],
 
-  "nvar_md": 8,
+  "nvar_md": 9,
   "nvar_mb": 7,
   "ncontr": 6,
   "n_sideband": 2,
-    "init_values": [
-    [10.0, 1870.23, 5.88232, 0.5, 2.0, 1.0, 2.12662, 1.4],
-    [10.0, 1870.23, 5.0, 0.5, 1.75869, 1.0, 2.12662, 0.5],
-    [10.0, 1885.33, 12.1655, 0.0, 0.4, 10.0, 2.22105, 0.4],
-    [8.91203, 1870.42, 5.76074, 0.5, 1.80105, 1, 2.55946, 0.5],
-    [0, 0, 0, 0, 0, 0, 0],
-    [10.0, 1870.23, 5.88232, 0.5, 1.75869, 1.0, 2.12662, 0.5]
+  "init_values": [
+    [0.5, 1870.23, 10.0, 1870.23, 5.88232, 2.0,     1.0,  2.12662, 1.0],
+    [0.5, 1870.23, 10.0, 1870.23, 5.0,     1.75869, 1.0,  2.12662, 1.0],
+    [0.0, 1885.33, 10.0, 1885.33, 12.1655, 0.4,     1.0,  2.22105, 1.0],
+    [0.5, 1870.42, 8.91, 1870.42, 5.76074, 1.80105, 1.0,  2.55946, 1.0],
+    [0,   0,       0,    0,       0,       0,       0,    0,       0  ],
+    [0.5, 1870.23, 10.0, 1870.23, 5.88232, 1.75869, 1.0,  2.12662, 1.0]
   ],
-  
+
+  "varLimitsVect":{
+    "signal_f12":  [-1.0, 1.0],
+    "BuDmunu_f12": [-1.0, 1.0],
+    "BsDsMunu_f12":[-1.0, 1.0],
+    "B02DpDsm_f12":[-1.0, 1.0],
+    "Bu2D0Dsm_f12":[-1.0, 1.0]
+  },
+  "scanLimitsVect":{}
+
   "__KEYS_BELOW_ARE_NOT_USED__": "",
 
   "start_from_previous": false,
@@ -55,8 +68,6 @@
   
   "MC_directory_MD": "D_M_results_DCBplusGaus",
   "MC_directory_MB": "B_M_results_RCplusGaus",
-
-  "varLimitsVect":{},
 
   "fracInit": [0.2, 0.15, 0.15, 0.15, 0.15, 0.15]
 

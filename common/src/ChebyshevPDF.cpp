@@ -70,3 +70,5 @@ namespace cpt_b0_analysis
 		return IntExp;
 	}
 }
+
+// vim: tabstop=4 softtabstop=0 noexpandtab shiftwidth=4

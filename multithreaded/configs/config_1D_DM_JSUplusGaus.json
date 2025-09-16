@@ -1,9 +1,10 @@
 {
   "category": "1D_DM",
   "isMC": false,
+  "massVariable": "B_Mcorr",
   "DMshapes": ["JSUplusGaus", "JSUplusGaus", "JSUplusGaus", "JSUplusGaus", "Chebyshev", "JSUplusGaus"],
   "BMshapes": ["RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus"],
-  "binned": false,	
+  "binned": false,
   "sign":"muplus",
   "chainName": "BlindedTree",
   "nentries": -1,
@@ -32,23 +33,31 @@
   "DM_range": [1800, 1940],
   "BMcorr_range": [3000, 8000],
 
-  "varname_md": ["sigma", "mean", "lambda", "f12", "gamma", "delta"], 
+  "varname_md": ["f12", "mean", "sigma", "xi", "lambda", "gamma", "delta"],
   "varname_mb": ["mean_rc", "sigma_rc", "f12_gaus", "mean1_gaus", "sigma1_gaus", "mean2_gaus", "sigma2_gaus"], 
-  "fixVect" : ["n", "n2", "f12"],
+  "fixVect" : [],
 
-  "nvar_md": 6,
+  "nvar_md": 7,
   "nvar_mb": 7,
   "ncontr": 6,
   "n_sideband": 2,
     "init_values": [
-    [7.19906, 1870.47, 4.46561, 0.7, 0.23538, 0.599694],
-    [7.47497, 1870.33, 1.97786, 0.8, 0.461004, 0.371032],
-    [1499.15, 1898.87, 14.9942, 0.06, 1.79671, 1.09631],
-    [7.31576, 1870.33, 3.82062, 0.7, 0.0504217, 0.434271],
-    [0, 0, 0, 0, 0],
-    [7.40974, 1870.3, 2.0137, 0.8, 0.196081, 0.190293]
+    [0.5, 1870.47, 7.19906, 1870.47, 4.46561, 0.23538,   0.599694],
+    [0.5, 1870.33, 7.47497, 1870.33, 1.97786, 0.461004,  0.371032],
+    [0.5, 1898.87, 1499.15, 1898.87, 14.9942, 1.79671,   1.09631],
+    [0.5, 1870.33, 7.31576, 1870.33, 3.82062, 0.0504217, 0.434271],
+    [0,   0,       0,       0,       0],
+    [0.5, 1870.3,  7.40974, 1870.3,  2.0137,  0.196081,  0.190293]
   ],
 
+  "varLimitsVect":{
+    "signal_f12":  [-1.0, 1.0],
+    "BuDmunu_f12": [-1.0, 1.0],
+    "BsDsMunu_f12":[-1.0, 1.0],
+    "B02DpDsm_f12":[-1.0, 1.0],
+    "Bu2D0Dsm_f12":[-1.0, 1.0]
+  },
+  "scanLimitsVect":{}
 
   "__KEYS_BELOW_ARE_NOT_USED__": "",
 
@@ -57,8 +66,6 @@
   
   "MC_directory_MD": "D_M_results_JSUplusGaus",
   "MC_directory_MB": "B_M_results_CBplusSkewNorm",
-
-  "varLimitsVect":{},
 
   "fracInit": [0.2, 0.15, 0.15, 0.15, 0.15, 0.15]
 

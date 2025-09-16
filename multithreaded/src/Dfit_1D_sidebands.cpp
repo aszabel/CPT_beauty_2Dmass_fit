@@ -85,10 +85,10 @@ int main(int argc, char *argv[])
 
 	}
 	catch (const std::exception& ex) {
-        	std::cerr << "Error: " << ex.what() << std::endl;
-        	return 1;
-        }
-        int nentries = Config::nentries;
+		std::cerr << "Error: " << ex.what() << std::endl;
+		return 1;
+	}
+	int nentries = Config::nentries;
 	
 
 	// Load data set
@@ -121,8 +121,8 @@ int main(int argc, char *argv[])
 	if (nentries < 0) nentries = ch.GetEntries(); 
 	if (nentries > ch.GetEntries()){
 		std::cerr << "The value of 'nentries' exceeds the number of events in the file." << std::endl;
-                return 1;
-        }
+		return 1;
+	}
 	int frac_indeces[Config::ncontr];
 	for (int i=0; i<Config::ncontr; i++)
 		frac_indeces[i] = 0;
@@ -208,21 +208,21 @@ int main(int argc, char *argv[])
 		}
 */
 		//Set Limits on variables
-        	for (auto it =Config::varLimitsMap.begin(); it!=Config::varLimitsMap.end(); ++it)
-        	{
-                	int index_var = min->VariableIndex(it->first);
-                	if (index_var == -1 ){
-                        	std::cerr<< "Error in limiting parameters: param " << it->first << " not found.\n";
-                        	return 1;
-                	}
-                	auto pairlims = it->second;
-                	min->SetVariableLimits(index_var, pairlims.first, pairlims.second);
-        	}
+		for (auto it =Config::varLimitsMap.begin(); it!=Config::varLimitsMap.end(); ++it)
+		{
+			int index_var = min->VariableIndex(it->first);
+			if (index_var == -1 ){
+				std::cerr<< "Error in limiting parameters: param " << it->first << " not found.\n";
+				return 1;
+			}
+			auto pairlims = it->second;
+			min->SetVariableLimits(index_var, pairlims.first, pairlims.second);
+		}
 
 		for (int i = 0; i < Config::ncontr; i++)
 		{
 			min->SetVariable((Config::nvar_md + Config::nvar_mb) * Config::ncontr + i, (TString::Format("par_frac%d", i)).Data(), Config::fracInit[i], 0.001);
-                	//min->SetVariableLimits((Config::nvar_md + Config::nvar_mb) * Config::ncontr + i, -1.0, 1.0);
+			//min->SetVariableLimits((Config::nvar_md + Config::nvar_mb) * Config::ncontr + i, -1.0, 1.0);
 			//if (int_choose_fit == 1){
 			if (i!=4){
 				min->SetVariableValue((Config::nvar_md + Config::nvar_mb) * Config::ncontr + i, 0.0);
@@ -252,17 +252,17 @@ int main(int argc, char *argv[])
 		}
 		
 		const auto& B_PDFs = Config::getVectorPDFs("Bmass");
-        	/*if (int(B_PDFs.size()) != Config::ncontr){
-                	std::cout<< " NO B_PDFs \n";    
-                	return 1;
-        	}
-        	for (int i=0; i<Config::ncontr; ++i){
-                	auto pdf = B_PDFs[i].get();
-                	if (!pdf){
-                        	std::cout<< "Nullptr passed as pdf\n";
-                        	return 1;
-                	}
-        	}
+		/*if (int(B_PDFs.size()) != Config::ncontr){
+			std::cout<< " NO B_PDFs \n";    
+			return 1;
+		}
+		for (int i=0; i<Config::ncontr; ++i){
+			auto pdf = B_PDFs[i].get();
+			if (!pdf){
+				std::cout<< "Nullptr passed as pdf\n";
+				return 1;
+			}
+		}
 		//list of fixed variables form config*/
 		for (const auto& fix: Config::fixVect){
 			min->FixVariable(min->VariableIndex(fix));
@@ -330,17 +330,17 @@ int main(int argc, char *argv[])
 	
 
 */		std::vector<std::pair<int, int>> replaceIndexVect = {};
-/*                for (const auto& rep_var: Config::replace_var){
-                        int index_replaced = min->VariableIndex(rep_var.first);
-                        int index_substitute = min->VariableIndex(rep_var.second);
-                        if (index_replaced == -1 ){
-                                std::cerr<< "Error in substituting parameters param " << rep_var.first << " not found.\n";
+/*		for (const auto& rep_var: Config::replace_var){
+			int index_replaced = min->VariableIndex(rep_var.first);
+			int index_substitute = min->VariableIndex(rep_var.second);
+			if (index_replaced == -1 ){
+				std::cerr<< "Error in substituting parameters param " << rep_var.first << " not found.\n";
 				return 1;
-                        }
-                        if (index_substitute == -1 ){
-                                std::cerr<< "Error in substituting parameters param " << rep_var.second << " not found.\n";
+			}
+			if (index_substitute == -1 ){
+				std::cerr<< "Error in substituting parameters param " << rep_var.second << " not found.\n";
 				return 1;
-                        }
+			}
 			replaceIndexVect.push_back(std::make_pair(index_replaced, index_substitute));
 		}
 
@@ -369,22 +369,22 @@ int main(int argc, char *argv[])
 		// Q: Why do we recalculate fractions? What does the minuti minimize - what is stored in `pa` ???
 		// The parameters pa[] define the fractions, we have 6 fractions but 5 independent parameters. The parametrisation is arbitrary
  		double frac_res[Config::ncontr];
-                frac_res[0] = abs(pa[0]);
-                frac_res[1] = abs(pa[1]);
-                frac_res[2] = abs(pa[2]);
-                frac_res[3] = abs(pa[3]);
-                frac_res[4] = abs(pa[4]);
-                frac_res[5] = abs(pa[5]);
+		frac_res[0] = abs(pa[0]);
+		frac_res[1] = abs(pa[1]);
+		frac_res[2] = abs(pa[2]);
+		frac_res[3] = abs(pa[3]);
+		frac_res[4] = abs(pa[4]);
+		frac_res[5] = abs(pa[5]);
 	
-                results << min->X()[4 * Config::nvar_md + 0] << "  " << min->Errors()[4 * Config::nvar_md + 0] << std::endl;
-                results << min->X()[4 * Config::nvar_md + 1] << "  " << min->Errors()[4 * Config::nvar_md + 1] << std::endl;
-                results << min->X()[Config::ncontr * Config::nvar_md + 4] << "  " << min->Errors()[Config::ncontr * Config::nvar_md + 4] << std::endl;
+		results << min->X()[4 * Config::nvar_md + 0] << "  " << min->Errors()[4 * Config::nvar_md + 0] << std::endl;
+		results << min->X()[4 * Config::nvar_md + 1] << "  " << min->Errors()[4 * Config::nvar_md + 1] << std::endl;
+		results << min->X()[Config::ncontr * Config::nvar_md + 4] << "  " << min->Errors()[Config::ncontr * Config::nvar_md + 4] << std::endl;
 
 	
 /*		for (int i = 0; i < e_all; i++)
-                {
-                        results << min->X()[i] << "  " << min->Errors()[i] << std::endl;
-                }
+		{
+			results << min->X()[i] << "  " << min->Errors()[i] << std::endl;
+		}
  */
 
 		results.close();
@@ -394,10 +394,10 @@ int main(int argc, char *argv[])
 
 		D_PDFs[4].get()->CalcIntegral(&min->X()[4 * Config::nvar_md], hist1D.GetBinLowEdge(hist1D.FindBin(1830)), hist1D.GetBinLowEdge(hist1D.FindBin(1910)));
 		double integral_signal_range = D_PDFs[4].get()->getIntegral();
-                std::cout << integral_signal_range << " intsig\n";
+		std::cout << integral_signal_range << " intsig\n";
 		D_PDFs[4].get()->CalcIntegral(&min->X()[4 * Config::nvar_md], Config::minDM, Config::maxDM);
 		double integral_full_range = D_PDFs[4].get()->getIntegral();
-                std::cout << integral_full_range << " intfull\n";
+		std::cout << integral_full_range << " intfull\n";
 
 		double nevents = (double)hist1D.Integral();	
 		TF1 *sidebandtf1 = new TF1("stf1", [D_PDFs, nevents, integral_full_range, integral_signal_range, bin_width](double *x, double *par)->double{return bin_width*nevents*integral_full_range/(integral_full_range-integral_signal_range)*D_PDFs[4].get()->EvalPDF(x, par);}, Config::minDM, Config::maxDM, Config::n_sideband);
@@ -416,36 +416,36 @@ int main(int argc, char *argv[])
 }
 
 void Draw_pull(TCanvas *c, TH1D hist, TF1 *tf1_sum){
-        c->cd();
-        TPad *pad1 = new TPad("pad1", "", 0.0, 0.3, 1.0, 1.0);
-                pad1->SetLogy();
-                pad1->Draw();
-                pad1->cd();
+	c->cd();
+	TPad *pad1 = new TPad("pad1", "", 0.0, 0.3, 1.0, 1.0);
+		pad1->SetLogy();
+		pad1->Draw();
+		pad1->cd();
 
-        hist.SetStats(kFALSE);
-        hist.SetMinimum(1.0);
-        hist.DrawClone("ep");
-        tf1_sum->SetLineColor(kBlack);
-        tf1_sum->DrawClone("same");
+	hist.SetStats(kFALSE);
+	hist.SetMinimum(1.0);
+	hist.DrawClone("ep");
+	tf1_sum->SetLineColor(kBlack);
+	tf1_sum->DrawClone("same");
 
-        //hist->Sumw2();
-        TH1D histpull1D(hist);
-        histpull1D.SetMinimum();
-        for (int bin=1; bin<=hist.GetNbinsX(); bin++){
-                double err = hist.GetBinError(bin);
-                if (err==0.0) continue;
-                double diff  = hist.GetBinContent(bin)-tf1_sum->Eval(hist.GetBinCenter(bin));
-                histpull1D.SetBinContent(bin, diff/err);
-        }
+	//hist->Sumw2();
+	TH1D histpull1D(hist);
+	histpull1D.SetMinimum();
+	for (int bin=1; bin<=hist.GetNbinsX(); bin++){
+		double err = hist.GetBinError(bin);
+		if (err==0.0) continue;
+		double diff  = hist.GetBinContent(bin)-tf1_sum->Eval(hist.GetBinCenter(bin));
+		histpull1D.SetBinContent(bin, diff/err);
+	}
        c->cd();
-        TPad *pad2 = new TPad("pad2", "", 0.0, 0.0, 1.0, 0.3);
-        pad2->Draw();
-        pad2->cd();
-        histpull1D.SetStats(kFALSE);
-        histpull1D.SetFillColor(kBlue);
-        histpull1D.GetYaxis()->SetLabelSize(0.1);
-        histpull1D.GetXaxis()->SetLabelSize(0.1);
-        histpull1D.DrawClone("hist");
+	TPad *pad2 = new TPad("pad2", "", 0.0, 0.0, 1.0, 0.3);
+	pad2->Draw();
+	pad2->cd();
+	histpull1D.SetStats(kFALSE);
+	histpull1D.SetFillColor(kBlue);
+	histpull1D.GetYaxis()->SetLabelSize(0.1);
+	histpull1D.GetXaxis()->SetLabelSize(0.1);
+	histpull1D.DrawClone("hist");
 }
 
 
@@ -463,7 +463,7 @@ std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr
 		// Calculate fractions
 		// Q: Why do we recalculate fractions? What does the minuti minimize - what is stored in `pa` ???
 		// The parameters pa[] define the fractions, we have 6 fractions but 5 independent parameters. The parametrisation is arbitrary
- 		double frac[Config::ncontr];
+		double frac[Config::ncontr];
 
 		double chi2 = 0.0;
 		//double sum_frac = 0.0;
@@ -478,12 +478,12 @@ std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr
 */
 		//frac[Config::ncontr-1] = abs(1.0-sum_frac);
 
-	        /*frac[0] = 1.0 - abs(pa[0]);
-                frac[1] = abs(pa[0]) * (1.0 - abs(pa[1]));
-                frac[2] = abs(pa[0]) * abs(pa[1]) * (1.0 - abs(pa[2]));
-                frac[3] = abs(pa[0]) * abs(pa[1]) * abs(pa[2]) * (1.0 - abs(pa[3]));
-                frac[4] = abs(pa[0]) * abs(pa[1]) * abs(pa[2]) * abs(pa[3]) * (1.0 - abs(pa[4]));
-                frac[5] = abs(pa[0]) * abs(pa[1]) * abs(pa[2]) * abs(pa[3]) * abs(pa[4]);
+		/*frac[0] = 1.0 - abs(pa[0]);
+		frac[1] = abs(pa[0]) * (1.0 - abs(pa[1]));
+		frac[2] = abs(pa[0]) * abs(pa[1]) * (1.0 - abs(pa[2]));
+		frac[3] = abs(pa[0]) * abs(pa[1]) * abs(pa[2]) * (1.0 - abs(pa[3]));
+		frac[4] = abs(pa[0]) * abs(pa[1]) * abs(pa[2]) * abs(pa[3]) * (1.0 - abs(pa[4]));
+		frac[5] = abs(pa[0]) * abs(pa[1]) * abs(pa[2]) * abs(pa[3]) * abs(pa[4]);
 	*/
 		// Extract the parameters and add some constraints
 		double param[Config::ncontr * (Config::nvar_md + Config::nvar_mb)];
@@ -548,7 +548,7 @@ std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr
 				//{
 					double sum_contr = 0.0;
 					for (int i = 0; i < Config::ncontr; i++)
-                        		{
+					{
 						double mdass = hist1D.GetXaxis()->GetBinCenter(bin_md);
 						//double mcorr = hist1D.GetYaxis()->GetBinCenter(bin_mb);
 						double md_val = D_PDFs_get[i]->EvalPDF(&mdass, &param[i * Config::nvar_md]);
@@ -592,10 +592,10 @@ std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr
 					case 1:
 						like_event += md_like * frac[i];
 						break;
-				        case 2:	
+					case 2:	
 						like_event += md_like * mb_like * frac[i];
 						break;
-				        case 3:	
+					case 3:	
 						like_event += md_like * mb_like * frac[i];
 						break;
 					default:
@@ -648,4 +648,4 @@ std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr
 	return fchi2;
 }
 
-/* vim:set shiftwidth=8 softtabstop=8 tabstop=8 noexpandtab: */
+// vim: tabstop=4 softtabstop=0 noexpandtab shiftwidth=4

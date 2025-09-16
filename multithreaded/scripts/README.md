@@ -1,0 +1,3 @@
+- scanBM.py - randomscan of fit starting point for 1D B mass
+- scanBM.slurm - slurm batch script for scanBM.py
+- 

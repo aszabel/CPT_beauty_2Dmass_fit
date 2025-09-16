@@ -85,8 +85,27 @@ for (auto& choice: Config::int_choose_fits)
 		if (D_M < Config::minDM || D_M > Config::maxDM)
 			continue;
 		if (int(charge) == Config::sign){
-			vect_Bmass.push_back(B_M+2.0*missPT);
-			hist->Fill(B_M+2.0*missPT);
+			switch (Config::int_mass_variable){
+				case 1: // B_M
+					vect_Bmass.push_back(B_M);
+					hist->Fill(B_M);
+					break;
+				case 2: // B_Mcorr
+					vect_Bmass.push_back(B_M+2.0*missPT);
+					hist->Fill(B_M+2.0*missPT);
+					break;
+				case 3: // B_MMcorr
+					vect_Bmass.push_back(B_MMcorr);
+					hist->Fill(B_MMcorr);
+					break;
+				case 4: // missPT
+					vect_Bmass.push_back(missPT);
+					hist->Fill(missPT);
+					break;
+				default:
+					std::cerr << "Unsupported mass variable " << Config::mass_variable << std::endl;
+					return;
+			}
 		}
 	}
 	double  nevents = double(vect_Bmass.size());
@@ -102,14 +121,14 @@ for (auto& choice: Config::int_choose_fits)
 		//step = abs(0.01*Config::init_values[choice][ivar])+0.01;
 		step = abs(0.1*Config::init_values[choice][ivar])+0.01;
 		//TODO name variables after fit name so that we can fix, set limits per contribution
-		min->SetVariable(ivar, (Config::Fits[choice] + std::string("_") + Config::varname_mb[ivar]).c_str(), Config::init_values[choice][ivar], step);
+		min->SetVariable(ivar, (Config::Fits[fit_id] + std::string("_") + Config::varname_mb[ivar]).c_str(), Config::init_values[choice][ivar], step);
 		//min -> FixVariable(ivar);		
 	}
 
 	//Set Limits on variables
 	for (auto it=Config::varLimitsMap.begin(); it!=Config::varLimitsMap.end(); ++it)
 	{
-		if (it->first.rfind(Config::Fits[choice], 0) != 0) continue;
+		if (it->first.rfind(Config::Fits[fit_id], 0) != 0) continue;
 		int index_var = min->VariableIndex(it->first);
 		if (index_var == -1 ){
 			std::cerr<< "Error in limiting parameters: param " << it->first << " not found.\n";
@@ -127,12 +146,37 @@ for (auto& choice: Config::int_choose_fits)
 		}
 	}
 
+	std::vector<std::pair<int, int>> replaceIndexVect = {};
+	for (const auto& rep_var: Config::replace_var){
+		if (rep_var.first.rfind(Config::Fits[fit_id], 0) != 0) continue;
+		int index_replaced = min->VariableIndex(rep_var.first);
+		int index_substitute = min->VariableIndex(rep_var.second);
+		if (index_replaced == -1 ){
+			std::cerr<< "Error in substituting parameters param " << rep_var.first << " not found.\n";
+			return 1;
+		}
+		if (index_substitute == -1 ){
+			std::cerr<< "Error in substituting parameters param " << rep_var.second << " not found.\n";
+			return 1;
+		}
+		replaceIndexVect.push_back(std::make_pair(index_replaced, index_substitute));
+	}
+
 	int ndim = min->NFree();
-	auto fchi2 = [&B_PDFs, vect_Bmass, choice](const double *par)->double {
+	auto fchi2 = [&B_PDFs, vect_Bmass, choice, replaceIndexVect](const double *par)->double {
+		double param[Config::nvar_mb];
+		for (int ivar = 0; ivar < Config::nvar_mb; ivar++)
+		{
+			param[ivar] = par[ivar];
+		}
+		for (const auto& irep_var: replaceIndexVect){
+			param[irep_var.first] = par[irep_var.second];
+		}
+
 		double chi2 = 0.0;
-		B_PDFs[choice]->CalcIntegral(par, Config::minBMcorr, Config::maxBMcorr);
+		B_PDFs[choice]->CalcIntegral(param, Config::minBMcorr, Config::maxBMcorr);
 		for (auto bmass: vect_Bmass){
-			double likelihood = B_PDFs[choice]->EvalPDF(&bmass, par);
+			double likelihood = B_PDFs[choice]->EvalPDF(&bmass, param);
 			if (likelihood>=1.0|| likelihood <=0.0)
 			{
 				continue;
@@ -141,15 +185,24 @@ for (auto& choice: Config::int_choose_fits)
 		}
 		return chi2;
 	};
-	auto fchi2binned = [&B_PDFs, hist, nevents, nbins, choice, ndim](const double *par)->double{
+	auto fchi2binned = [&B_PDFs, hist, nevents, nbins, choice, ndim, replaceIndexVect](const double *par)->double{
+		double param[Config::nvar_mb];
+		for (int ivar = 0; ivar < Config::nvar_mb; ivar++)
+		{
+			param[ivar] = par[ivar];
+		}
+		for (const auto& irep_var: replaceIndexVect){
+			param[irep_var.first] = par[irep_var.second];
+		}
+
 		double chi2 = 0;
-		B_PDFs[choice]->CalcIntegral(par, Config::minBMcorr, Config::maxBMcorr);
+		B_PDFs[choice]->CalcIntegral(param, Config::minBMcorr, Config::maxBMcorr);
 		double bin_width = (Config::maxBMcorr-Config::minBMcorr)/double(nbins);
 		for (int bin=1; bin<=nbins; bin++){
 			double bincenter = hist->GetBinCenter(bin);
 			double bincont = hist->GetBinContent(bin);
 			double err = hist->GetBinError(bin);
-			double estim = bin_width*double(nevents)*B_PDFs[choice]->EvalPDF(&bincenter, par);
+			double estim = bin_width*double(nevents)*B_PDFs[choice]->EvalPDF(&bincenter, param);
 			if(err!=0.0) chi2+=(bincont-estim)*(bincont-estim)/err/err;
 		}
 		return chi2/double(nbins-ndim);
@@ -213,12 +266,21 @@ g.Draw("AC");
 	pad1->Draw();
 	pad1->cd();
 
-	auto funcDraw = [&B_PDFs, min, nevents, nbins, choice](double *x, double *par)->double
+	auto funcDraw = [&B_PDFs, min, nevents, nbins, choice, replaceIndexVect](double *x, double *par)->double
 	{
-		B_PDFs[choice]->CalcIntegral(par, Config::minBMcorr, Config::maxBMcorr);
+		double param[Config::nvar_mb];
+		for (int ivar = 0; ivar < Config::nvar_mb; ivar++)
+		{
+			param[ivar] = par[ivar];
+		}
+		for (const auto& irep_var: replaceIndexVect){
+			param[irep_var.first] = par[irep_var.second];
+		}
+
+		B_PDFs[choice]->CalcIntegral(param, Config::minBMcorr, Config::maxBMcorr);
 		double bin_width = (Config::maxBMcorr-Config::minBMcorr)/double(nbins);
 		//return double(nevents)*B_PDFs[choice]->EvalPDF(x, par);
-		return bin_width*double(nevents)*B_PDFs[choice]->EvalPDF(x, par);
+		return bin_width*double(nevents)*B_PDFs[choice]->EvalPDF(x, param);
 	};
 	TF1 *tf1 = new TF1("tf1", funcDraw, Config::minBMcorr, Config::maxBMcorr, nvar);
 	tf1->SetParameters(min->X());
@@ -227,10 +289,19 @@ g.Draw("AC");
 
 	std::vector<int> colors = {4,6,7,8,9,30,40,41,38,42,46,28,39};
 	for (int i=0; i<B_PDFs[choice]->getComponentCount(); i++) {
-		auto funcDrawComponent = [&B_PDFs, min, nevents, nbins, choice, i](double *x, double *par)->double{
+		auto funcDrawComponent = [&B_PDFs, min, nevents, nbins, choice, i, replaceIndexVect](double *x, double *par)->double{
+			double param[Config::nvar_mb];
+			for (int ivar = 0; ivar < Config::nvar_mb; ivar++)
+			{
+				param[ivar] = par[ivar];
+			}
+			for (const auto& irep_var: replaceIndexVect){
+				param[irep_var.first] = par[irep_var.second];
+			}
+
 			double bin_width = (Config::maxBMcorr-Config::minBMcorr)/double(nbins);
 			//return double(nevents)*B_PDFs[choice]->EvalPDF(x, par);
-			return bin_width*double(nevents)*B_PDFs[choice]->EvalPDF(x, par, i);
+			return bin_width*double(nevents)*B_PDFs[choice]->EvalPDF(x, param, i);
 		};
 		TF1 *tfc = new TF1((std::string("tfc_") + std::to_string(i)).c_str(), funcDrawComponent, Config::minBMcorr, Config::maxBMcorr, nvar);
 		tfc->SetParameters(min->X());
@@ -271,7 +342,7 @@ g.Draw("AC");
 		delete hist;
 	if(c)
 		delete c;
-	}
+}
 }
 
 // vim: tabstop=4 softtabstop=0 noexpandtab shiftwidth=4

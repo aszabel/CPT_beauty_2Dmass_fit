@@ -8,6 +8,7 @@
 
 #include "D_M_fit_shape.h"
 #include "M_B_2missPT_fit.h"
+#include "BasicShapes.h"
 #include "ChebyshevPDF.h"
 #include "pdf_interface.h"
 
@@ -25,12 +26,29 @@ using namespace cpt_b0_analysis;
 
 	const std::unordered_map<std::string, const int> dictionaryBMcorr ={
 		{"RCplusGaus", 0},
-		{"SNplusCB", 1}
+		{"SNplusCB", 1},
+		{"Gauss", 2},
+		{"DoubleGauss", 3},
+		{"CrystalBall", 4},
+		{"SkewNormal", 5},
+		{"RaisedCosine", 6},
+		{"Johnson", 7},
+		{"DoubleSidedCrystalBall", 8},
+		{"JSUplusCB", 9},
+		{"DCBplusGaus", 10},
+		{"JSUplusGaus", 11},
 	};
 	const std::unordered_map<std::string, const int> dictionaryChooseCategory ={
 		{"2D", 0},
 		{"1D_DM", 1},
 		{"1D_BM", 2},
+	};
+	const std::unordered_map<std::string, const int> dictionaryChooseMassVariable ={
+		{"D_M", 0},
+		{"B_M", 1},
+		{"B_Mcorr", 2},
+		{"B_MMcorr", 3},
+		{"missPT", 4}
 	};
 	const std::unordered_map<std::string, const int> dictionaryChooseFit ={
 		{"frac", 0},
@@ -54,7 +72,7 @@ public:
 	static int load(const std::string& filename);
 
 
-        static void read_MC(std::vector<std::vector<double>>& xx, std::vector<std::vector<double>>& dxx, std::string MC_directory, int nvar);	
+	static void read_MC(std::vector<std::vector<double>>& xx, std::vector<std::vector<double>>& dxx, std::string MC_directory, int nvar);	
 	static std::vector<std::shared_ptr<PDFInterface>> getVectorPDFs(const std::string& domain);
 
 	static bool isMC;
@@ -65,35 +83,37 @@ public:
 	static int sign;
 	static std::string category;
 	static int int_category;
+	static std::string mass_variable;
+	static int int_mass_variable;
 	static std::vector<std::string> input_files;
-    	static std::string previous_result_file;
+	static std::string previous_result_file;
 
 
-    	static int nentries;
+	static int nentries;
 
-    	static std::vector<double> tolerance;
-    	static int functionCalls;
-    	static int printLevel;
+	static std::vector<double> tolerance;
+	static int functionCalls;
+	static int printLevel;
 	static int randSeed;
 
 	static std::string chainName;
-    	static double muPTmin;
-    	static double muPmin;
-    	static double eta_min;
-    	static double eta_max;
+	static double muPTmin;
+	static double muPmin;
+	static double eta_min;
+	static double eta_max;
 	static double tMin;
 	static double tMax;
 
-    	//Global
-    	static double minDM;
-    	static double maxDM;
-    	static double minBMcorr;
-    	static double maxBMcorr;
-    	static int nvar_md;
-    	static int nvar_mb;
-    	static int ncontr;
-    	static int n_sideband;
-    	static int ntries;
+	//Global
+	static double minDM;
+	static double maxDM;
+	static double minBMcorr;
+	static double maxBMcorr;
+	static int nvar_md;
+	static int nvar_mb;
+	static int ncontr;
+	static int n_sideband;
+	static int ntries;
 
 	static std::vector<std::string> Fits;
 	static std::vector<std::string> DMshapes;
@@ -126,4 +146,4 @@ private:
 };
 
 #endif // CONFIG_H
-/* vim:set shiftwidth=8 softtabstop=8 tabstop=8 noexpandtab: */
+// vim: tabstop=4 softtabstop=0 noexpandtab shiftwidth=4

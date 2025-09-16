@@ -11,10 +11,9 @@ namespace cpt_b0_analysis
 		sWeights(const std::string& _path_data, const std::string& _outfilename, const std::string& _outtreename);
 		void get_sWeigths(const double res[], bool BBbar);
 		std::string path_data, outfilename, outtreename;
-
 	};
-		
 
 }
 
 #endif
+// vim: tabstop=4 softtabstop=0 noexpandtab shiftwidth=4

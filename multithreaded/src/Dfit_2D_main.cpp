@@ -83,10 +83,10 @@ int main(int argc, char *argv[])
 
 	}
 	catch (const std::exception& ex) {
-        	std::cerr << "Error: " << ex.what() << std::endl;
-        	return 1;
-        }
-        int nentries = Config::nentries;
+		std::cerr << "Error: " << ex.what() << std::endl;
+		return 1;
+	}
+	int nentries = Config::nentries;
 	
 
 	// Load data set
@@ -119,8 +119,8 @@ int main(int argc, char *argv[])
 	if (nentries < 0) nentries = ch.GetEntries(); 
 	if (nentries > ch.GetEntries()){
 		std::cerr << "The value of 'nentries' exceeds the number of events in the file." << std::endl;
-                return 1;
-        }
+		return 1;
+	}
 	int frac_indeces[Config::ncontr];
 	for (int i=0; i<Config::ncontr; i++)
 		frac_indeces[i] = 0;
@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
 	std::string algoName = "";
 	int itry = 1;
 	bool goodfit = false;
-        int last_fit = -1;
+	int last_fit = -1;
 while ((itry<=Config::ntries || !goodfit)&&itry<=100){
 	bool start_scratch = true;
 	int loop_count = 0;
@@ -222,22 +222,22 @@ while ((itry<=Config::ntries || !goodfit)&&itry<=100){
 		}
 
 		//Set Limits on variables
-        	for (auto it =Config::varLimitsMap.begin(); it!=Config::varLimitsMap.end(); ++it)
-        	{
-                	int index_var = min->VariableIndex(it->first);
-                	if (index_var == -1 ){
-                        	std::cerr<< "Error in limiting parameters: param " << it->first << " not found.\n";
-                        	return 1;
-                	}
-                	auto pairlims = it->second;
-                	min->SetVariableLimits(index_var, pairlims.first, pairlims.second);
-        	}
+		for (auto it =Config::varLimitsMap.begin(); it!=Config::varLimitsMap.end(); ++it)
+		{
+			int index_var = min->VariableIndex(it->first);
+			if (index_var == -1 ){
+				std::cerr<< "Error in limiting parameters: param " << it->first << " not found.\n";
+				return 1;
+			}
+			auto pairlims = it->second;
+			min->SetVariableLimits(index_var, pairlims.first, pairlims.second);
+		}
 
 		for (int i = 0; i < Config::ncontr; i++)
 		{
 			min->SetVariable((Config::nvar_md + Config::nvar_mb) * Config::ncontr + i, (TString::Format("par_frac%d", i)).Data(), Config::fracInit[i], 0.001);
 			min->FixVariable((Config::nvar_md + Config::nvar_mb) * Config::ncontr + 1);
-                	//min->SetVariableLimits((Config::nvar_md + Config::nvar_mb) * Config::ncontr + i, -1.0, 1.0);
+			//min->SetVariableLimits((Config::nvar_md + Config::nvar_mb) * Config::ncontr + i, -1.0, 1.0);
 			if (start_scratch) 
 				starting_point[(Config::nvar_md + Config::nvar_mb) * Config::ncontr + i] = Config::fracInit[i];
 		}
@@ -262,17 +262,17 @@ while ((itry<=Config::ntries || !goodfit)&&itry<=100){
 		}
 		
 		const auto& B_PDFs = Config::getVectorPDFs("Bmass");
-        	if (int(B_PDFs.size()) != Config::ncontr){
-                	std::cout<< " NO B_PDFs \n";    
-                	return 1;
-        	}
-        	for (int i=0; i<Config::ncontr; ++i){
-                	auto pdf = B_PDFs[i].get();
-                	if (!pdf){
-                        	std::cout<< "Nullptr passed as pdf\n";
-                        	return 1;
-                	}
-        	}
+		if (int(B_PDFs.size()) != Config::ncontr){
+			std::cout<< " NO B_PDFs \n";    
+			return 1;
+		}
+		for (int i=0; i<Config::ncontr; ++i){
+			auto pdf = B_PDFs[i].get();
+			if (!pdf){
+				std::cout<< "Nullptr passed as pdf\n";
+				return 1;
+			}
+		}
 		//list of fixed variables form config
 		for (const auto& fix: Config::fixVect){
 			min->FixVariable(min->VariableIndex(fix));
@@ -379,17 +379,17 @@ while ((itry<=Config::ntries || !goodfit)&&itry<=100){
 	
 
 		std::vector<std::pair<int, int>> replaceIndexVect = {};
-                for (const auto& rep_var: Config::replace_var){
-                        int index_replaced = min->VariableIndex(rep_var.first);
-                        int index_substitute = min->VariableIndex(rep_var.second);
-                        if (index_replaced == -1 ){
-                                std::cerr<< "Error in substituting parameters param " << rep_var.first << " not found.\n";
+		for (const auto& rep_var: Config::replace_var){
+			int index_replaced = min->VariableIndex(rep_var.first);
+			int index_substitute = min->VariableIndex(rep_var.second);
+			if (index_replaced == -1 ){
+				std::cerr<< "Error in substituting parameters param " << rep_var.first << " not found.\n";
 				return 1;
-                        }
-                        if (index_substitute == -1 ){
-                                std::cerr<< "Error in substituting parameters param " << rep_var.second << " not found.\n";
+			}
+			if (index_substitute == -1 ){
+				std::cerr<< "Error in substituting parameters param " << rep_var.second << " not found.\n";
 				return 1;
-                        }
+			}
 			replaceIndexVect.push_back(std::make_pair(index_replaced, index_substitute));
 		}
 
@@ -405,7 +405,7 @@ while ((itry<=Config::ntries || !goodfit)&&itry<=100){
 
 		// Print the fit results
 		TString path, path1;
-	        if (Config::binned){
+		if (Config::binned){
 			path1 = "results_binned100kMU_2";
 			path = TString::Format("results_binned100kMU_2/fit2D_%d", itry);
 		}
@@ -432,7 +432,7 @@ while ((itry<=Config::ntries || !goodfit)&&itry<=100){
 			if (i!=(Config::nvar_md+Config::nvar_mb)*Config::ncontr+1){
 				results << min->X()[i] << "  " << min->Errors()[i] << std::endl;
 				if(previous_fit) starting_point[i] = min->X()[i];
-			}else{                                       //case of frac1 which is fixed
+			}else{				       //case of frac1 which is fixed
 				double sumfrac = 0.0;
 				for(int j=0; j<Config::ncontr; j++){
 					if (j==1) continue; 
@@ -447,9 +447,9 @@ while ((itry<=Config::ntries || !goodfit)&&itry<=100){
 		}
 
 		std::string fileWeightsName = "Tree_sWeights";
-        	std::string TreeName = "Tree_sWeights";
-        	sWeights sW(Config::input_files[0].c_str(), fileWeightsName.c_str(), TreeName.c_str());
-        	sW.get_sWeigths(min->X(), Config::sign == 1);
+		std::string TreeName = "Tree_sWeights";
+		sWeights sW(Config::input_files[0].c_str(), fileWeightsName.c_str(), TreeName.c_str());
+		sW.get_sWeigths(min->X(), Config::sign == 1);
 
 		for (int i = 0; i < Config::ncontr; i++)
 			results << double(frac_indeces[i])/double(vect_2D.size()) <<"  " << 0.0 << std::endl;
@@ -477,48 +477,48 @@ while ((itry<=Config::ntries || !goodfit)&&itry<=100){
 	itry++;
 }
        double min_chi2 = 1.0e45;
-        double chi2;
-        int status;
-        int best = -1;
+	double chi2;
+	int status;
+	int best = -1;
 	TString result_dir;
 	if (Config::binned)
 		result_dir = "results_binned100kMU_2";
 	else 	
 		result_dir = "results_unbinned100kMU_2";
-        for (int i=1; i<=itry; i++){
-           double res[(Config::nvar_md+Config::nvar_mb)*Config::ncontr+2*Config::ncontr];
-               double dres[(Config::nvar_md+Config::nvar_mb)*Config::ncontr+2*Config::ncontr];
-        std::ifstream resin(Form("%s/fit2D_%d/results_%d_%d.txt", result_dir.Data(), i, Config::sign, last_fit));
-                resin>>status>>chi2;
+	for (int i=1; i<=itry; i++){
+		double res[(Config::nvar_md+Config::nvar_mb)*Config::ncontr+2*Config::ncontr];
+		double dres[(Config::nvar_md+Config::nvar_mb)*Config::ncontr+2*Config::ncontr];
+		std::ifstream resin(Form("%s/fit2D_%d/results_%d_%d.txt", result_dir.Data(), i, Config::sign, last_fit));
+		resin>>status>>chi2;
 
-                int j=0;
-                double  x, dx;
-                while (resin>>x>>dx){
-                        res[j] = abs(x);
-                        dres[j] = dx;
-                        j++;
-                }
+		int j=0;
+		double  x, dx;
+		while (resin>>x>>dx){
+			res[j] = abs(x);
+			dres[j] = dx;
+			j++;
+		}
 
-                resin.close();
+		resin.close();
 
-                int n0 = (Config::ncontr) * (Config::nvar_md + Config::nvar_mb);
-                if ((status==0||status==1) && chi2<min_chi2){// && res[n0+1]<0.2 && res[n0+2] <0.2 && res[n0+3]<0.2&& res[n0+5]<0.2){// && i!=10){
-                        min_chi2 = chi2;
-                        best = i;
-                }
-        }
-                TString path, best_path;
-                if (Config::binned){
-                        path = TString::Format("results_binned100kMU_2/fit2D_%d/", best);
-                        best_path="best_results_binned/fit2D_best";
-                }
-                else{
-                        path = TString::Format("results_unbinned100kMU_2/fit2D_%d/", best);
-                        best_path="best_results_unbinned/fit2D_best/";
-                }
-                gSystem->Exec(TString::Format("mkdir -p  %s", best_path.Data()).Data());
-                gSystem->Exec(TString::Format("cp -r  %s/* %s", path.Data(), best_path.Data()).Data());
-        
+		int n0 = (Config::ncontr) * (Config::nvar_md + Config::nvar_mb);
+		if ((status==0||status==1) && chi2<min_chi2){// && res[n0+1]<0.2 && res[n0+2] <0.2 && res[n0+3]<0.2&& res[n0+5]<0.2){// && i!=10){
+			min_chi2 = chi2;
+			best = i;
+		}
+	}
+		TString path, best_path;
+		if (Config::binned){
+			path = TString::Format("results_binned100kMU_2/fit2D_%d/", best);
+			best_path="best_results_binned/fit2D_best";
+		}
+		else{
+			path = TString::Format("results_unbinned100kMU_2/fit2D_%d/", best);
+			best_path="best_results_unbinned/fit2D_best/";
+		}
+		gSystem->Exec(TString::Format("mkdir -p  %s", best_path.Data()).Data());
+		gSystem->Exec(TString::Format("cp -r  %s/* %s", path.Data(), best_path.Data()).Data());
+	
 
 	return 0;
 }
@@ -554,12 +554,12 @@ std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr
 			tmp *= emax;
 		chi2 += tmp;
 
-	        /*frac[0] = 1.0 - abs(pa[0]);
-                frac[1] = abs(pa[0]) * (1.0 - abs(pa[1]));
-                frac[2] = abs(pa[0]) * abs(pa[1]) * (1.0 - abs(pa[2]));
-                frac[3] = abs(pa[0]) * abs(pa[1]) * abs(pa[2]) * (1.0 - abs(pa[3]));
-                frac[4] = abs(pa[0]) * abs(pa[1]) * abs(pa[2]) * abs(pa[3]) * (1.0 - abs(pa[4]));
-                frac[5] = abs(pa[0]) * abs(pa[1]) * abs(pa[2]) * abs(pa[3]) * abs(pa[4]);
+		/*frac[0] = 1.0 - abs(pa[0]);
+		frac[1] = abs(pa[0]) * (1.0 - abs(pa[1]));
+		frac[2] = abs(pa[0]) * abs(pa[1]) * (1.0 - abs(pa[2]));
+		frac[3] = abs(pa[0]) * abs(pa[1]) * abs(pa[2]) * (1.0 - abs(pa[3]));
+		frac[4] = abs(pa[0]) * abs(pa[1]) * abs(pa[2]) * abs(pa[3]) * (1.0 - abs(pa[4]));
+		frac[5] = abs(pa[0]) * abs(pa[1]) * abs(pa[2]) * abs(pa[3]) * abs(pa[4]);
 	*/
 		// Extract the parameters and add some constraints
 		double param[Config::ncontr * (Config::nvar_md + Config::nvar_mb)];
@@ -629,7 +629,7 @@ std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr
 				{
 					double sum_contr = 0.0;
 					for (int i = 0; i < Config::ncontr; i++)
-                        		{
+					{
 						double mdass = hist2D.GetXaxis()->GetBinCenter(bin_md);
 						double mcorr = hist2D.GetYaxis()->GetBinCenter(bin_mb);
 						double md_val = D_PDFs_get[i]->EvalPDF(&mdass, &param[i * Config::nvar_md]);
@@ -715,4 +715,4 @@ std::function<double(const double*)> wrap_chi2(const std::vector<std::shared_ptr
 	return fchi2;
 }
 
-/* vim:set shiftwidth=8 softtabstop=8 tabstop=8 noexpandtab: */
+// vim: tabstop=4 softtabstop=0 noexpandtab shiftwidth=4

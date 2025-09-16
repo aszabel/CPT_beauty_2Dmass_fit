@@ -19,3 +19,4 @@ namespace cpt_b0_analysis
 
 }
 #endif
+// vim: tabstop=4 softtabstop=0 noexpandtab shiftwidth=4

@@ -1,14 +1,11 @@
 #!/bin/bash -e
-#SBATCH --ntasks=1			# Number of processes
-#SBATCH --time=24:00:00			# Time limit hrs:min:sec
 
 INPUT=$(realpath "$1")
 JSON_FILE=$(basename "$INPUT")
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DIR="$( dirname "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" )"
 INSTALL="$( dirname "$DIR" )"
 
-#source $DIR/setup.sh
 mkdir -p results
 if [ -f .rootrc ]; then
     cp .rootrc results
