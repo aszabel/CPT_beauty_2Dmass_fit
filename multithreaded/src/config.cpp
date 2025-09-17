@@ -135,6 +135,12 @@ std::vector<std::shared_ptr<PDFInterface>> Config::getVectorPDFs(const std::stri
 				case 11:
 					vPDFs.push_back(std::make_shared<JohnsonPlusGaussPDF>());
 					break;
+				case 12:
+					vPDFs.push_back(std::make_shared<JohnsonPlusCBPlusDoubleGaussPDF>());
+					break;
+				case 13:
+					vPDFs.push_back(std::make_shared<SkewNormalPlusCBPlusDoubleGaussPDF>());
+					break;
 				default:
 					std::cerr << "Error while BM_pdf dynamic declaration. Check if shapes from config file refer to the shapes defined in the code." << std::endl;
 				return std::vector<std::shared_ptr<PDFInterface>>{};

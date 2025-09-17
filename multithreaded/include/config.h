@@ -37,6 +37,8 @@ using namespace cpt_b0_analysis;
 		{"JSUplusCB", 9},
 		{"DCBplusGaus", 10},
 		{"JSUplusGaus", 11},
+		{"JSUplusCBplusDGaus", 12},
+		{"SNplusCBplusDGaus", 13},
 	};
 	const std::unordered_map<std::string, const int> dictionaryChooseCategory ={
 		{"2D", 0},

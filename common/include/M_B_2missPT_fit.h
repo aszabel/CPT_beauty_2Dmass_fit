@@ -61,6 +61,44 @@ namespace cpt_b0_analysis
 		JohnsonPDF JSU;
 		CrystalBallPDF CB;
 	};
+
+	class SkewNormalPlusCBPlusDoubleGaussPDF : public PDFInterface
+	{
+	public:
+		SkewNormalPlusCBPlusDoubleGaussPDF() {};
+		SkewNormalPlusCBPlusDoubleGaussPDF(const SkewNormalPlusCBPlusDoubleGaussPDF &other)=default;
+		SkewNormalPlusCBPlusDoubleGaussPDF(SkewNormalPlusCBPlusDoubleGaussPDF&&)=default;
+		~SkewNormalPlusCBPlusDoubleGaussPDF() {};
+			
+		void CalcIntegral(const double *par, double min, double max);
+		double getIntegral(){return 0.0;};
+		int getComponentCount(){return 4;}; // SkewNormal + CB
+		double EvalPDF(const double *xx, const double *par, const int component = -1);
+
+	private:
+		SkewNormalPDF SkewNorm;
+		CrystalBallPDF CB;
+		DoubleGaussPDF Gauss;
+	};
+
+	class JohnsonPlusCBPlusDoubleGaussPDF : public PDFInterface
+	{
+	public:
+		JohnsonPlusCBPlusDoubleGaussPDF() {};
+		JohnsonPlusCBPlusDoubleGaussPDF(const JohnsonPlusCBPlusDoubleGaussPDF &other)=default;
+		JohnsonPlusCBPlusDoubleGaussPDF(JohnsonPlusCBPlusDoubleGaussPDF&&)=default;
+		~JohnsonPlusCBPlusDoubleGaussPDF() {};
+			
+		void CalcIntegral(const double *par, double min, double max);
+		double getIntegral(){return 0.0;};
+		int getComponentCount(){return 4;}; // Johnson + CB
+		double EvalPDF(const double *xx, const double *par, const int component = -1);
+
+	private:
+		JohnsonPDF JSU;
+		CrystalBallPDF CB;
+		DoubleGaussPDF Gauss;
+	};
 }
 
 #endif
