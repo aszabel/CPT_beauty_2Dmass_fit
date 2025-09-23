@@ -78,6 +78,16 @@
     "signal_meanCB": [1000, 4000],
     "signal_f12":  [-1.0, 1.0],   
 
+    "sidebands_sigma": [0, 0],
+    "sidebands_mean": [0, 0],
+    "sidebands_alpha": [0, 0],
+    "sidebands_n": [0, 0],
+    "sidebands_alpha_h": [0, 0],
+    "sidebands_n2": [0, 0],
+    "sidebands_sigmaCB": [0, 0],
+    "sidebands_meanCB": [0, 0],
+    "sidebands_f12":  [0, 0],   
+
     "BuDmunu_sigma": [100, 3000],
     "BuDmunu_mean": [1000, 4000],
     "BuDmunu_alpha": [0.1, 5.0],

@@ -28,15 +28,13 @@ elif config["category"] == "1D_DM":
     directory = "MC_directory_MD"
     fig_prefix = "Dmass"
 else:
-    raise(Exception("Unknown fit category: " + config["category"])
-
-
+    raise(Exception("Unknown fit category: " + config["category"]))
 
 scan_path = (Path("scans") / ("scan_" + config_path.stem + "_binned" if config["binned"] else "_unbinned")).absolute()
 scan_path.mkdir(parents=True, exist_ok=True)
 
 for n in range(N):
-    for i, fit in enumerate(config["Fits"]):
+    for i, fit in enumerate(config["contrName"]):
         for j, var in enumerate(config[varname]):
             limits = config["scanLimitsVect"][f"{fit}_{var}"]
             v = random.uniform(limits[0], limits[1])
