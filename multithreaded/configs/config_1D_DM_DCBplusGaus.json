@@ -1,10 +1,10 @@
 {
   "category": "1D_DM",
   "isMC": false,
-  "massVariable": "B_Mcorr",
+  "massVariable": "D_M",
   "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
   "BMshapes": ["RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus"],
-  "binned": false,
+  "binned": true,
   "sign":"muplus",
   "chainName": "BlindedTree",
   "nentries": -1,
@@ -36,8 +36,16 @@
   "varname_mb": ["mean_rc", "sigma_rc", "f12_gaus", "mean1_gaus", "sigma1_gaus", "mean2_gaus", "sigma2_gaus"], 
   "fixVect" : [
     "signal_n", "BuDmunu_n", "BsDsMunu_n", "B02DpDsm_n", "Bu2D0Dsm_n",
-    "signal_n2", "BuDmunu_n2", "BsDsMunu_n2", "B02DpDsm_n2", "Bu2D0Dsm_n2"
+    "signal_n2", "BuDmunu_n2", "BsDsMunu_n2", "B02DpDsm_n2", "Bu2D0Dsm_n2",
+    "signal_meanCB", "BuDmunu_meanCB", "BsDsMunu_meanCB", "B02DpDsm_meanCB", "Bu2D0Dsm_meanCB"
   ],
+  "replace_var": {
+    "signal_meanCB": "signal_mean",
+    "BuDmunu_meanCB": "BuDmunu_mean",
+    "BsDsMunu_meanCB": "BsDsMunu_mean",
+    "B02DpDsm_meanCB": "B02DpDsm_mean",
+    "Bu2D0Dsm_meanCB": "Bu2D0Dsm_mean"
+  },
 
   "nvar_md": 9,
   "nvar_mb": 7,
@@ -59,7 +67,57 @@
     "B02DpDsm_f12":[-1.0, 1.0],
     "Bu2D0Dsm_f12":[-1.0, 1.0]
   },
-  "scanLimitsVect":{}
+  "scanLimitsVect":{
+    "signal_sigma": [100, 3000],
+    "signal_mean": [1000, 4000],
+    "signal_alpha": [0.1, 5.0],
+    "signal_n": [1, 1],
+    "signal_alpha_h": [0.1, 5.0],
+    "signal_n2": [1, 1],
+    "signal_sigmaCB": [1870, 1870],
+    "signal_meanCB": [1000, 4000],
+    "signal_f12":  [-1.0, 1.0],   
+
+    "BuDmunu_sigma": [100, 3000],
+    "BuDmunu_mean": [1000, 4000],
+    "BuDmunu_alpha": [0.1, 5.0],
+    "BuDmunu_n": [1, 1],
+    "BuDmunu_alpha_h": [0.1, 5.0],
+    "BuDmunu_n2": [1, 1],
+    "BuDmunu_sigmaCB": [100, 3000],
+    "BuDmunu_meanCB": [1870, 1870],
+    "BuDmunu_f12":  [-1.0, 1.0],   
+
+    "BsDsMunu_sigma": [100, 3000],
+    "BsDsMunu_mean": [1000, 4000],
+    "BsDsMunu_alpha": [0.1, 5.0],
+    "BsDsMunu_n": [1, 1],
+    "BsDsMunu_alpha_h": [0.1, 5.0],
+    "BsDsMunu_n2": [1, 1],
+    "BsDsMunu_sigmaCB": [100, 3000],
+    "BsDsMunu_meanCB": [1870, 1870],
+    "BsDsMunu_f12":  [-1.0, 1.0],   
+
+    "B02DpDsm_sigma": [100, 3000],
+    "B02DpDsm_mean": [1000, 4000],
+    "B02DpDsm_alpha": [0.1, 5.0],
+    "B02DpDsm_n": [1, 1],
+    "B02DpDsm_alpha_h": [0.1, 5.0],
+    "B02DpDsm_n2": [1, 1],
+    "B02DpDsm_sigmaCB": [100, 3000],
+    "B02DpDsm_meanCB": [1870, 1870],
+    "B02DpDsm_f12":  [-1.0, 1.0],   
+
+    "Bu2D0Dsm_sigma": [100, 3000],
+    "Bu2D0Dsm_mean": [1000, 4000],
+    "Bu2D0Dsm_alpha": [0.1, 5.0],
+    "Bu2D0Dsm_n": [1, 1],
+    "Bu2D0Dsm_alpha_h": [0.1, 5.0],
+    "Bu2D0Dsm_n2": [1, 1],
+    "Bu2D0Dsm_sigmaCB": [100, 3000],
+    "Bu2D0Dsm_meanCB": [1870, 1870],
+    "Bu2D0Dsm_f12":  [-1.0, 1.0]
+  },
 
   "__KEYS_BELOW_ARE_NOT_USED__": "",
 

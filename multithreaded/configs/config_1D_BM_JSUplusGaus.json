@@ -19,6 +19,7 @@
   "muPmin": 5000.0,
   "eta_cut": [2.0, 4.5],
   "t_cut": [1.0, 15.0],
+
   "input_files": [
     "/mnt/home/share/lhcb/CPT_beauty/MC2016/selected/selectedMagDown_B2Dmunu_signal_taustrip_nomassDmuCut/selected_MCsignal25102023.root",
     "/mnt/home/share/lhcb/CPT_beauty/MC2016/selected/selectedMagDown_B2Dmunu_Bu2Dmunu_taustrip_nomassDmuCut/selected_BuDmunu.root",

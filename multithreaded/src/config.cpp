@@ -89,6 +89,12 @@ std::vector<std::shared_ptr<PDFInterface>> Config::getVectorPDFs(const std::stri
 				case 3:
 					vPDFs.push_back(std::make_shared<ExponentPDF>());
 					break;
+				case 4:
+					vPDFs.push_back(std::make_shared<JohnsonPlusCBPDF>());
+					break;
+				case 5:
+					vPDFs.push_back(std::make_shared<JohnsonPlusDoubleSidedCrystalBallPDF>());
+					break;
 				
 				default:
 					std::cerr << "Error while DM_pdf dynamic declaration. Check if shapes from config file refer to the shapes defined in the code." << std::endl;

@@ -21,7 +21,9 @@ using namespace cpt_b0_analysis;
 		{"DCBplusGaus", 0},
 		{"Chebyshev", 1},
 		{"JSUplusGaus", 2},
-		{"Exponent", 3}
+		{"Exponent", 3},
+		{"JSUplusCB", 4},
+		{"JSUplusDSCB", 5}
 	};
 
 	const std::unordered_map<std::string, const int> dictionaryBMcorr ={

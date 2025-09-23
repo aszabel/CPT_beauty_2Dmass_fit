@@ -43,6 +43,25 @@ namespace cpt_b0_analysis
 		GaussPDF Gauss;
 		JohnsonPDF JSU;
 	};
+
+
+	class JohnsonPlusDoubleSidedCrystalBallPDF : public PDFInterface
+	{
+	public:
+		JohnsonPlusDoubleSidedCrystalBallPDF() {};
+		JohnsonPlusDoubleSidedCrystalBallPDF(const JohnsonPlusDoubleSidedCrystalBallPDF& other)=default;
+		JohnsonPlusDoubleSidedCrystalBallPDF(JohnsonPlusDoubleSidedCrystalBallPDF&&)=default;
+		~JohnsonPlusDoubleSidedCrystalBallPDF() {};
+
+		void CalcIntegral(const double *par, double min, double max);
+		double getIntegral(){return 0.0;};
+		int getComponentCount(){return 2;};
+		double EvalPDF(const double *xx, const double *par, const int component=-1);
+
+	private:
+		DoubleSidedCrystalBallPDF DSCB;
+		JohnsonPDF JSU;
+	};
 }
 
 #endif

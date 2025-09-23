@@ -7,4 +7,4 @@ NRUNS="$3"
 
 source "${DIR}/setup.sh"
 
-"${DIR}/scripts/scanBM.py" "$CONFIG" "$NRUNS"
+"${DIR}/scripts/scan1D.py" "$CONFIG" "$NRUNS"
