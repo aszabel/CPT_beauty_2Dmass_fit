@@ -1,22 +1,22 @@
 #ifndef PDF_INTERFACE_H
 #define PDF_INTERFACE_H
 
-namespace cpt_b0_analysis
-{
+namespace cpt_b0_analysis {
 
-	class PDFInterface
-	{
-	public:
-		PDFInterface() {}
-		PDFInterface(const PDFInterface& other) = default;
-		PDFInterface(PDFInterface&&) = default;
-		virtual ~PDFInterface() {}
-		virtual void CalcIntegral(const double *par, double min, double max) = 0; // "= 0" part makes this method pure virtual, and also makes this class abstract.
-		virtual double EvalPDF(const double *par, const double *x, const int component=-1) = 0;
-		virtual double getIntegral() = 0;
-		virtual int getComponentCount() = 0;
-	};
+class PDFInterface {
+public:
+	PDFInterface() {}
+	PDFInterface(const PDFInterface &other) = default;
+	PDFInterface(PDFInterface &&) = default;
+	virtual ~PDFInterface() {}
+	virtual void CalcIntegral(const double *par, double min,
+							  double max) = 0;	// "= 0" part makes this method pure virtual, and
+												// also makes this class abstract.
+	virtual double EvalPDF(const double *par, const double *x, const int component = -1) = 0;
+	virtual double getIntegral() = 0;
+	virtual int getComponentCount() = 0;
+};
 
-}
+}  // namespace cpt_b0_analysis
 #endif
 // vim: tabstop=4 softtabstop=0 noexpandtab shiftwidth=4
