@@ -33,7 +33,10 @@ common/%.o: ../common/src/%.cpp
 clean:
 	rm -f $(OBJS) $(OBJS_COMMON) $(TARGET)
 
+format:
+	clang-format -i include/*.h ../common/include/*.h src/*.cpp ../common/src/*.cpp *.cpp macros/*.h macros/*.C
+
 # Phony targets
-.PHONY: all clean
+.PHONY: all clean format
 
 

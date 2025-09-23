@@ -47,7 +47,10 @@ common/%.o: ../common/src/%.cpp
 clean:
 	rm -f $(OBJS1) $(OBJS2) $(OBJS3) $(OBJS_COMMON) $(OBJS_CONFIG) $(TARGET1) $(TARGET2) $(TARGET3)
 
+format:
+	clang-format -i include/*.h ../common/include/*.h src/*.cpp ../common/src/*.cpp *.cpp macros/*.h macros/*.C
+
 # Phony targets
-.PHONY: all clean
+.PHONY: all clean format
 
 

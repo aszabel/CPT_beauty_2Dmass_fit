@@ -6,6 +6,8 @@
 *.o
 *ACLiC_dict*
 *.log
+venv/
 fit_lifetime/fit2time
 multithreaded/fit1D_mass
 multithreaded/fit2D_mass
+multithreaded/LikeRatio

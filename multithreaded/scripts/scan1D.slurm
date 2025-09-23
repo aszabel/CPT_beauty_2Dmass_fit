@@ -1,10 +1,9 @@
 #!/bin/bash
 #SBATCH -o logs/slurm-%x-%j.out
 
-DIR="$1"
-CONFIG="$2"
-NRUNS="$3"
+CONFIG="$1"
+NRUNS="$2"
 
-source "${DIR}/../setup.sh"
+source "../setup.sh"
 
-"${DIR}/scripts/scan1D.py" "$CONFIG" "$NRUNS"
+"${INSTALL_DIR}/multithreaded/scripts/scan1D.py" "$CONFIG" "$NRUNS"
