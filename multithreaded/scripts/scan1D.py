@@ -59,6 +59,9 @@ for n in range(N):
         f.write(errs)
 
     result_path = Path("results") / (config[directory] + "_binned" if config["binned"] else "_unbinned")
+    if not result_path.exists():
+        print("Missing results directory - FIT FAILED")
+        continue
     for fname in result_path.iterdir():
         with fname.open() as f:
             data = f.readlines()
@@ -69,6 +72,8 @@ for run in scan_path.iterdir():
     if run.name == "results":
         continue
     result_path = run / "results" / (config[directory] + "_binned" if config["binned"] else "_unbinned")
+    if not result_path.exists():
+        continue
     for fname in result_path.iterdir():
         with fname.open() as f:
             data = f.readlines()
