@@ -5,6 +5,7 @@ import json
 import random
 import math
 import shutil
+import argparse
 
 from pathlib import Path
 from subprocess import Popen, PIPE
@@ -12,8 +13,17 @@ from pprint import pprint
 
 scripts_path = Path( __file__ ).absolute().parent
 
-config_path = Path(sys.argv[1])
-N = int(sys.argv[2])
+parser = argparse.ArgumentParser(
+    description='Random search of 1D mass fit input parameters'
+)
+parser.add_argument('-c', '--config', type=str, required=True, help="Config file")
+parser.add_argument('-n', '--tries', type=int, default=100, help="Number of random search tries")
+parser.add_argument('-i', '--input', type=str, help="Path with fit result txt files to use as random search range")
+
+args = parser.parse_args()
+
+config_path = Path(args.config)
+N = args.tries
 with config_path.open() as f:
     config = json.load(f)
 
@@ -22,20 +32,38 @@ if config["category"] == "1D_BM":
     script = "runBMall.sh"
     directory = "MC_directory_MB"
     fig_prefix = "Bmass"
+    shapes = "BMshapes"
 elif config["category"] == "1D_DM":
     varname = "varname_md"
     script = "runDMall.sh"
     directory = "MC_directory_MD"
     fig_prefix = "Dmass"
+    shapes = "DMshapes"
 else:
     raise(Exception("Unknown fit category: " + config["category"]))
 
 scan_path = (Path("scans") / ("scan_" + config_path.stem + "_binned" if config["binned"] else "_unbinned")).absolute()
 scan_path.mkdir(parents=True, exist_ok=True)
 
+if args.input:
+    input_path = Path(args.input)
+    for results_path in input_path.iterdir():
+        tags = results_path.stem.split("_")
+        fit = tags[1]
+        pdf = tags[2]
+        idx = config["contrName"].index(fit)
+        assert pdf == config[shapes][idx], f"Non compatible pdf parameters: {pdf} vs {config[shapes][idx]}"
+        with results_path.open() as results:
+            data = results.readlines()
+            for j, var in enumerate(config[varname][idx]):
+                mean, sigma = (float(v) for v in data[j+2].strip().split())
+                config["scanLimitsVect"][f"{fit}_{var}"] = [
+                    mean - sigma, mean + sigma
+                ]
+
 for n in range(N):
     for i, fit in enumerate(config["contrName"]):
-        for j, var in enumerate(config[varname]):
+        for j, var in enumerate(config[varname][i]):
             limits = config["scanLimitsVect"][f"{fit}_{var}"]
             v = random.uniform(limits[0], limits[1])
             config["init_values"][i][j] = v

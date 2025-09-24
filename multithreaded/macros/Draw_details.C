@@ -1,5 +1,6 @@
 #include <cmath>
 
+#include "config.h"
 #include "ChebyshevPDF.h"
 #include "D_M_fit_shape.h"
 #include "M_B_2missPT_fit.h"
@@ -168,7 +169,7 @@ void Draw_details(std::string config_file) {
 	c_mc->SaveAs("../results/swtau_signalMC.pdf");
 	c_mc->SaveAs("../results/swtau_signalMC.C");
 
-	double res[(Config::nvar_md + Config::nvar_mb) * Config::ncontr + Config::ncontr];
+	double res[Config::nvar_all_md + Config::nvar_all_mb + Config::ncontr];
 	TString resname = Form("../toy_res/toy_%d/best_results_unbinned/fit2D_best/results_%d_3.txt",
 						   Config::randSeed, Config::sign);
 	cout << resname << endl;
@@ -187,7 +188,7 @@ void Draw_details(std::string config_file) {
 	TF2 *func2D[Config::ncontr];
 	TF1 *funcMD[Config::ncontr], *funcMB[Config::ncontr];
 	double frac[Config::ncontr];
-	double *pa = &res[Config::ncontr * (Config::nvar_md + Config::nvar_mb)];
+	double *pa = &res[Config::nvar_all_md + Config::nvar_all_mb];
 
 	double sum_frac = 0.0;
 	for (int i = 0; i < Config::ncontr - 1; i++) {
@@ -196,17 +197,17 @@ void Draw_details(std::string config_file) {
 	}
 	frac[Config::ncontr - 1] = abs(1.0 - sum_frac);
 
-	const int nall = Config::ncontr * (Config::nvar_md + Config::nvar_mb);
+	const int nall = Config::nvar_all_md + Config::nvar_all_mb;
 
 	double param[nall];
 	for (int i = 0; i < Config::ncontr; i++) {
-		for (int ivar = 0; ivar < Config::nvar_md; ivar++) {
-			param[i * Config::nvar_md + ivar] = res[i * Config::nvar_md + ivar];
-			if (ivar == 1 && i != 2 && i != 4) param[i * Config::nvar_md + ivar] = res[1];
+		for (int ivar = 0; ivar < Config::nvar_md[i]; ivar++) {
+			param[Config::nvar_offset_md[i] + ivar] = res[Config::nvar_offset_md[i] + ivar];
+			if (ivar == 1 && i != 2 && i != 4) param[Config::nvar_offset_md[i] + ivar] = res[1];
 		}
-		for (int ivar = 0; ivar < Config::nvar_mb; ivar++) {
-			param[Config::ncontr * Config::nvar_md + i * Config::nvar_mb + ivar] =
-				res[Config::ncontr * Config::nvar_md + i * Config::nvar_mb + ivar];
+		for (int ivar = 0; ivar < Config::nvar_mb[i]; ivar++) {
+			param[Config::nvar_all_md + Config::nvar_offset_mb[i] + ivar] =
+				res[Config::nvar_all_md + Config::nvar_offset_mb[i] + ivar];
 		}
 	}
 
@@ -245,8 +246,8 @@ void Draw_details(std::string config_file) {
 	}
 
 	for (int i = 0; i < Config::ncontr; i++) {
-		D_PDFs_get[i]->CalcIntegral(&param[i * Config::nvar_md], Config::minDM, Config::maxDM);
-		B_PDFs_get[i]->CalcIntegral(&param[Config::ncontr * Config::nvar_md + i * Config::nvar_mb],
+		D_PDFs_get[i]->CalcIntegral(&param[Config::nvar_offset_md[i]], Config::minDM, Config::maxDM);
+		B_PDFs_get[i]->CalcIntegral(&param[Config::nvar_all_md + Config::nvar_offset_mb[i]],
 									Config::minBMcorr, Config::maxBMcorr);
 	}
 
@@ -256,9 +257,9 @@ void Draw_details(std::string config_file) {
 		auto wrap = [&D_PDFs_get, &B_PDFs_get, nevents, &param, i, &frac, bin_widthx, bin_widthy](
 						double *x, double *par) -> double {
 			double fval_md, fval_mb;
-			fval_md = D_PDFs_get[i]->EvalPDF(x, &param[i * Config::nvar_md]);
+			fval_md = D_PDFs_get[i]->EvalPDF(x, &param[Config::nvar_offset_md[i]]);
 			fval_mb = B_PDFs_get[i]->EvalPDF(
-				&x[1], &param[Config::ncontr * Config::nvar_md + i * Config::nvar_mb]);
+				&x[1], &param[Config::nvar_all_md + Config::nvar_offset_mb[i]]);
 			return nevents * bin_widthx * bin_widthy * frac[i] * fval_md * fval_mb;
 		};
 		func2D[i] = new TF2(Form("tf2_%d", i), wrap, Config::minDM, Config::maxDM,
@@ -266,7 +267,7 @@ void Draw_details(std::string config_file) {
 
 		auto wrap_md = [&D_PDFs_get, nevents, &param, i, &frac, bin_widthx](double *x,
 																			double *par) -> double {
-			double fval_md = D_PDFs_get[i]->EvalPDF(x, &param[i * Config::nvar_md]);
+			double fval_md = D_PDFs_get[i]->EvalPDF(x, &param[Config::nvar_offset_md[i]]);
 			return nevents * bin_widthx * frac[i] * fval_md;
 		};
 		funcMD[i] = new TF1(Form("tf1_mD_%d", i), wrap_md, Config::minDM, Config::maxDM, 0);
@@ -274,7 +275,7 @@ void Draw_details(std::string config_file) {
 		auto wrap_mb = [&B_PDFs_get, nevents, &param, i, &frac, bin_widthy](double *x,
 																			double *par) -> double {
 			double fval_mb = B_PDFs_get[i]->EvalPDF(
-				&x[0], &param[Config::ncontr * Config::nvar_md + i * Config::nvar_mb]);
+				&x[0], &param[Config::nvar_all_md + Config::nvar_offset_mb[i]]);
 			;
 			return nevents * bin_widthy * frac[i] * fval_mb;
 		};

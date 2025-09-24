@@ -2,7 +2,7 @@
   "category": "1D_BM",
   "isMC": false,
   "massVariable": "B_Mcorr",
-  "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
+  "MC_directory_MB": "B_M_results_CBplusGaus",
   "BMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus"],
   "binned": true,
   "sign":"muplus",
@@ -32,16 +32,20 @@
   "DM_range": [1800, 1940],
   "BMcorr_range": [3000.0, 8000.0],
 
-  "varname_md": ["sigma", "mean", "sigmaCB", "f12", "alpha", "n", "alpha_h"], 
-  "varname_mb": ["f12", "mean", "sigma", "meanCB", "sigmaCB", "alpha", "n", "alpha_h", "n2"],
+  "varname_mb": [
+    ["f12", "mean", "sigma", "meanCB", "sigmaCB", "alpha", "n", "alpha_h", "n2"],
+    ["f12", "mean", "sigma", "meanCB", "sigmaCB", "alpha", "n", "alpha_h", "n2"],
+    ["f12", "mean", "sigma", "meanCB", "sigmaCB", "alpha", "n", "alpha_h", "n2"],
+    ["f12", "mean", "sigma", "meanCB", "sigmaCB", "alpha", "n", "alpha_h", "n2"],
+    ["f12", "mean", "sigma", "meanCB", "sigmaCB", "alpha", "n", "alpha_h", "n2"],
+    ["f12", "mean", "sigma", "meanCB", "sigmaCB", "alpha", "n", "alpha_h", "n2"]
+  ]
   "fixVect" : [
     "signal_n", "BuDmunu_n", "BsDsMunu_n", "B02DpDsm_n", "sidebands_n", "Bu2D0Dsm_n",
     "signal_n2", "BuDmunu_n2", "BsDsMunu_n2", "B02DpDsm_n2", "sidebands_n2", "Bu2D0Dsm_n2",
     "signal_alpha", "BuDmunu_alpha", "BsDsMunu_alpha", "B02DpDsm_alpha", "sidebands_alpha", "Bu2D0Dsm_alpha"
   ],
 
-  "nvar_md": 7,
-  "nvar_mb": 9,
   "ncontr": 6,
   "n_sideband": 2,
   "init_values": [
@@ -133,7 +137,8 @@
   "previous_result_file": "",
   
   "MC_directory_MD": "D_M_results_JSUplusGaus",
-  "MC_directory_MB": "B_M_results_CBplusGaus",
+  "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
+  "varname_md": [[]],
 
   "fracInit": [0.2, 0.15, 0.15, 0.15, 0.15, 0.15]
 

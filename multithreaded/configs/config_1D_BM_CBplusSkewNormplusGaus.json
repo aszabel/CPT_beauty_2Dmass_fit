@@ -2,7 +2,7 @@
   "category": "1D_BM",
   "isMC": false,
   "massVariable": "B_Mcorr",
-  "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
+  "MC_directory_MB": "B_M_results_CBplusSkewNormplusGaus",
   "BMshapes": ["SNplusCBplusDGaus", "SNplusCBplusDGaus", "SNplusCBplusDGaus", "SNplusCBplusDGaus", "SNplusCBplusDGaus", "SNplusCBplusDGaus"],
   "binned": true,
   "sign":"muplus",
@@ -32,8 +32,14 @@
   "DM_range": [1800, 1940],
   "BMcorr_range": [3000.0, 8000.0],
 
-  "varname_md": ["sigma", "mean", "sigmaCB", "f12", "alpha", "n", "alpha_h"], 
-  "varname_mb": ["f_gaus", "f12", "mean_skew", "sigma_skew", "skew", "mean", "sigma", "alpha", "n", "f12_gaus", "mean_g1", "sigma_g1", "mean_g2", "sigma_g2"],
+  "varname_mb": [
+    ["f_gaus", "f12", "mean_skew", "sigma_skew", "skew", "mean", "sigma", "alpha", "n", "f12_gaus", "mean_g1", "sigma_g1", "mean_g2", "sigma_g2"],
+    ["f_gaus", "f12", "mean_skew", "sigma_skew", "skew", "mean", "sigma", "alpha", "n", "f12_gaus", "mean_g1", "sigma_g1", "mean_g2", "sigma_g2"],
+    ["f_gaus", "f12", "mean_skew", "sigma_skew", "skew", "mean", "sigma", "alpha", "n", "f12_gaus", "mean_g1", "sigma_g1", "mean_g2", "sigma_g2"],
+    ["f_gaus", "f12", "mean_skew", "sigma_skew", "skew", "mean", "sigma", "alpha", "n", "f12_gaus", "mean_g1", "sigma_g1", "mean_g2", "sigma_g2"],
+    ["f_gaus", "f12", "mean_skew", "sigma_skew", "skew", "mean", "sigma", "alpha", "n", "f12_gaus", "mean_g1", "sigma_g1", "mean_g2", "sigma_g2"],
+    ["f_gaus", "f12", "mean_skew", "sigma_skew", "skew", "mean", "sigma", "alpha", "n", "f12_gaus", "mean_g1", "sigma_g1", "mean_g2", "sigma_g2"]
+  ],
   "fixVect" : [
     "signal_n", "BuDmunu_n", "BsDsMunu_n", "B02DpDsm_n", "sidebands_n", "Bu2D0Dsm_n",
     "signal_f12_gaus", "BuDmunu_f12_gaus", "BsDsMunu_f12_gaus", "B02DpDsm_f12_gaus", "sidebands_f12_gaus", "Bu2D0Dsm_f12_gaus",
@@ -41,8 +47,6 @@
     "signal_sigma_g1", "BuDmunu_sigma_g1", "BsDsMunu_sigma_g1", "B02DpDsm_sigma_g1", "sidebands_sigma_g1", "Bu2D0Dsm_sigma_g1"
   ],
 
-  "nvar_md": 7,
-  "nvar_mb": 14,
   "ncontr": 6,
   "n_sideband": 2,
   "init_values": [
@@ -176,7 +180,8 @@
   "previous_result_file": "",
   
   "MC_directory_MD": "D_M_results_JSUplusGaus",
-  "MC_directory_MB": "B_M_results_CBplusSkewNormplusGaus",
+  "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
+  "varname_md": [[]],
 
   "fracInit": [0.2, 0.15, 0.15, 0.15, 0.15, 0.15]
 

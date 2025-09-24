@@ -19,7 +19,10 @@ using namespace cpt_b0_analysis;
 // afterwards
 const std::unordered_map<std::string, const int> dictionaryDM = {
 	{"DCBplusGaus", 0}, {"Chebyshev", 1}, {"JSUplusGaus", 2},
-	{"Exponent", 3},	{"JSUplusCB", 4}, {"JSUplusDSCB", 5}};
+	{"Exponent", 3},	{"JSUplusCB", 4}, {"JSUplusDSCB", 5},
+	{"Johnson", 6},
+	{"DoubleSidedCrystalBall", 7}
+};
 
 const std::unordered_map<std::string, const int> dictionaryBMcorr = {
 	{"RCplusGaus", 0},
@@ -56,7 +59,7 @@ public:
 	static int load(const std::string& filename);
 
 	static void read_MC(std::vector<std::vector<double>>& xx, std::vector<std::vector<double>>& dxx,
-						std::string MC_directory, int nvar);
+						std::string MC_directory, std::vector<int> nvar);
 	static std::vector<std::shared_ptr<PDFInterface>> getVectorPDFs(const std::string& domain);
 
 	static bool isMC;
@@ -92,8 +95,12 @@ public:
 	static double maxDM;
 	static double minBMcorr;
 	static double maxBMcorr;
-	static int nvar_md;
-	static int nvar_mb;
+	static std::vector<int> nvar_md;
+	static std::vector<int> nvar_mb;
+	static std::vector<int> nvar_offset_md;
+	static std::vector<int> nvar_offset_mb;
+	static int nvar_all_md;
+	static int nvar_all_mb;
 	static int ncontr;
 	static int n_sideband;
 	static int ntries;
@@ -104,14 +111,15 @@ public:
 	static std::vector<int> int_choose_fits;
 	static std::vector<int> intshapesDM;
 	static std::vector<int> intshapesBMcorr;
+	static std::vector<int> test;
 
 	static std::vector<std::string> fixVect;
 	static std::vector<double> fracInit;
 	static std::vector<std::vector<double>> init_values;
 
 	static std::vector<std::string> contrName;
-	static std::vector<std::string> varname_md;
-	static std::vector<std::string> varname_mb;
+	static std::vector<std::vector<std::string>> varname_md;
+	static std::vector<std::vector<std::string>> varname_mb;
 	static std::map<std::string, std::string> replace_var;
 	static std::map<std::string, std::pair<double, double>> varLimitsMap;
 

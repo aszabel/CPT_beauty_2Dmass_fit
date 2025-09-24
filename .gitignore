@@ -7,6 +7,9 @@
 *ACLiC_dict*
 *.log
 venv/
+**/scans/
+**/results/
+**/logs/
 fit_lifetime/fit2time
 multithreaded/fit1D_mass
 multithreaded/fit2D_mass

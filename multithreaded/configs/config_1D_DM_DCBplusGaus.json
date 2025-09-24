@@ -32,7 +32,15 @@
   "DM_range": [1800, 1940],
   "BMcorr_range": [3000, 8000],
 
-  "varname_md": ["f12", "mean", "sigma", "meanCB", "sigmaCB", "alpha", "n", "alpha_h", "n2"],
+  "varname_md": [
+    ["f12", "mean", "sigma", "meanCB", "sigmaCB", "alpha", "n", "alpha_h", "n2"],
+    ["f12", "mean", "sigma", "meanCB", "sigmaCB", "alpha", "n", "alpha_h", "n2"],
+    ["f12", "mean", "sigma", "meanCB", "sigmaCB", "alpha", "n", "alpha_h", "n2"],
+    ["f12", "mean", "sigma", "meanCB", "sigmaCB", "alpha", "n", "alpha_h", "n2"],
+    ["f12", "mean", "sigma", "meanCB", "sigmaCB", "alpha", "n", "alpha_h", "n2"],
+    ["f12", "mean", "sigma", "meanCB", "sigmaCB", "alpha", "n", "alpha_h", "n2"],
+    ["f12", "mean", "sigma", "meanCB", "sigmaCB", "alpha", "n", "alpha_h", "n2"]
+  ],
   "fixVect" : [
     "signal_n", "BuDmunu_n", "BsDsMunu_n", "B02DpDsm_n", "Bu2D0Dsm_n",
     "signal_n2", "BuDmunu_n2", "BsDsMunu_n2", "B02DpDsm_n2", "Bu2D0Dsm_n2",
@@ -46,7 +54,6 @@
     "Bu2D0Dsm_meanCB": "Bu2D0Dsm_mean"
   },
 
-  "nvar_md": 9,
   "ncontr": 6,
   "n_sideband": 2,
   "init_values": [
@@ -133,8 +140,7 @@
   "previous_result_file": "",
 
   "BMshapes": ["Gauss", "Gauss", "Gauss", "Gauss", "Gauss", "Gauss"],
-  "varname_mb": [],
-  "nvar_mb": 0,
+  "varname_mb": [[]],
   "MC_directory_MB": "",
 
   "fracInit": [0.2, 0.15, 0.15, 0.15, 0.15, 0.15]

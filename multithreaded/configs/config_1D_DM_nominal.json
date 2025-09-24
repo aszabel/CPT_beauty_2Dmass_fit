@@ -2,8 +2,8 @@
   "category": "1D_DM",
   "isMC": false,
   "massVariable": "D_M",
-  "MC_directory_MD": "D_M_results_JSUplusGaus",
-  "DMshapes": ["JSUplusGaus", "JSUplusGaus", "JSUplusGaus", "JSUplusGaus", "Chebyshev", "JSUplusGaus"],
+  "MC_directory_MD": "D_M_results_nominal",
+  "DMshapes": ["JSUplusDSCB", "DCBplusGaus", "JSUplusGaus", "JSUplusGaus", "Chebyshev", "JSUplusGaus"],
   "binned": true,
   "sign":"muplus",
   "chainName": "BlindedTree",
@@ -30,27 +30,32 @@
 
   "__GLOBAL__": "Here global variables are set",
   "DM_range": [1800, 1940],
-  "BMcorr_range": [3000, 8000],
+  "BMcorr_range": [3000.0, 8000.0],
 
   "varname_md": [
+    ["f12", "xi", "lambda", "gamma", "delta", "mean", "sigma", "alpha", "n", "alpha2", "n2"],
+    ["f12", "mean", "sigma", "meanCB", "sigmaCB", "alpha", "n", "alpha_h", "n2"],
     ["f12", "mean", "sigma", "xi", "lambda", "gamma", "delta"],
     ["f12", "mean", "sigma", "xi", "lambda", "gamma", "delta"],
-    ["f12", "mean", "sigma", "xi", "lambda", "gamma", "delta"],
-    ["f12", "mean", "sigma", "xi", "lambda", "gamma", "delta"],
-    ["f12", "mean", "sigma", "xi", "lambda", "gamma", "delta"],
+    [],
     ["f12", "mean", "sigma", "xi", "lambda", "gamma", "delta"]
   ],
-  "fixVect" : [],
+  "fixVect" : [
+    "signal_n", "signal_n2",
+    "BuDmunu_n", "BuDmunu_n2", "BuDmunu_meanCB"
+  ],
+  "replace_var": {
+    "BuDmunu_meanCB": "BuDmunu_mean"
+  },
 
-  "nvar_md": 7,
   "ncontr": 6,
   "n_sideband": 2,
   "init_values": [
-    [0.5, 1870.47, 7.19906, 1870.47, 4.46561, 0.23538,   0.599694],
-    [0.5, 1870.33, 7.47497, 1870.33, 1.97786, 0.461004,  0.371032],
+    [0.5, 1870, 100, 4, 4, 1870, 10.0, 2.3, 1, 2.3, 1],
+    [0.5, 1870.23, 10.0, 1870.23, 5.0,     1.75869, 1.0,  2.12662, 1.0],
     [0.5, 1898.87, 1499.15, 1898.87, 14.9942, 1.79671,   1.09631 ],
     [0.5, 1870.33, 7.31576, 1870.33, 3.82062, 0.0504217, 0.434271],
-    [0,   0,       0,       0,       0,       0,         0       ],
+    [],
     [0.5, 1870.3,  7.40974, 1870.3,  2.0137,  0.196081,  0.190293]
   ],
 
@@ -61,55 +66,8 @@
     "B02DpDsm_f12":[-1.0, 1.0],
     "Bu2D0Dsm_f12":[-1.0, 1.0]
   },
-  "scanLimitsVect":{
-    "signal_sigma":  [1,    50  ],
-    "signal_mean":   [1800, 1940],
-    "signal_xi":     [1800, 1940],
-    "signal_lambda": [1,    50  ],
-    "signal_gamma":  [-4,   4   ],
-    "signal_delta":  [0,    5   ],
-    "signal_f12":    [-1.0, 1.0 ],
 
-    "sidebands_sigma": [0, 0],
-    "sidebands_mean": [0, 0],
-    "sidebands_xi": [0, 0],
-    "sidebands_lambda": [0, 0],
-    "sidebands_gamma": [0, 0],
-    "sidebands_delta": [0, 0],
-    "sidebands_f12":  [0, 0],
-
-    "BuDmunu_sigma":  [1,    50  ],
-    "BuDmunu_mean":   [1800, 1940],
-    "BuDmunu_xi":     [1800, 1940],
-    "BuDmunu_lambda": [1,    50  ],
-    "BuDmunu_gamma":  [-4,   4   ],
-    "BuDmunu_delta":  [0,    5   ],
-    "BuDmunu_f12":    [-1.0, 1.0 ],
-
-    "BsDsMunu_sigma":  [1,    50  ],
-    "BsDsMunu_mean":   [1800, 1940],
-    "BsDsMunu_xi":     [1800, 1940],
-    "BsDsMunu_lambda": [1,    50  ],
-    "BsDsMunu_gamma":  [-4,   4   ],
-    "BsDsMunu_delta":  [0,    5   ],
-    "BsDsMunu_f12":    [-1.0, 1.0 ],
-
-    "B02DpDsm_sigma":  [1,    50  ],
-    "B02DpDsm_mean":   [1800, 1940],
-    "B02DpDsm_xi":     [1800, 1940],
-    "B02DpDsm_lambda": [1,    50  ],
-    "B02DpDsm_gamma":  [-4,   4   ],
-    "B02DpDsm_delta":  [0,    5   ],
-    "B02DpDsm_f12":    [-1.0, 1.0 ],
-
-    "Bu2D0Dsm_sigma":  [1,    50  ],
-    "Bu2D0Dsm_mean":   [1800, 1940],
-    "Bu2D0Dsm_xi":     [1800, 1940],
-    "Bu2D0Dsm_lambda": [1,    50  ],
-    "Bu2D0Dsm_gamma":  [-4,   4   ],
-    "Bu2D0Dsm_delta":  [0,    5   ],
-    "Bu2D0Dsm_f12":    [-1.0, 1.0 ]
-  },
+  "scanLimitsVect":{},
 
   "__KEYS_BELOW_ARE_NOT_USED__": "",
 

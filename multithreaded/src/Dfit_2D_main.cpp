@@ -152,7 +152,7 @@ int main(int argc, char* argv[]) {
 	// Initial fit parameter values taken from 1D fits to MC and Side Bands
 
 	// Define Minuit fit variables for M_D
-	const int n_all = (Config::nvar_md + Config::nvar_mb) * Config::ncontr + Config::ncontr;
+	const int n_all = Config::nvar_all_md + Config::nvar_all_mb;
 	bool previous_fit = false;
 	double starting_point[n_all];
 	std::string minName = "Minuit2";
@@ -175,22 +175,22 @@ int main(int argc, char* argv[]) {
 			// min->SetStrategy(2);
 
 			for (int i = 0; i < Config::ncontr; i++) {
-				for (int ivar = 0; ivar < Config::nvar_md; ivar++) {
-					min->SetVariable(i * Config::nvar_md + ivar,
+				for (int ivar = 0; ivar < Config::nvar_md[i]; ivar++) {
+					min->SetVariable(Config::nvar_offset_md[i] + ivar,
 									 (TString::Format("%s_%s", Config::contrName[i].c_str(),
-													  Config::varname_md[ivar].c_str()))
+													  Config::varname_md[i][ivar].c_str()))
 										 .Data(),
 									 Config::MC_MD[i][ivar], Config::dMC_MD[i][ivar] + 1.0e-11);
 					if (((int_choose_fit == dictionaryChooseFit.at("BM") ||
 						  int_choose_fit == dictionaryChooseFit.at("frac")) &&
 						 i != -1)) {
-						min->FixVariable(i * Config::nvar_md + ivar);
+						min->FixVariable(Config::nvar_offset_md[i] + ivar);
 					}  // else{
 					//	if (ivar>4)
 					//			min->FixVariable(i * Config::nvar_md + ivar);
 					//}
 					if (start_scratch)
-						starting_point[i * Config::nvar_md + ivar] = Config::MC_MD[i][ivar];
+						starting_point[Config::nvar_offset_md[i] + ivar] = Config::MC_MD[i][ivar];
 
 					/*if (ivar==3)
 					{
@@ -204,19 +204,19 @@ int main(int argc, char* argv[]) {
 			// Define Minuit fit variables for M_B
 
 			for (int i = 0; i < Config::ncontr; i++) {
-				for (int ivar = 0; ivar < Config::nvar_mb; ivar++) {
-					min->SetVariable(Config::ncontr * Config::nvar_md + i * Config::nvar_mb + ivar,
+				for (int ivar = 0; ivar < Config::nvar_mb[i]; ivar++) {
+					min->SetVariable(Config::nvar_all_md + Config::nvar_offset_mb[i] + ivar,
 									 (TString::Format("%s_%s", Config::contrName[i].c_str(),
-													  Config::varname_mb[ivar].c_str()))
+													  Config::varname_mb[i][ivar].c_str()))
 										 .Data(),
 									 Config::MC_MB[i][ivar], Config::dMC_MB[i][ivar] + 1.0e-11);
 					if (int_choose_fit == dictionaryChooseFit.at("DM+BMfixed") ||
 						int_choose_fit == dictionaryChooseFit.at("frac")) {
-						min->FixVariable(Config::ncontr * Config::nvar_md + i * Config::nvar_mb +
+						min->FixVariable(Config::nvar_all_md + Config::nvar_offset_mb[i] +
 										 ivar);
 					}
 					if (start_scratch)
-						starting_point[Config::ncontr * Config::nvar_md + i * Config::nvar_mb +
+						starting_point[Config::nvar_all_md + Config::nvar_offset_mb[i] +
 									   ivar] = Config::MC_MB[i][ivar];
 				}
 			}
@@ -234,14 +234,14 @@ int main(int argc, char* argv[]) {
 			}
 
 			for (int i = 0; i < Config::ncontr; i++) {
-				min->SetVariable((Config::nvar_md + Config::nvar_mb) * Config::ncontr + i,
+				min->SetVariable(Config::nvar_all_md + Config::nvar_all_mb + i,
 								 (TString::Format("par_frac%d", i)).Data(), Config::fracInit[i],
 								 0.001);
-				min->FixVariable((Config::nvar_md + Config::nvar_mb) * Config::ncontr + 1);
+				min->FixVariable(Config::nvar_all_md + Config::nvar_all_mb + 1);
 				// min->SetVariableLimits((Config::nvar_md + Config::nvar_mb) * Config::ncontr + i,
 				// -1.0, 1.0);
 				if (start_scratch)
-					starting_point[(Config::nvar_md + Config::nvar_mb) * Config::ncontr + i] =
+					starting_point[Config::nvar_all_md + Config::nvar_all_mb + i] =
 						Config::fracInit[i];
 			}
 
@@ -290,7 +290,7 @@ int main(int argc, char* argv[]) {
 			// staring point for stability checks
 			double frac_st[Config::ncontr];
 			for (int ivar = 0;
-				 ivar < (Config::nvar_md + Config::nvar_mb) * Config::ncontr + Config::ncontr;
+				 ivar < Config::nvar_all_md + Config::nvar_all_mb + Config::ncontr;
 				 ivar++) {
 				// for (int ivar=0; ivar<(nvar_md+nvar_mb)*ncontr+ncontr; ivar++){
 				double random = 0.0;
@@ -315,18 +315,19 @@ int main(int argc, char* argv[]) {
 				std::cout << "========================================\n read data " << a1 << "  "
 						  << a2 << "  " << frac_sidebands << std::endl;
 				double a_pair[] = {a1, a2};
+				// TODO WHY WE USED `4 * nvar_md + ivar`  ??
 				for (int ivar = 0; ivar < Config::n_sideband; ivar++)
-					min->SetVariableValue(4 * Config::nvar_md + ivar, a_pair[ivar]);
-				min->SetVariableValue(Config::ncontr * (Config::nvar_md + Config::nvar_mb) + 4,
+					min->SetVariableValue(Config::nvar_offset_md[4] + ivar, a_pair[ivar]);
+				min->SetVariableValue(Config::nvar_all_md + Config::nvar_all_mb + 4,
 									  frac_sidebands);
 			}
 			double sumc = abs(frac_sidebands);
 			for (int icontr = 0; icontr < Config::ncontr; icontr++) {
 				frac_st[icontr] =
-					starting_point[(Config::nvar_md + Config::nvar_mb) * Config::ncontr + icontr];
+					starting_point[Config::nvar_all_md + Config::nvar_all_mb + icontr];
 
 				if (Config::randSeed > -1 &&
-					!min->IsFixedVariable((Config::nvar_md + Config::nvar_mb) * Config::ncontr +
+					!min->IsFixedVariable(Config::nvar_all_md + Config::nvar_all_mb +
 										  icontr) &&
 					start_scratch && !Config::start_from_previous && itry != 1) {
 					double random = rand.Uniform(0.0, 1.0 - sumc);
@@ -335,7 +336,7 @@ int main(int argc, char* argv[]) {
 				}
 			}
 			if (Config::randSeed > -1 &&
-				!min->IsFixedVariable((Config::nvar_md + Config::nvar_mb) * Config::ncontr + 5) &&
+				!min->IsFixedVariable(Config::nvar_all_md + Config::nvar_all_mb + 5) &&
 				int_choose_fit == dictionaryChooseFit.at("frac")) {
 				frac_st[4] = abs(frac_sidebands);
 				frac_st[5] = 1.0 - sumc;
@@ -347,7 +348,7 @@ int main(int argc, char* argv[]) {
 			// frac_st[4] = 0.24;
 
 			double
-				result0[Config::ncontr * (Config::nvar_md + Config::nvar_mb) + 2 * Config::ncontr];
+				result0[Config::nvar_all_md + Config::nvar_all_mb + 2 * Config::ncontr];
 			if (Config::start_from_previous) {
 				double x, dx;
 				std::ifstream res0(Config::previous_result_file.c_str());
@@ -360,14 +361,13 @@ int main(int argc, char* argv[]) {
 				for (int ic = 0; ic < Config::ncontr; ic++) {
 					double random = 0.0;
 					if (Config::randSeed > -1 &&
-						!min->IsFixedVariable((Config::nvar_md + Config::nvar_mb) * Config::ncontr +
-											  ic) &&
+						!min->IsFixedVariable(Config::nvar_all_md + Config::nvar_all_mb + ic) &&
 						(int_choose_fit == dictionaryChooseFit.at("all") ||
 						 int_choose_fit == dictionaryChooseFit.at("frac")) &&
 						itry != 1)
 						random = rand.Uniform(-1.0, 1.0);
 					frac_st[ic] =
-						result0[(Config::nvar_md + Config::nvar_mb) * Config::ncontr + ic] *
+						result0[Config::nvar_all_md + Config::nvar_all_mb + ic] *
 						(1.0 + 0.01 * random);
 				}
 			}
@@ -380,22 +380,22 @@ int main(int argc, char* argv[]) {
 				if (abs(frac_st[ic]) < 1.0e-4) {
 					std::cout << ic << "  fixed\n";
 					// frac_st[ic] = 0.0;
-					for (int ivar = 0; ivar < Config::nvar_md; ivar++)
-						min->FixVariable(Config::nvar_md * ic + ivar);
-					for (int ivar = 0; ivar < Config::nvar_mb; ivar++)
-						min->FixVariable(Config::nvar_md * Config::ncontr + Config::nvar_mb * ic +
+					for (int ivar = 0; ivar < Config::nvar_md[ic]; ivar++)
+						min->FixVariable(Config::nvar_offset_md[ic] + ivar);
+					for (int ivar = 0; ivar < Config::nvar_mb[ic]; ivar++)
+						min->FixVariable(Config::nvar_all_md + Config::nvar_offset_mb[ic] +
 										 ivar);
 					// min->FixVariable((Config::nvar_md+Config::nvar_mb) * Config::ncontr+ic);
 				}
 			}
 
 			for (int ic = 0; ic < Config::ncontr; ic++) {
-				min->SetVariableValue((Config::nvar_md + Config::nvar_mb) * Config::ncontr + ic,
+				min->SetVariableValue(Config::nvar_all_md + Config::nvar_all_mb + ic,
 									  frac_st[ic] / sum_contr);
 				if (int_choose_fit == dictionaryChooseFit.at("shapes") ||
 					int_choose_fit == dictionaryChooseFit.at("DM+BMfixed") ||
 					int_choose_fit == dictionaryChooseFit.at("BM"))
-					min->FixVariable((Config::nvar_md + Config::nvar_mb) * Config::ncontr + ic);
+					min->FixVariable(Config::nvar_all_md + Config::nvar_all_mb + ic);
 			}
 
 			std::vector<std::pair<int, int>> replaceIndexVect = {};
@@ -452,7 +452,7 @@ int main(int argc, char* argv[]) {
 				start_scratch = false;
 			}
 			for (int i = 0; i < n_all; i++) {
-				if (i != (Config::nvar_md + Config::nvar_mb) * Config::ncontr + 1) {
+				if (i != Config::nvar_all_md + Config::nvar_all_mb + 1) {
 					results << min->X()[i] << "  " << min->Errors()[i] << std::endl;
 					if (previous_fit) starting_point[i] = min->X()[i];
 				} else {  // case of frac1 which is fixed
@@ -460,7 +460,7 @@ int main(int argc, char* argv[]) {
 					for (int j = 0; j < Config::ncontr; j++) {
 						if (j == 1) continue;
 						sumfrac +=
-							abs(min->X()[(Config::nvar_md + Config::nvar_mb) * Config::ncontr + j]);
+							abs(min->X()[Config::nvar_all_md + Config::nvar_all_mb + j]);
 					}
 					double frac1 = 1.0 - sumfrac;
 					results << frac1 << "  " << 0.0 << std::endl;
@@ -478,7 +478,7 @@ int main(int argc, char* argv[]) {
 						<< std::endl;
 
 			results.close();
-			const double* pa = &min->X()[Config::ncontr * (Config::nvar_md + Config::nvar_mb)];
+			const double* pa = &min->X()[Config::nvar_all_md + Config::nvar_all_mb];
 			// Calculate fractions
 			// Q: Why do we recalculate fractions? What does the minuti minimize - what is stored in
 			// `pa` ??? The parameters pa[] define the fractions, we have 6 fractions but 5
@@ -511,8 +511,8 @@ int main(int argc, char* argv[]) {
 	else
 		result_dir = "results_unbinned100kMU_2";
 	for (int i = 1; i <= itry; i++) {
-		double res[(Config::nvar_md + Config::nvar_mb) * Config::ncontr + 2 * Config::ncontr];
-		double dres[(Config::nvar_md + Config::nvar_mb) * Config::ncontr + 2 * Config::ncontr];
+		double res[Config::nvar_all_md + Config::nvar_all_mb + 2 * Config::ncontr];
+		double dres[Config::nvar_all_md + Config::nvar_all_mb + 2 * Config::ncontr];
 		std::ifstream resin(
 			Form("%s/fit2D_%d/results_%d_%d.txt", result_dir.Data(), i, Config::sign, last_fit));
 		resin >> status >> chi2;
@@ -527,7 +527,7 @@ int main(int argc, char* argv[]) {
 
 		resin.close();
 
-		int n0 = (Config::ncontr) * (Config::nvar_md + Config::nvar_mb);
+		int n0 = Config::nvar_all_md + Config::nvar_all_mb;
 		if ((status == 0 || status == 1) &&
 			chi2 < min_chi2) {	// && res[n0+1]<0.2 && res[n0+2] <0.2 && res[n0+3]<0.2&&
 								// res[n0+5]<0.2){// && i!=10){
@@ -562,7 +562,7 @@ std::function<double(const double*)> wrap_chi2(
 				  replaceIndexVect, int_choose_fit, hist2D](const double* par) -> double {
 		// Caclulate chi2
 		// Get the pointer in parameters array that correspond to fraction defining parameters????
-		const double* pa = &par[Config::ncontr * (Config::nvar_md + Config::nvar_mb)];
+		const double* pa = &par[Config::nvar_all_md + Config::nvar_all_mb];
 		// Calculate fractions
 		// Q: Why do we recalculate fractions? What does the minuti minimize - what is stored in
 		// `pa` ??? The parameters pa[] define the fractions, we have 6 fractions but 5 independent
@@ -590,8 +590,8 @@ std::function<double(const double*)> wrap_chi2(
 		frac[5] = abs(pa[0]) * abs(pa[1]) * abs(pa[2]) * abs(pa[3]) * abs(pa[4]);
 	*/
 		// Extract the parameters and add some constraints
-		double param[Config::ncontr * (Config::nvar_md + Config::nvar_mb)];
-		for (int ivar = 0; ivar < (Config::nvar_md + Config::nvar_mb) * Config::ncontr; ivar++) {
+		double param[Config::nvar_all_md + Config::nvar_all_mb];
+		for (int ivar = 0; ivar < (Config::nvar_all_md + Config::nvar_all_mb); ivar++) {
 			param[ivar] = par[ivar];
 		}
 		for (const auto& irep_var : replaceIndexVect) {
@@ -600,9 +600,9 @@ std::function<double(const double*)> wrap_chi2(
 
 		// Calculate normalisation integrals
 		for (int i = 0; i < Config::ncontr; i++) {
-			D_PDFs_get[i]->CalcIntegral(&param[i * Config::nvar_md], Config::minDM, Config::maxDM);
+			D_PDFs_get[i]->CalcIntegral(&param[Config::nvar_offset_md[i]], Config::minDM, Config::maxDM);
 			B_PDFs_get[i]->CalcIntegral(
-				&param[Config::ncontr * Config::nvar_md + i * Config::nvar_mb], Config::minBMcorr,
+				&param[Config::nvar_all_md + Config::nvar_offset_mb[i]], Config::minBMcorr,
 				Config::maxBMcorr);
 		}
 
@@ -612,12 +612,12 @@ std::function<double(const double*)> wrap_chi2(
 			dictionaryChooseFit.at("frac")) {  // don't calculate if only fractions fit
 			for (int i = 0; i < Config::ncontr; i++) {
 				// TODO set dxx for D comb background to 0 and remove this
-				for (int ivar = 0; ivar < Config::nvar_md; ivar++) {
+				for (int ivar = 0; ivar < Config::nvar_md[i]; ivar++) {
 					// Skip the constrain for chebyshev background: {"Chebyshev", 1}
 					// if (Config::intshapesDM[i] == 1 || ivar == 1) continue;
 					if (dMC_MD[i][ivar] != 0) {
-						double tmp = (MC_MD[i][ivar] - param[i * Config::nvar_md + ivar]) *
-									 (MC_MD[i][ivar] - param[i * Config::nvar_md + ivar]) /
+						double tmp = (MC_MD[i][ivar] - param[Config::nvar_offset_md[i] + ivar]) *
+									 (MC_MD[i][ivar] - param[Config::nvar_offset_md[i] + ivar]) /
 									 (2.0 * (dMC_MD[i][ivar] *
 											 dMC_MD[i][ivar]));	 // use the results of MC fits
 						double scale = 1.0;
@@ -629,13 +629,13 @@ std::function<double(const double*)> wrap_chi2(
 		if (int_choose_fit !=
 			dictionaryChooseFit.at("frac")) {  // don't calculate if only fractions fit
 			for (int i = 0; i < Config::ncontr; i++) {
-				for (int ivar = 0; ivar < Config::nvar_mb; ivar++) {
+				for (int ivar = 0; ivar < Config::nvar_mb[i]; ivar++) {
 					if (dMC_MB[i][ivar] != 0) {
 						double tmp =
 							(MC_MB[i][ivar] -
-							 param[Config::ncontr * Config::nvar_md + i * Config::nvar_mb + ivar]) *
+							 param[Config::nvar_all_md + Config::nvar_offset_mb[i] + ivar]) *
 							(MC_MB[i][ivar] -
-							 param[Config::ncontr * Config::nvar_md + i * Config::nvar_mb + ivar]) /
+							 param[Config::nvar_all_md + Config::nvar_offset_mb[i] + ivar]) /
 							(2.0 *
 							 (dMC_MB[i][ivar] * dMC_MB[i][ivar]));	// use the results of MC fits
 
@@ -663,9 +663,9 @@ std::function<double(const double*)> wrap_chi2(
 					for (int i = 0; i < Config::ncontr; i++) {
 						double mdass = hist2D.GetXaxis()->GetBinCenter(bin_md);
 						double mcorr = hist2D.GetYaxis()->GetBinCenter(bin_mb);
-						double md_val = D_PDFs_get[i]->EvalPDF(&mdass, &param[i * Config::nvar_md]);
+						double md_val = D_PDFs_get[i]->EvalPDF(&mdass, &param[Config::nvar_offset_md[i]]);
 						double mb_val = B_PDFs_get[i]->EvalPDF(
-							&mcorr, &param[Config::ncontr * Config::nvar_md + i * Config::nvar_mb]);
+							&mcorr, &param[Config::nvar_all_md + Config::nvar_offset_mb[i]]);
 						sum_contr +=
 							histev * bin_width_md * bin_width_mb * frac[i] * mb_val * md_val;
 						// std::cout << sum_contr << "  sumcontr  " << frac[i] << "  " << md_val <<
@@ -694,9 +694,9 @@ std::function<double(const double*)> wrap_chi2(
 				double like_event = 0.0;
 				for (int i = 0; i < Config::ncontr; i++) {
 					double md_like, mb_like;
-					md_like = D_PDFs_get[i]->EvalPDF(&mdass, &param[i * Config::nvar_md]);
+					md_like = D_PDFs_get[i]->EvalPDF(&mdass, &param[Config::nvar_offset_md[i]]);
 					mb_like = B_PDFs_get[i]->EvalPDF(
-						&mcorr, &param[Config::ncontr * Config::nvar_md + i * Config::nvar_mb]);
+						&mcorr, &param[Config::nvar_all_md + Config::nvar_offset_mb[i]]);
 					if (mb_like < 0.0 || mb_like > 1.0 || md_like < 0.0 || md_like > 1.0 ||
 						frac[i] < 0.0 || frac[i] > 1.0) {
 						chi2 += 1e15;

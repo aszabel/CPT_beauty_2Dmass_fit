@@ -1,9 +1,9 @@
 #include "config.h"
 
 using namespace cpt_b0_analysis;
-void M_fit_Every(const TString& path_results, const int& nvar, const double& minM,
+void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, const double& minM,
 				 const double& maxM, const TString& fit_type,
-				 const std::vector<std::string>& varnames, const int& nbins = 100) {
+				 const std::vector<std::vector<std::string>>& varnames, const int& nbins = 100) {
 	std::string minName = "Minuit2";
 	std::string algoName = "";
 
@@ -17,6 +17,7 @@ void M_fit_Every(const TString& path_results, const int& nvar, const double& min
 	int fit_id = 0;
 
 	for (auto& choice : Config::int_choose_fits) {
+		int nvar = nvars[choice];
 		std::cout << "##### Running fit: " << Config::Fits[fit_id] << endl;
 
 		// set tolerance , etc...
@@ -114,7 +115,7 @@ void M_fit_Every(const TString& path_results, const int& nvar, const double& min
 			// TODO name variables after fit name so that we can fix, set limits
 			// per contribution
 			min->SetVariable(ivar,
-							 (Config::Fits[fit_id] + std::string("_") + varnames[ivar]).c_str(),
+							 (Config::Fits[fit_id] + std::string("_") + varnames[choice][ivar]).c_str(),
 							 Config::init_values[choice][ivar], step);
 			// min -> FixVariable(ivar);
 		}
@@ -232,7 +233,7 @@ void M_fit_Every(const TString& path_results, const int& nvar, const double& min
 		size_t headerWidths[nvar];
 		size_t max_header = 0;
 		for (int i = 0; i < nvar; i++) {
-			const auto& name = varnames[i];
+			const auto& name = varnames[choice][i];
 			headerWidths[i] = name.size() > 7 ? name.size() : 7;
 			if (max_header < name.size()) max_header = name.size();
 		}
@@ -240,11 +241,11 @@ void M_fit_Every(const TString& path_results, const int& nvar, const double& min
 			if (i == 0) {
 				cout << std::setw(max_header) << " " << std::setw(0);
 				for (int j = 0; j < nvar; j++) {
-					cout << " | " << std::setw(headerWidths[j]) << varnames[j];
+					cout << " | " << std::setw(headerWidths[j]) << varnames[choice][j];
 				}
 				cout << endl;
 			}
-			cout << std::setw(max_header) << varnames[i];
+			cout << std::setw(max_header) << varnames[choice][i];
 			for (int j = 0; j < nvar; j++) {
 				cout << std::setw(0) << " | " << std::setw(headerWidths[j]) << std::setprecision(3)
 					 << min->Correlation(i, j);

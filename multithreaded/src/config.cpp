@@ -45,8 +45,12 @@ double Config::minDM = 1800.;
 double Config::maxDM = 1940.;
 double Config::minBMcorr = 2700.;
 double Config::maxBMcorr = 8300.;
-int Config::nvar_md = 7;
-int Config::nvar_mb = 7;
+std::vector<int> Config::nvar_md = {};
+std::vector<int> Config::nvar_mb = {};
+std::vector<int> Config::nvar_offset_md = {};
+std::vector<int> Config::nvar_offset_mb = {};
+int Config::nvar_all_md = 0;
+int Config::nvar_all_mb = 0;
 int Config::ncontr = 6;
 int Config::n_sideband = 2;
 int Config::ntries = 1;
@@ -64,8 +68,8 @@ std::vector<double> Config::fracInit = {};
 std::vector<std::vector<double>> Config::init_values = {};
 
 std::vector<std::string> Config::contrName = {};
-std::vector<std::string> Config::varname_md = {};
-std::vector<std::string> Config::varname_mb = {};
+std::vector<std::vector<std::string>> Config::varname_md = {};
+std::vector<std::vector<std::string>> Config::varname_mb = {};
 std::map<std::string, std::string> Config::replace_var;
 std::map<std::string, std::pair<double, double>> Config::varLimitsMap;
 
@@ -95,6 +99,12 @@ std::vector<std::shared_ptr<PDFInterface>> Config::getVectorPDFs(const std::stri
 					break;
 				case 5:
 					vPDFs.push_back(std::make_shared<JohnsonPlusDoubleSidedCrystalBallPDF>());
+					break;
+				case 6:
+					vPDFs.push_back(std::make_shared<JohnsonPDF>());
+					break;
+				case 7:
+					vPDFs.push_back(std::make_shared<DoubleSidedCrystalBallPDF>());
 					break;
 
 				default:
@@ -169,7 +179,7 @@ std::vector<std::shared_ptr<PDFInterface>> Config::getVectorPDFs(const std::stri
 	return vPDFs;
 }
 void Config::read_MC(std::vector<std::vector<double>>& xx, std::vector<std::vector<double>>& dxx,
-					 std::string MC_directory, int nvar) {
+					 std::string MC_directory, std::vector<int> nvar) {
 	// Read results of 1D fits that are stored as simple text files
 	// Each line corresponds to a single parameter
 	// First column defines parameter value
@@ -186,6 +196,9 @@ void Config::read_MC(std::vector<std::vector<double>>& xx, std::vector<std::vect
 		double _x, _dx;
 		std::vector<double> tmp_x = {};
 		std::vector<double> tmp_dx = {};
+		// read fit status and chi2/likelihood
+		infile >> _x >> _dx;
+		// load results
 		while (infile >> _x >> _dx) {
 			tmp_x.push_back(_x);
 			tmp_dx.push_back(_dx);
@@ -193,8 +206,9 @@ void Config::read_MC(std::vector<std::vector<double>>& xx, std::vector<std::vect
 
 		xx.emplace_back(std::move(tmp_x));
 		dxx.emplace_back(std::move(tmp_dx));
-		if (int(xx[ifile].size()) != nvar || int(dxx[ifile].size()) != nvar) {
-			std::cerr << " Wrong number of parameters in the MC result file " << name << std::endl;
+		if (int(xx[ifile].size()) != nvar[ifile] || int(dxx[ifile].size()) != nvar[ifile]) {
+			std::cerr << " Wrong number of parameters for component " << ifile
+					  << " in the MC result file " << name << std::endl;
 		}
 	}
 }
@@ -434,27 +448,6 @@ int Config::load(const std::string& filename) {
 		return 1;
 	}
 
-	if (config.contains("nvar_md")) {
-		nvar_md = config["nvar_md"];
-		if (nvar_md < 0) {
-			std::cerr << "Invalid config file: 'nvar_md' must be positive." << std::endl;
-			return 1;
-		}
-	} else {
-		std::cerr << "Invalid config file: missing 'nvar_md' key." << std::endl;
-		return 1;
-	}
-	if (config.contains("nvar_mb")) {
-		nvar_mb = config["nvar_mb"];
-		if (nvar_mb < 0) {
-			std::cerr << "Invalid config file: 'nvar_mb' must be positive." << std::endl;
-			return 1;
-		}
-	} else {
-		std::cerr << "Invalid config file: missing 'nvar_mb' key." << std::endl;
-		return 1;
-	}
-
 	if (config.contains("ntries")) {
 		ntries = config["ntries"];
 		if (ntries <= 0) {
@@ -554,6 +547,32 @@ int Config::load(const std::string& filename) {
 			return 1;
 		}
 	}
+	if (config.contains("varname_md")) {
+		varname_md = config["varname_md"].template get<std::vector<std::vector<std::string>>>();
+		int sum = 0;
+		for(auto &v : varname_md) {
+			nvar_md.push_back(v.size());
+			nvar_offset_md.push_back(sum);
+			sum += v.size();
+		}
+		nvar_all_md = sum;
+	} else {
+		std::cerr << "Invalid config file: missing 'varname_md' key." << std::endl;
+		return 1;
+	}
+	if (config.contains("varname_mb")) {
+		varname_mb = config["varname_mb"].template get<std::vector<std::vector<std::string>>>();
+		int sum = 0;
+		for(auto &v : varname_mb) {
+			nvar_mb.push_back(v.size());
+			nvar_offset_mb.push_back(sum);
+			sum += v.size();
+		}
+		nvar_all_mb = sum;
+	} else {
+		std::cerr << "Invalid config file: missing 'varname_mb' key." << std::endl;
+		return 1;
+	}
 
 	if (config.contains("fixVect")) {
 		fixVect = config["fixVect"].template get<std::vector<std::string>>();
@@ -569,12 +588,14 @@ int Config::load(const std::string& filename) {
 					  << " elements.";
 			return 1;
 		}
-		int nvars = nvar_md;
+		std::vector<int>& nvars = nvar_md;
 		if (int_category == dictionaryChooseCategory.at("1D_BM")) nvars = nvar_mb;
-		if (int(init_values[0].size()) != nvars) {
-			std::cerr << "Invalid config file: vector 'init_values[*]' should have " << nvars
-					  << " elements.";
-			return 1;
+		for(int i = 0; i<init_values.size(); i++) {
+			if (int(init_values[i].size()) != nvars[i]) {
+				std::cerr << "Invalid config file: vector 'init_values[" << i << "]' should have " << nvars[i]
+						<< " elements.";
+				return 1;
+			}
 		}
 	} else if (!is2D) {
 		std::cerr << "Invalid config file: missing 'init_values' key." << std::endl;
@@ -602,28 +623,6 @@ int Config::load(const std::string& filename) {
 		}
 	} else {
 		std::cerr << "Invalid config file: missing 'contrName' key." << std::endl;
-		return 1;
-	}
-	if (config.contains("varname_md")) {
-		varname_md = config["varname_md"].template get<std::vector<std::string>>();
-		if (int(varname_md.size()) != nvar_md) {
-			std::cerr << "Invalid config file: vector 'varname_md' should have " << nvar_md
-					  << " elements.";
-			return 1;
-		}
-	} else {
-		std::cerr << "Invalid config file: missing 'varname_md' key." << std::endl;
-		return 1;
-	}
-	if (config.contains("varname_mb")) {
-		varname_mb = config["varname_mb"].template get<std::vector<std::string>>();
-		if (int(varname_mb.size()) != nvar_mb) {
-			std::cerr << "Invalid config file: vector 'varname_mb' should have " << nvar_mb
-					  << " elements.";
-			return 1;
-		}
-	} else {
-		std::cerr << "Invalid config file: missing 'varname_mb' key." << std::endl;
 		return 1;
 	}
 

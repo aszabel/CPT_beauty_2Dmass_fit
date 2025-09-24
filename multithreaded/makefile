@@ -26,13 +26,13 @@ TARGET3 = LikeRatio
 all: $(TARGET1) $(TARGET2) $(TARGET3)
 
 # Linking
-$(TARGET1): $(OBJS1) $(OBJS_COMMON) $(CONFIG)
+$(TARGET1): $(OBJS1) $(OBJS_COMMON) $(OBJS_CONFIG)
 	$(CC) $(CFLAGS)  -o $@ $^
 
-$(TARGET2): $(OBJS2) $(OBJS_COMMON) $(CONFIG)
+$(TARGET2): $(OBJS2) $(OBJS_COMMON) $(OBJS_CONFIG)
 	$(CC) $(CFLAGS)  -o $@ $^
 
-$(TARGET3): $(OBJS3) $(OBJS_COMMON) $(CONFIG)
+$(TARGET3): $(OBJS3) $(OBJS_COMMON) $(OBJS_CONFIG)
 	$(CC) $(CFLAGS)  -o $@ $^
 
 # Compilation
@@ -47,10 +47,11 @@ common/%.o: ../common/src/%.cpp
 clean:
 	rm -f $(OBJS1) $(OBJS2) $(OBJS3) $(OBJS_COMMON) $(OBJS_CONFIG) $(TARGET1) $(TARGET2) $(TARGET3)
 
-format:
-	clang-format -i include/*.h ../common/include/*.h src/*.cpp ../common/src/*.cpp *.cpp macros/*.h macros/*.C
+#format:
+#	clang-format -i include/*.h ../common/include/*.h src/*.cpp ../common/src/*.cpp *.cpp macros/*.h macros/*.C
 
 # Phony targets
-.PHONY: all clean format
+.PHONY: all clean
+#format
 
 

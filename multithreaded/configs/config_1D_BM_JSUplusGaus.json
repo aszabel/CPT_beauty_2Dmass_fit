@@ -2,7 +2,7 @@
   "category": "1D_BM",
   "isMC": false,
   "massVariable": "B_Mcorr",
-  "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
+  "MC_directory_MB": "B_M_results_JSUplusGaus",
   "BMshapes": ["JSUplusGaus", "JSUplusGaus", "JSUplusGaus", "JSUplusGaus", "JSUplusGaus", "JSUplusGaus"],
   "binned": true,
   "sign":"muplus",
@@ -33,12 +33,16 @@
   "DM_range": [1800, 1940],
   "BMcorr_range": [3000.0, 8000.0],
 
-  "varname_md": ["sigma", "mean", "sigmaCB", "f12", "alpha", "n", "alpha_h"], 
-  "varname_mb": ["f12", "mean", "sigma", "xi", "lambda", "gamma", "delta"],
+  "varname_mb": [
+    ["f12", "mean", "sigma", "xi", "lambda", "gamma", "delta"],
+    ["f12", "mean", "sigma", "xi", "lambda", "gamma", "delta"],
+    ["f12", "mean", "sigma", "xi", "lambda", "gamma", "delta"],
+    ["f12", "mean", "sigma", "xi", "lambda", "gamma", "delta"],
+    ["f12", "mean", "sigma", "xi", "lambda", "gamma", "delta"],
+    ["f12", "mean", "sigma", "xi", "lambda", "gamma", "delta"]
+  ],
   "fixVect" : [],
 
-  "nvar_md": 7,
-  "nvar_mb": 7,
   "ncontr": 6,
   "n_sideband": 2,
   "init_values": [
@@ -118,7 +122,8 @@
   "previous_result_file": "",
   
   "MC_directory_MD": "D_M_results_JSUplusGaus",
-  "MC_directory_MB": "B_M_results_JSUplusGaus",
+  "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
+  "varname_md": ["sigma", "mean", "sigmaCB", "f12", "alpha", "n", "alpha_h"], 
 
   "fracInit": [0.2, 0.15, 0.15, 0.15, 0.15, 0.15]
 

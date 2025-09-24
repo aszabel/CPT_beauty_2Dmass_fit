@@ -2,7 +2,7 @@
   "category": "1D_BM",
   "isMC": false,
   "massVariable": "B_Mcorr",
-  "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
+  "MC_directory_MB": "B_M_results_CB",
   "BMshapes": ["CrystalBall", "CrystalBall", "CrystalBall", "CrystalBall", "CrystalBall", "CrystalBall"],
   "binned": true,
   "sign":"muplus",
@@ -32,14 +32,18 @@
   "DM_range": [1800, 1940],
   "BMcorr_range": [3000.0, 8000.0],
 
-  "varname_md": ["sigma", "mean", "sigmaCB", "f12", "alpha", "n", "alpha_h"], 
-  "varname_mb": ["mean", "sigma", "alpha", "n"],
+  "varname_mb": [
+    ["mean", "sigma", "alpha", "n"],
+    ["mean", "sigma", "alpha", "n"],
+    ["mean", "sigma", "alpha", "n"],
+    ["mean", "sigma", "alpha", "n"],
+    ["mean", "sigma", "alpha", "n"],
+    ["mean", "sigma", "alpha", "n"]
+  ],
   "fixVect" : [
     "signal_n", "BuDmunu_n", "BsDsMunu_n", "B02DpDsm_n", "sidebands_n", "Bu2D0Dsm_n"
   ],
 
-  "nvar_md": 7,
-  "nvar_mb": 4,
   "ncontr": 6,
   "n_sideband": 2,
   "init_values": [
@@ -94,8 +98,9 @@
   "start_from_previous": false,
   "previous_result_file": "",
   
+  "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
+  "varname_md": [[]],
   "MC_directory_MD": "D_M_results_JSUplusGaus",
-  "MC_directory_MB": "B_M_results_CB",
 
   "fracInit": [0.2, 0.15, 0.15, 0.15, 0.15, 0.15]
 
