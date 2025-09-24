@@ -2,7 +2,7 @@
   "category": "1D_DM",
   "isMC": false,
   "massVariable": "D_M",
-  "MC_directory_MD": "D_M_results_DCBplusGaus",
+  "MC_directory_MD": "D_M_results_DCBplusGaus_free",
   "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
   "binned": true,
   "sign":"muplus",
@@ -35,16 +35,9 @@
   "varname_md": ["f12", "mean", "sigma", "meanCB", "sigmaCB", "alpha", "n", "alpha_h", "n2"],
   "fixVect" : [
     "signal_n", "BuDmunu_n", "BsDsMunu_n", "B02DpDsm_n", "Bu2D0Dsm_n",
-    "signal_n2", "BuDmunu_n2", "BsDsMunu_n2", "B02DpDsm_n2", "Bu2D0Dsm_n2",
-    "signal_meanCB", "BuDmunu_meanCB", "BsDsMunu_meanCB", "B02DpDsm_meanCB", "Bu2D0Dsm_meanCB"
+    "signal_n2", "BuDmunu_n2", "BsDsMunu_n2", "B02DpDsm_n2", "Bu2D0Dsm_n2"
   ],
-  "replace_var": {
-    "signal_meanCB": "signal_mean",
-    "BuDmunu_meanCB": "BuDmunu_mean",
-    "BsDsMunu_meanCB": "BsDsMunu_mean",
-    "B02DpDsm_meanCB": "B02DpDsm_mean",
-    "Bu2D0Dsm_meanCB": "Bu2D0Dsm_mean"
-  },
+  "replace_var": {},
 
   "nvar_md": 9,
   "ncontr": 6,
@@ -73,7 +66,7 @@
     "signal_alpha_h": [0.1,  5.0 ],
     "signal_n2":      [1,    1   ],
     "signal_sigmaCB": [1,    50  ],
-    "signal_meanCB":  [1870, 1870],
+    "signal_meanCB":  [1800, 1940],
     "signal_f12":     [-1.0, 1.0 ],
 
     "sidebands_sigma": [0, 0],
@@ -93,7 +86,7 @@
     "BuDmunu_alpha_h": [0.1,  5.0 ],
     "BuDmunu_n2":      [1,    1   ],
     "BuDmunu_sigmaCB": [1,    50  ],
-    "BuDmunu_meanCB":  [1870, 1870],
+    "BuDmunu_meanCB":  [1800, 1940],
     "BuDmunu_f12":     [-1.0, 1.0 ],
 
     "BsDsMunu_sigma":   [1,    50  ],
@@ -103,7 +96,7 @@
     "BsDsMunu_alpha_h": [0.1,  5.0 ],
     "BsDsMunu_n2":      [1,    1   ],
     "BsDsMunu_sigmaCB": [1,    50  ],
-    "BsDsMunu_meanCB":  [1870, 1870],
+    "BsDsMunu_meanCB":  [1800, 1940],
     "BsDsMunu_f12":     [-1.0, 1.0 ],
 
     "B02DpDsm_sigma":   [1,    50  ],
@@ -113,7 +106,7 @@
     "B02DpDsm_alpha_h": [0.1,  5.0 ],
     "B02DpDsm_n2":      [1,    1   ],
     "B02DpDsm_sigmaCB": [1,    50  ],
-    "B02DpDsm_meanCB":  [1870, 1870],
+    "B02DpDsm_meanCB":  [1800, 1940],
     "B02DpDsm_f12":     [-1.0, 1.0 ],
 
     "Bu2D0Dsm_sigma":   [1,    50  ],
@@ -123,7 +116,7 @@
     "Bu2D0Dsm_alpha_h": [0.1,  5.0 ],
     "Bu2D0Dsm_n2":      [1,    1   ],
     "Bu2D0Dsm_sigmaCB": [1,    50  ],
-    "Bu2D0Dsm_meanCB":  [1870, 1870],
+    "Bu2D0Dsm_meanCB":  [1800, 1940],
     "Bu2D0Dsm_f12":     [-1.0, 1.0 ]
   },
 
@@ -134,8 +127,8 @@
 
   "BMshapes": ["Gauss", "Gauss", "Gauss", "Gauss", "Gauss", "Gauss"],
   "varname_mb": [],
+  "MC_directory_MB": "B_M_results_RCplusGaus",
   "nvar_mb": 0,
-  "MC_directory_MB": "",
 
   "fracInit": [0.2, 0.15, 0.15, 0.15, 0.15, 0.15]
 
