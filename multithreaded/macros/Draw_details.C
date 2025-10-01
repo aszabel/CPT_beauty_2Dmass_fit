@@ -1,9 +1,9 @@
 #include <cmath>
 
-#include "config.h"
 #include "ChebyshevPDF.h"
 #include "D_M_fit_shape.h"
 #include "M_B_2missPT_fit.h"
+#include "config.h"
 
 using namespace cpt_b0_analysis;
 const int nbins = 40;
@@ -246,7 +246,8 @@ void Draw_details(std::string config_file) {
 	}
 
 	for (int i = 0; i < Config::ncontr; i++) {
-		D_PDFs_get[i]->CalcIntegral(&param[Config::nvar_offset_md[i]], Config::minDM, Config::maxDM);
+		D_PDFs_get[i]->CalcIntegral(&param[Config::nvar_offset_md[i]], Config::minDM,
+									Config::maxDM);
 		B_PDFs_get[i]->CalcIntegral(&param[Config::nvar_all_md + Config::nvar_offset_mb[i]],
 									Config::minBMcorr, Config::maxBMcorr);
 	}

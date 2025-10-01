@@ -106,8 +106,8 @@ void sWeights::get_sWeigths(const double res[], bool BBbar) {
 				}
 				// std::cout << sum_k << " ssssssummmmmmm\n";
 				md_like = D_PDFs[n]->EvalPDF(&mdass, &res[Config::nvar_offset_md[n]]);
-				mb_like = B_PDFs[n]->EvalPDF(
-					&mcorr, &res[Config::nvar_all_md + Config::nvar_offset_mb[n]]);
+				mb_like = B_PDFs[n]->EvalPDF(&mcorr,
+											 &res[Config::nvar_all_md + Config::nvar_offset_mb[n]]);
 				md_like2 = D_PDFs[j]->EvalPDF(&mdass, &res[Config::nvar_offset_md[j]]);
 				mb_like2 = B_PDFs[j]->EvalPDF(
 					&mcorr, &res[Config::nvar_all_md + Config::nvar_offset_mb[j]]);
@@ -128,16 +128,16 @@ void sWeights::get_sWeigths(const double res[], bool BBbar) {
 		double md_like, mb_like;
 		for (int i = 0; i < ncontr; i++) {
 			md_like = D_PDFs[i]->EvalPDF(&mdass, &res[Config::nvar_offset_md[i]]);
-			mb_like = B_PDFs[i]->EvalPDF(
-				&mcorr, &res[Config::nvar_all_md + Config::nvar_offset_mb[i]]);
+			mb_like =
+				B_PDFs[i]->EvalPDF(&mcorr, &res[Config::nvar_all_md + Config::nvar_offset_mb[i]]);
 			sum_k += md_like * mb_like * frac[i] * nevents;
 		}
 
 		double sum_n = 0.0;
 		for (int i = 0; i < ncontr; i++) {
 			md_like = D_PDFs[i]->EvalPDF(&mdass, &res[Config::nvar_offset_md[i]]);
-			mb_like = B_PDFs[i]->EvalPDF(
-				&mcorr, &res[Config::nvar_all_md + Config::nvar_offset_mb[i]]);
+			mb_like =
+				B_PDFs[i]->EvalPDF(&mcorr, &res[Config::nvar_all_md + Config::nvar_offset_mb[i]]);
 			sum_n += inv_matrixV(0, i) * md_like * mb_like;
 		}
 		vec_Tau.push_back(Tau);

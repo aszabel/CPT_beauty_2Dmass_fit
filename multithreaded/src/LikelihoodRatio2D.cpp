@@ -179,12 +179,11 @@ int main(int argc, char* argv[]) {
 									 Config::MC_MB[i][ivar], Config::dMC_MB[i][ivar] + 1.0e-11);
 					if (int_choose_fit == dictionaryChooseFit.at("DM+BMfixed") ||
 						int_choose_fit == dictionaryChooseFit.at("frac")) {
-						min->FixVariable(Config::nvar_all_md + Config::nvar_offset_mb[i] +
-										 ivar);
+						min->FixVariable(Config::nvar_all_md + Config::nvar_offset_mb[i] + ivar);
 					}
 					if (start_scratch)
-						starting_point[Config::nvar_all_md + Config::nvar_offset_mb[i] +
-									   ivar] = Config::MC_MB[i][ivar];
+						starting_point[Config::nvar_all_md + Config::nvar_offset_mb[i] + ivar] =
+							Config::MC_MB[i][ivar];
 				}
 			}
 
@@ -260,8 +259,7 @@ int main(int argc, char* argv[]) {
 			if (Config::randSeed > -1) rand.SetSeed(itry);
 			// staring point for stability checks
 			double frac_st[Config::ncontr];
-			for (int ivar = 0;
-				 ivar < Config::nvar_all_md + Config::nvar_all_mb + Config::ncontr;
+			for (int ivar = 0; ivar < Config::nvar_all_md + Config::nvar_all_mb + Config::ncontr;
 				 ivar++) {
 				// for (int ivar=0; ivar<(nvar_md+nvar_mb)*ncontr+ncontr; ivar++){
 				double random = 0.0;
@@ -299,8 +297,7 @@ int main(int argc, char* argv[]) {
 					starting_point[Config::nvar_all_md + Config::nvar_all_mb + icontr];
 
 				if (Config::randSeed > -1 &&
-					!min->IsFixedVariable(Config::nvar_all_md + Config::nvar_all_mb +
-										  icontr) &&
+					!min->IsFixedVariable(Config::nvar_all_md + Config::nvar_all_mb + icontr) &&
 					start_scratch && !Config::start_from_previous && itry != 1) {
 					double random = rand.Uniform(0.0, 1.0 - sumc);
 					frac_st[icontr] = random;
@@ -319,8 +316,7 @@ int main(int argc, char* argv[]) {
 			// frac_st[3] = 0.06;
 			// frac_st[4] = 0.24;
 
-			double
-				result0[Config::nvar_all_md + Config::nvar_all_mb + 2 * Config::ncontr];
+			double result0[Config::nvar_all_md + Config::nvar_all_mb + 2 * Config::ncontr];
 			if (Config::start_from_previous) {
 				double x, dx;
 				std::ifstream res0(Config::previous_result_file.c_str());
@@ -338,9 +334,8 @@ int main(int argc, char* argv[]) {
 						 int_choose_fit == dictionaryChooseFit.at("frac")) &&
 						itry != 1)
 						random = rand.Uniform(-1.0, 1.0);
-					frac_st[ic] =
-						result0[Config::nvar_all_md + Config::nvar_all_mb + ic] *
-						(1.0 + 0.01 * random);
+					frac_st[ic] = result0[Config::nvar_all_md + Config::nvar_all_mb + ic] *
+								  (1.0 + 0.01 * random);
 				}
 			}
 			for (int icontr = 0; icontr < Config::ncontr; icontr++)
@@ -355,8 +350,7 @@ int main(int argc, char* argv[]) {
 					for (int ivar = 0; ivar < Config::nvar_md[ic]; ivar++)
 						min->FixVariable(Config::nvar_offset_md[ic] + ivar);
 					for (int ivar = 0; ivar < Config::nvar_mb[ic]; ivar++)
-						min->FixVariable(Config::nvar_all_md + Config::nvar_offset_mb[ic] +
-										 ivar);
+						min->FixVariable(Config::nvar_all_md + Config::nvar_offset_mb[ic] + ivar);
 					// min->FixVariable((Config::nvar_md+Config::nvar_mb) * Config::ncontr+ic);
 				}
 			}
@@ -403,7 +397,8 @@ int main(int argc, char* argv[]) {
 			double param[nall];
 			for (int i = 0; i < Config::ncontr; i++) {
 				for (int ivar = 0; ivar < Config::nvar_md[i]; ivar++) {
-					param[Config::nvar_offset_md[i] + ivar] = result0[Config::nvar_offset_md[i] + ivar];
+					param[Config::nvar_offset_md[i] + ivar] =
+						result0[Config::nvar_offset_md[i] + ivar];
 					if (ivar == 1 && i != 2 && i != 4)
 						param[Config::nvar_offset_md[i] + ivar] = result0[1];
 				}
@@ -416,9 +411,8 @@ int main(int argc, char* argv[]) {
 			for (int i = 0; i < Config::ncontr; i++) {
 				D_PDFs_get[i]->CalcIntegral(&param[Config::nvar_offset_md[i]], Config::minDM,
 											Config::maxDM);
-				B_PDFs_get[i]->CalcIntegral(
-					&param[Config::nvar_all_md + Config::nvar_offset_mb[i]],
-					Config::minBMcorr, Config::maxBMcorr);
+				B_PDFs_get[i]->CalcIntegral(&param[Config::nvar_all_md + Config::nvar_offset_mb[i]],
+											Config::minBMcorr, Config::maxBMcorr);
 			}
 
 			for (int i = 0; i < Config::ncontr; i++) {
@@ -505,8 +499,7 @@ int main(int argc, char* argv[]) {
 					double sumfrac = 0.0;
 					for (int j = 0; j < Config::ncontr; j++) {
 						if (j == 1) continue;
-						sumfrac +=
-							abs(min->X()[Config::nvar_all_md + Config::nvar_all_mb + j]);
+						sumfrac += abs(min->X()[Config::nvar_all_md + Config::nvar_all_mb + j]);
 					}
 					double frac1 = 1.0 - sumfrac;
 					results << frac1 << "  " << 0.0 << std::endl;
@@ -646,10 +639,10 @@ std::function<double(const double*)> wrap_chi2(
 
 		// Calculate normalisation integrals
 		for (int i = 0; i < Config::ncontr; i++) {
-			D_PDFs_get[i]->CalcIntegral(&param[Config::nvar_offset_md[i]], Config::minDM, Config::maxDM);
-			B_PDFs_get[i]->CalcIntegral(
-				&param[Config::nvar_all_md + Config::nvar_offset_mb[i]], Config::minBMcorr,
-				Config::maxBMcorr);
+			D_PDFs_get[i]->CalcIntegral(&param[Config::nvar_offset_md[i]], Config::minDM,
+										Config::maxDM);
+			B_PDFs_get[i]->CalcIntegral(&param[Config::nvar_all_md + Config::nvar_offset_mb[i]],
+										Config::minBMcorr, Config::maxBMcorr);
 		}
 
 		int nbins_md = hist2D.GetNbinsX();
@@ -709,7 +702,8 @@ std::function<double(const double*)> wrap_chi2(
 					for (int i = 0; i < Config::ncontr; i++) {
 						double mdass = hist2D.GetXaxis()->GetBinCenter(bin_md);
 						double mcorr = hist2D.GetYaxis()->GetBinCenter(bin_mb);
-						double md_val = D_PDFs_get[i]->EvalPDF(&mdass, &param[Config::nvar_offset_md[i]]);
+						double md_val =
+							D_PDFs_get[i]->EvalPDF(&mdass, &param[Config::nvar_offset_md[i]]);
 						double mb_val = B_PDFs_get[i]->EvalPDF(
 							&mcorr, &param[Config::nvar_all_md + Config::nvar_offset_mb[i]]);
 						sum_contr +=

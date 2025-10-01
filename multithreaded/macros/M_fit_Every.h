@@ -1,9 +1,9 @@
 #include "config.h"
 
 /**
- * 
+ *
  * Fit all 1D mass distributions for all contributions defined in a config file.
- * 
+ *
  * @param path_result output directory
  * @param nvars vector with number of parameters for each contribution
  * @param minM low edge of the mass window
@@ -136,9 +136,9 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 			step = abs(0.1 * Config::init_values[choice][ivar]) + 0.01;
 			// TODO name variables after fit name so that we can fix, set limits
 			// per contribution
-			min->SetVariable(ivar,
-							 (Config::Fits[fit_id] + std::string("_") + varnames[choice][ivar]).c_str(),
-							 Config::init_values[choice][ivar], step);
+			min->SetVariable(
+				ivar, (Config::Fits[fit_id] + std::string("_") + varnames[choice][ivar]).c_str(),
+				Config::init_values[choice][ivar], step);
 			// min -> FixVariable(ivar);
 		}
 

@@ -235,7 +235,6 @@ int Config::load(const std::string& filename) {
 	json config = json::parse(config_file);
 	config_file.close();
 
-
 	if (config.contains("sign")) {
 		if (config["sign"].template get<std::string>() == std::string("muplus"))
 			sign = 1;
@@ -568,7 +567,7 @@ int Config::load(const std::string& filename) {
 	if (config.contains("varname_md")) {
 		varname_md = config["varname_md"].template get<std::vector<std::vector<std::string>>>();
 		int sum = 0;
-		for(auto &v : varname_md) {
+		for (auto& v : varname_md) {
 			nvar_md.push_back(v.size());
 			nvar_offset_md.push_back(sum);
 			sum += v.size();
@@ -581,7 +580,7 @@ int Config::load(const std::string& filename) {
 	if (config.contains("varname_mb")) {
 		varname_mb = config["varname_mb"].template get<std::vector<std::vector<std::string>>>();
 		int sum = 0;
-		for(auto &v : varname_mb) {
+		for (auto& v : varname_mb) {
 			nvar_mb.push_back(v.size());
 			nvar_offset_mb.push_back(sum);
 			sum += v.size();
@@ -608,10 +607,10 @@ int Config::load(const std::string& filename) {
 		}
 		std::vector<int>& nvars = nvar_md;
 		if (int_category == dictionaryChooseCategory.at("1D_BM")) nvars = nvar_mb;
-		for(int i = 0; i<init_values.size(); i++) {
+		for (int i = 0; i < init_values.size(); i++) {
 			if (int(init_values[i].size()) != nvars[i]) {
-				std::cerr << "Invalid config file: vector 'init_values[" << i << "]' should have " << nvars[i]
-						<< " elements.";
+				std::cerr << "Invalid config file: vector 'init_values[" << i << "]' should have "
+						  << nvars[i] << " elements.";
 				return 1;
 			}
 		}

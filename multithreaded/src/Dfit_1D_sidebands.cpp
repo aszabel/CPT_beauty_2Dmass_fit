@@ -38,13 +38,13 @@
 #include "M_B_2missPT_fit.h"
 #include "TH1D.h"
 
-//using json = nlohmann::json;
+// using json = nlohmann::json;
 using namespace cpt_b0_analysis;
 
 #include <mutex>
 std::mutex my_mutex;
 
-//bool avx = false;
+// bool avx = false;
 bool avx = true;
 
 /**
@@ -61,9 +61,8 @@ bool avx = true;
  * @return int
  */
 std::function<double(const double*)> wrap_chi2(
-	const std::vector<std::shared_ptr<PDFInterface>>& D_PDFs_get,
-	std::vector<double> data, const std::vector<std::vector<double>>& MC_MD,
-	const std::vector<std::vector<double>>& dMC_MD,
+	const std::vector<std::shared_ptr<PDFInterface>>& D_PDFs_get, std::vector<double> data,
+	const std::vector<std::vector<double>>& MC_MD, const std::vector<std::vector<double>>& dMC_MD,
 	const std::vector<std::pair<int, int>>& replaceIndexVect, int int_choose_fit, TH1D hist1D);
 
 /**
@@ -174,8 +173,9 @@ int main(int argc, char* argv[]) {
 	// Define Minuit fit variables for M_D
 	const int n_all = Config::nvar_all_md + Config::ncontr;
 	// Get index of the sidebands contribution
-	const int sb_idx = std::distance(Config::contrName.begin(), std::find(
-		Config::contrName.begin(), Config::contrName.end(), "sidebands"));
+	const int sb_idx =
+		std::distance(Config::contrName.begin(),
+					  std::find(Config::contrName.begin(), Config::contrName.end(), "sidebands"));
 	bool previous_fit = false;
 	bool start_scratch = true;
 	double starting_point[n_all];
@@ -206,7 +206,8 @@ int main(int argc, char* argv[]) {
 					// Fix parameters for all contributions besides sidebands
 					min->FixVariable(Config::nvar_offset_md[i] + ivar);
 				} else {
-					if (ivar >= Config::n_sideband) min->FixVariable(Config::nvar_offset_md[i] + ivar);
+					if (ivar >= Config::n_sideband)
+						min->FixVariable(Config::nvar_offset_md[i] + ivar);
 				}
 				// Read initial value from 1D fit for "from scratch" fit
 				if (start_scratch)
@@ -226,17 +227,14 @@ int main(int argc, char* argv[]) {
 		}
 
 		for (int i = 0; i < Config::ncontr; i++) {
-		// TODO if this is 1D M_D fit why are we setting fractions after M_B params ???
-			min->SetVariable(Config::nvar_all_md + i,
-							 (TString::Format("par_frac%d", i)).Data(), Config::fracInit[i], 0.001);
+			// TODO if this is 1D M_D fit why are we setting fractions after M_B params ???
+			min->SetVariable(Config::nvar_all_md + i, (TString::Format("par_frac%d", i)).Data(),
+							 Config::fracInit[i], 0.001);
 			if (i != sb_idx) {
-				min->SetVariableValue(Config::nvar_all_md + i,
-									  0.0);
+				min->SetVariableValue(Config::nvar_all_md + i, 0.0);
 				min->FixVariable(Config::nvar_all_md + i);
 			}
-			if (start_scratch)
-				starting_point[Config::nvar_all_md + i] =
-					Config::fracInit[i];
+			if (start_scratch) starting_point[Config::nvar_all_md + i] = Config::fracInit[i];
 		}
 
 		// Define the error setimation parameter in minuit for 1 sigma and ncontr -1 free parameters
@@ -259,31 +257,33 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
-		//list of fixed variables form config*/
+		// list of fixed variables form config*/
 		for (const auto& fix : Config::fixVect) {
 			min->FixVariable(min->VariableIndex(fix));
 			std::cout << "Fix: " << fix << "  " << min->VariableIndex(fix) << std::endl;
 		}
 
 		std::vector<std::pair<int, int>> replaceIndexVect = {};
-		for (const auto& rep_var: Config::replace_var){
+		for (const auto& rep_var : Config::replace_var) {
 			int index_replaced = min->VariableIndex(rep_var.first);
 			int index_substitute = min->VariableIndex(rep_var.second);
-			if (index_replaced == -1 ){
-				std::cerr<< "Error in substituting parameters param " << rep_var.first << " not found.\n"; return 1;
+			if (index_replaced == -1) {
+				std::cerr << "Error in substituting parameters param " << rep_var.first
+						  << " not found.\n";
+				return 1;
 			}
-			if (index_substitute == -1 ){
-				std::cerr<< "Error in substituting parameters param " << rep_var.second << " not found.\n"; return 1;
+			if (index_substitute == -1) {
+				std::cerr << "Error in substituting parameters param " << rep_var.second
+						  << " not found.\n";
+				return 1;
 			}
 			replaceIndexVect.push_back(std::make_pair(index_replaced, index_substitute));
 		}
 
-
 		// Start the minimization
 		// Define a fit function for Minuit
-		auto fchi2 =
-			wrap_chi2(D_PDFs, data, Config::MC_MD, Config::dMC_MD,
-					  replaceIndexVect, int_choose_fit, hist1D);
+		auto fchi2 = wrap_chi2(D_PDFs, data, Config::MC_MD, Config::dMC_MD, replaceIndexVect,
+							   int_choose_fit, hist1D);
 		ROOT::Math::Functor f(fchi2, n_all);
 		min->SetFunction(f);
 		min->Minimize();
@@ -314,11 +314,12 @@ int main(int argc, char* argv[]) {
 					  << double(frac_indeces[i]) / double(data.size()) << std::endl;
 
 		D_PDFs[sb_idx].get()->CalcIntegral(&min->X()[Config::nvar_offset_md[sb_idx]],
-									  hist1D.GetBinLowEdge(hist1D.FindBin(1830)),
-									  hist1D.GetBinLowEdge(hist1D.FindBin(1910)));
+										   hist1D.GetBinLowEdge(hist1D.FindBin(1830)),
+										   hist1D.GetBinLowEdge(hist1D.FindBin(1910)));
 		double integral_signal_range = D_PDFs[sb_idx].get()->getIntegral();
 		std::cout << integral_signal_range << " intsig\n";
-		D_PDFs[sb_idx].get()->CalcIntegral(&min->X()[Config::nvar_offset_md[sb_idx]], Config::minDM, Config::maxDM);
+		D_PDFs[sb_idx].get()->CalcIntegral(&min->X()[Config::nvar_offset_md[sb_idx]], Config::minDM,
+										   Config::maxDM);
 		double integral_full_range = D_PDFs[sb_idx].get()->getIntegral();
 		std::cout << integral_full_range << " intfull\n";
 
@@ -383,14 +384,13 @@ void Draw_pull(TCanvas* c, TH1D hist, TF1* tf1_sum) {
 }
 
 std::function<double(const double*)> wrap_chi2(
-	const std::vector<std::shared_ptr<PDFInterface>>& D_PDFs_get,
-	std::vector<double> data, const std::vector<std::vector<double>>& MC_MD,
-	const std::vector<std::vector<double>>& dMC_MD,
+	const std::vector<std::shared_ptr<PDFInterface>>& D_PDFs_get, std::vector<double> data,
+	const std::vector<std::vector<double>>& MC_MD, const std::vector<std::vector<double>>& dMC_MD,
 	const std::vector<std::pair<int, int>>& replaceIndexVect, int int_choose_fit, TH1D hist1D) {
 	long int emax = data.size();
 	std::cout << emax << " yield of the sample \n";
-	auto fchi2 = [D_PDFs_get, data, MC_MD, dMC_MD, emax,
-				  replaceIndexVect, int_choose_fit, hist1D](const double* par) -> double {
+	auto fchi2 = [D_PDFs_get, data, MC_MD, dMC_MD, emax, replaceIndexVect, int_choose_fit,
+				  hist1D](const double* par) -> double {
 		// Caclulate chi2
 		// Get the pointer in parameters array that correspond to fraction defining parameters????
 		const double* pa = &par[Config::nvar_all_md];
@@ -417,13 +417,13 @@ std::function<double(const double*)> wrap_chi2(
 
 		// Calculate normalisation integrals
 		for (int i = 0; i < Config::ncontr; i++) {
-			D_PDFs_get[i]->CalcIntegral(&param[Config::nvar_offset_md[i]], Config::minDM, Config::maxDM);
+			D_PDFs_get[i]->CalcIntegral(&param[Config::nvar_offset_md[i]], Config::minDM,
+										Config::maxDM);
 		}
-		double* vect_chi2 =
-			new double[data.size()];	 // Per event results - required to efficiently calculate a
-										 // Kahan compensated sum
+		double* vect_chi2 = new double[data.size()];  // Per event results - required to efficiently
+													  // calculate a Kahan compensated sum
 		for (int jj = 0; jj < int(data.size()); jj++) vect_chi2[jj] = 0.0;
-		//double test_chi2 = 0.0;
+		// double test_chi2 = 0.0;
 		if (Config::binned) {
 			int nbins_md = hist1D.GetNbinsX();
 			double bin_width_md = (Config::maxDM - Config::minDM) / double(nbins_md);
@@ -432,7 +432,8 @@ std::function<double(const double*)> wrap_chi2(
 				double sum_contr = 0.0;
 				for (int i = 0; i < Config::ncontr; i++) {
 					double mdass = hist1D.GetXaxis()->GetBinCenter(bin_md);
-					double md_val = D_PDFs_get[i]->EvalPDF(&mdass, &param[Config::nvar_offset_md[i]]);
+					double md_val =
+						D_PDFs_get[i]->EvalPDF(&mdass, &param[Config::nvar_offset_md[i]]);
 					sum_contr += emax * bin_width_md * frac[i] * md_val;
 					// std::cout << sum_contr << "  sumcontr  " << frac[i] << "  " << md_val << "  "
 					// << mb_val << std::endl;
@@ -442,9 +443,9 @@ std::function<double(const double*)> wrap_chi2(
 				if (err != 0.0) {
 					vect_chi2[bin_md - 1] +=
 						0.5 * (sum_contr - cont) * (sum_contr - cont) / err / err;
-					//test_chi2 += 0.5 * (sum_contr - cont) * (sum_contr - cont) / err / err;
-					// std::cout << bin_md << "   " << cont << "  " << sum_contr
-					// << "  " << sum_contr/cont << std::endl;
+					// test_chi2 += 0.5 * (sum_contr - cont) * (sum_contr - cont) / err / err;
+					//  std::cout << bin_md << "   " << cont << "  " << sum_contr
+					//  << "  " << sum_contr/cont << std::endl;
 				}
 				// std::cout << test_chi2 << " chi2 \n";
 				//}
@@ -458,8 +459,7 @@ std::function<double(const double*)> wrap_chi2(
 				for (int i = 0; i < Config::ncontr; i++) {
 					double md_like;
 					md_like = D_PDFs_get[i]->EvalPDF(&mdass, &param[Config::nvar_offset_md[i]]);
-					if (md_like < 0.0 || md_like > 1.0 ||
-						frac[i] < 0.0 || frac[i] > 1.0) {
+					if (md_like < 0.0 || md_like > 1.0 || frac[i] < 0.0 || frac[i] > 1.0) {
 						chi2 += 1e15;
 						continue;
 					}

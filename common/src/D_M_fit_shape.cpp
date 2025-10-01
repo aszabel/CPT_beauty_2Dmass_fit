@@ -49,7 +49,7 @@ void DoubleSidedCrystalballPlusGaussPDF::CalcIntegral(const double *par, double 
 }
 
 double DoubleSidedCrystalballPlusExpPDF::EvalPDF(const double *xx, const double *par,
-												   const int component) {
+												 const int component) {
 	double f = abs(par[0]);
 	double par1[1];
 	double par2[6];
