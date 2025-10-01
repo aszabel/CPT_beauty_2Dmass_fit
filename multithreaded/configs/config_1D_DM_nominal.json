@@ -3,7 +3,7 @@
   "isMC": false,
   "massVariable": "D_M",
   "MC_directory_MD": "D_M_results_nominal",
-  "DMshapes": ["JSUplusDSCB", "DCBplusGaus", "JSUplusGaus", "JSUplusGaus", "Chebyshev", "JSUplusGaus"],
+  "DMshapes": ["JSUplusDSCB", "DCBplusGaus", "JSUplusExp", "JSUplusGaus", "Chebyshev", "JSUplusGaus"],
   "binned": true,
   "sign":"muplus",
   "chainName": "BlindedTree",
@@ -35,7 +35,7 @@
   "varname_md": [
     ["f12", "xi", "lambda", "gamma", "delta", "mean", "sigma", "alpha", "n", "alpha2", "n2"],
     ["f12", "mean", "sigma", "meanCB", "sigmaCB", "alpha", "n", "alpha_h", "n2"],
-    ["f12", "mean", "sigma", "xi", "lambda", "gamma", "delta"],
+    ["f12", "slope", "xi", "lambda", "gamma", "delta"],
     ["f12", "mean", "sigma", "xi", "lambda", "gamma", "delta"],
     [],
     ["f12", "mean", "sigma", "xi", "lambda", "gamma", "delta"]
@@ -53,7 +53,7 @@
   "init_values": [
     [0.5, 1870, 100, 4, 4, 1870, 10.0, 2.3, 1, 2.3, 1],
     [0.5, 1870.23, 10.0, 1870.23, 5.0,     1.75869, 1.0,  2.12662, 1.0],
-    [0.5, 1898.87, 1499.15, 1898.87, 14.9942, 1.79671,   1.09631 ],
+    [0.5, 0.001, 1898.87, 14.9942, 1.79671,   1.09631 ],
     [0.5, 1870.33, 7.31576, 1870.33, 3.82062, 0.0504217, 0.434271],
     [],
     [0.5, 1870.3,  7.40974, 1870.3,  2.0137,  0.196081,  0.190293]
@@ -64,7 +64,8 @@
     "BuDmunu_f12": [-1.0, 1.0],
     "BsDsMunu_f12":[-1.0, 1.0],
     "B02DpDsm_f12":[-1.0, 1.0],
-    "Bu2D0Dsm_f12":[-1.0, 1.0]
+    "Bu2D0Dsm_f12":[-1.0, 1.0],
+    "BsDsMunu_slope":[0.0001, 0.01]
   },
 
   "scanLimitsVect":{},

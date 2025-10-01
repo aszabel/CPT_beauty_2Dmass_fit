@@ -106,6 +106,12 @@ std::vector<std::shared_ptr<PDFInterface>> Config::getVectorPDFs(const std::stri
 				case 7:
 					vPDFs.push_back(std::make_shared<DoubleSidedCrystalBallPDF>());
 					break;
+				case 8:
+					vPDFs.push_back(std::make_shared<JohnsonPlusExpPDF>());
+					break;
+				case 9:
+					vPDFs.push_back(std::make_shared<DoubleSidedCrystalballPlusExpPDF>());
+					break;
 
 				default:
 					std::cerr << "Error while DM_pdf dynamic declaration. "
@@ -161,6 +167,15 @@ std::vector<std::shared_ptr<PDFInterface>> Config::getVectorPDFs(const std::stri
 				case 13:
 					vPDFs.push_back(std::make_shared<SkewNormalPlusCBPlusDoubleGaussPDF>());
 					break;
+				case 14:
+					vPDFs.push_back(std::make_shared<JohnsonPlusDoubleSidedCrystalBallPDF>());
+					break;
+				case 15:
+					vPDFs.push_back(std::make_shared<JohnsonPlusExpPDF>());
+					break;
+				case 16:
+					vPDFs.push_back(std::make_shared<DoubleSidedCrystalballPlusExpPDF>());
+					break;
 				default:
 					std::cerr << "Error while BM_pdf dynamic declaration. "
 								 "Check if shapes from config file refer to "
@@ -181,6 +196,8 @@ std::vector<std::shared_ptr<PDFInterface>> Config::getVectorPDFs(const std::stri
 void Config::read_MC(std::vector<std::vector<double>>& xx, std::vector<std::vector<double>>& dxx,
 					 std::string MC_directory, std::vector<int> nvar) {
 	// Read results of 1D fits that are stored as simple text files
+	// First two values (either both on the first line or on two separate lines)
+	// contain fit status and fit value (chi2/NLL)
 	// Each line corresponds to a single parameter
 	// First column defines parameter value
 	// Second column defines parameter uncertainty
@@ -217,6 +234,7 @@ int Config::load(const std::string& filename) {
 	std::ifstream config_file(filename);
 	json config = json::parse(config_file);
 	config_file.close();
+
 
 	if (config.contains("sign")) {
 		if (config["sign"].template get<std::string>() == std::string("muplus"))

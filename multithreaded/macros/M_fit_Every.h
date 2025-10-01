@@ -1,5 +1,18 @@
 #include "config.h"
 
+/**
+ * 
+ * Fit all 1D mass distributions for all contributions defined in a config file.
+ * 
+ * @param path_result output directory
+ * @param nvars vector with number of parameters for each contribution
+ * @param minM low edge of the mass window
+ * @param maxM high edge of the mass window
+ * @param fit_type "Bmass" or "Dmass"
+ * @param var_names vector of vectors containing parameter names for each contribution
+ * @param nbins number of bins to use for the binned fit variant
+ */
+
 using namespace cpt_b0_analysis;
 void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, const double& minM,
 				 const double& maxM, const TString& fit_type,
@@ -13,10 +26,15 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 	else
 		binning = "unbinned";
 
+	// Create output directory
 	gSystem->Exec(Form("mkdir -p %s %s_figures", path_results.Data(), path_results.Data()));
 	int fit_id = 0;
 
+	// Fit only for the contributions that are listed in the config "Fits" parameter
 	for (auto& choice : Config::int_choose_fits) {
+		// fit_id defines consecutive fit ID
+		// choice defines contribution ID
+
 		int nvar = nvars[choice];
 		std::cout << "##### Running fit: " << Config::Fits[fit_id] << endl;
 
@@ -33,9 +51,7 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 		// min->SetPrecision(0.00001);
 		const int ncontr = Config::ncontr;
 
-		// create funciton wrapper for minmizer
-		// a IMultiGenFunction type
-
+		// Load DATA
 		std::cout << "Load data: " << Config::input_files[fit_id] << std::endl;
 		TChain ch(Config::chainName.c_str());
 		ch.Add(Config::input_files[fit_id].c_str());
@@ -65,6 +81,8 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 		double B_MMcorr;
 		for (int i = 0; i < nentries; ++i) {
 			ch.GetEntry(i);
+
+			// Apply cuts
 			if (mu_PT < Config::muPTmin || mu_P < Config::muPmin || mu_eta < Config::eta_min ||
 				mu_eta > Config::eta_max)
 				continue;
@@ -72,6 +90,7 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 			if (B_MMcorr < Config::minBMcorr || B_MMcorr > Config::maxBMcorr) continue;
 			if (D_M < Config::minDM || D_M > Config::maxDM) continue;
 			if (int(charge) == Config::sign) {
+				// Select ROOT file branch to be used as the fit variable
 				switch (Config::int_mass_variable) {
 					case 0:	 // D_M
 						vect_mass.push_back(D_M);
@@ -101,8 +120,11 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 			}
 		}
 		double nevents = double(vect_mass.size());
+
+		// Load PDF instancess for all contributions
 		const auto& PDFs = Config::getVectorPDFs(fit_type.Data());
 
+		// Define fit variables
 		double step = 0.1;
 		for (int ivar = 0; ivar < nvar; ivar++) {
 			/*if (ivar== 2 || ivar == 3 || ivar == 5 || ivar == 7)
@@ -140,6 +162,8 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 			}
 		}
 
+		// Generate a vactor of value substitution rules for the variables
+		// Can be used for example to have two PDFs with a common mean
 		std::vector<std::pair<int, int>> replaceIndexVect = {};
 		for (const auto& rep_var : Config::replace_var) {
 			if (rep_var.first.rfind(Config::Fits[fit_id], 0) != 0) continue;
@@ -158,6 +182,7 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 			replaceIndexVect.push_back(std::make_pair(index_replaced, index_substitute));
 		}
 
+		// Define loglike function for the unbinned mode
 		int ndim = min->NFree();
 		auto fchi2 = [&PDFs, nvar, vect_mass, minM, maxM, choice,
 					  replaceIndexVect](const double* par) -> double {
@@ -170,6 +195,7 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 			}
 
 			double chi2 = 0.0;
+			// Precalculate PDF integrals for current parameter values
 			PDFs[choice]->CalcIntegral(param, minM, maxM);
 			for (auto bmass : vect_mass) {
 				double likelihood = PDFs[choice]->EvalPDF(&bmass, param);
@@ -180,6 +206,7 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 			}
 			return chi2;
 		};
+		// Define chi2 function for the binned mode
 		auto fchi2binned = [&PDFs, nvar, hist, nevents, nbins, minM, maxM, choice, ndim,
 							replaceIndexVect](const double* par) -> double {
 			double param[nvar];
@@ -191,6 +218,7 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 			}
 
 			double chi2 = 0;
+			// Precalculate PDF integrals for current parameter values
 			PDFs[choice]->CalcIntegral(param, minM, maxM);
 			double bin_width = (maxM - minM) / double(nbins);
 			for (int bin = 1; bin <= nbins; bin++) {
@@ -204,6 +232,8 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 			return chi2 / double(nbins - ndim);
 		};
 
+		// create funciton wrapper for minmizer
+		// a IMultiGenFunction type
 		ROOT::Math::Functor f_binned(fchi2binned, nvar);
 		ROOT::Math::Functor f(fchi2, nvar);
 		if (Config::binned)
@@ -258,6 +288,7 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 		}
 		cout << endl;
 
+		// Draw results
 		TCanvas* c = new TCanvas("c", "", 500, 500);
 		TPad* pad1 = new TPad("pad1", "", 0.0, 0.3, 1.0, 1.0);
 		pad1->SetLogy();
@@ -284,6 +315,7 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 		hist->Draw("ep");
 		tf1->DrawClone("same");
 
+		// Draw components of the fit
 		std::vector<int> colors = {4, 6, 7, 8, 9, 30, 40, 41, 38, 42, 46, 28, 39};
 		for (int i = 0; i < PDFs[choice]->getComponentCount(); i++) {
 			auto funcDrawComponent = [&PDFs, nvar, min, nevents, nbins, minM, maxM, choice, i,
@@ -307,6 +339,7 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 			tfc->DrawClone("same");
 		}
 
+		// Draw pull
 		hist->Sumw2();
 		TH1D histpull1D(*hist);
 		histpull1D.SetName("histpull1D");
@@ -328,6 +361,7 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 		c->SaveAs(Form("%s_figures/%s_%s_%d.pdf", path_results.Data(), fit_type.Data(),
 					   Config::contrName[choice].c_str(), Config::sign));
 
+		// Store results in a simple txt file
 		ofstream outfile(Form("%s/res_%s_%d.txt", path_results.Data(),
 							  Config::contrName[choice].c_str(), Config::sign));
 		outfile << min->Status() << endl;

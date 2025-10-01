@@ -9,6 +9,7 @@ void run_B_M_Every(string config_file, string install_path = "../..") {
 	gROOT->ProcessLine(Form(".L %s/common/src/M_B_2missPT_fit.cpp+", install_path.c_str()));
 	gROOT->ProcessLine(Form(".L %s/common/src/D_M_fit_shape.cpp+", install_path.c_str()));
 	gROOT->ProcessLine(Form(".L %s/common/src/BasicShapes.cpp+", install_path.c_str()));
+	gROOT->ProcessLine(Form(".L %s/common/src/ChebyshevPDF.cpp+", install_path.c_str()));
 	gROOT->ProcessLine(Form(".L %s/multithreaded/src/config.cpp+", install_path.c_str()));
 	gROOT->ProcessLine(Form(".x %s/multithreaded/macros/B_M_fit_Every.C(\"%s\")",
 							install_path.c_str(), config_file.c_str()));

@@ -21,7 +21,9 @@ const std::unordered_map<std::string, const int> dictionaryDM = {
 	{"DCBplusGaus", 0}, {"Chebyshev", 1}, {"JSUplusGaus", 2},
 	{"Exponent", 3},	{"JSUplusCB", 4}, {"JSUplusDSCB", 5},
 	{"Johnson", 6},
-	{"DoubleSidedCrystalBall", 7}
+	{"DoubleSidedCrystalBall", 7},
+	{"JSUplusExp", 8},
+	{"DCBplusExp", 9}
 };
 
 const std::unordered_map<std::string, const int> dictionaryBMcorr = {
@@ -39,6 +41,9 @@ const std::unordered_map<std::string, const int> dictionaryBMcorr = {
 	{"JSUplusGaus", 11},
 	{"JSUplusCBplusDGaus", 12},
 	{"SNplusCBplusDGaus", 13},
+	{"JSUplusDSCB", 14},
+	{"JSUplusExp", 15},
+	{"DCBplusExp", 16}
 };
 const std::unordered_map<std::string, const int> dictionaryChooseCategory = {
 	{"2D", 0},

@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "BasicShapes.h"
+#include "ChebyshevPDF.h"
 #include "pdf_interface.h"
 
 namespace cpt_b0_analysis {
@@ -24,6 +25,23 @@ private:
 	DoubleSidedCrystalBallPDF DSCB;
 };
 
+class DoubleSidedCrystalballPlusExpPDF : public PDFInterface {
+public:
+	DoubleSidedCrystalballPlusExpPDF() {};
+	DoubleSidedCrystalballPlusExpPDF(const DoubleSidedCrystalballPlusExpPDF &other) = default;
+	DoubleSidedCrystalballPlusExpPDF(DoubleSidedCrystalballPlusExpPDF &&) = default;
+	~DoubleSidedCrystalballPlusExpPDF() {};
+
+	void CalcIntegral(const double *par, double min, double max);
+	double getIntegral() { return 0.0; };
+	int getComponentCount() { return 2; };
+	double EvalPDF(const double *xx, const double *par, const int component = -1);
+
+private:
+	ExponentPDF Exp;
+	DoubleSidedCrystalBallPDF DSCB;
+};
+
 class JohnsonPlusGaussPDF : public PDFInterface {
 public:
 	JohnsonPlusGaussPDF() {};
@@ -38,6 +56,23 @@ public:
 
 private:
 	GaussPDF Gauss;
+	JohnsonPDF JSU;
+};
+
+class JohnsonPlusExpPDF : public PDFInterface {
+public:
+	JohnsonPlusExpPDF() {};
+	JohnsonPlusExpPDF(const JohnsonPlusExpPDF &other) = default;
+	JohnsonPlusExpPDF(JohnsonPlusExpPDF &&) = default;
+	~JohnsonPlusExpPDF() {};
+
+	void CalcIntegral(const double *par, double min, double max);
+	double getIntegral() { return 0.0; };
+	int getComponentCount() { return 2; };
+	double EvalPDF(const double *xx, const double *par, const int component = -1);
+
+private:
+	ExponentPDF Exp;
 	JohnsonPDF JSU;
 };
 

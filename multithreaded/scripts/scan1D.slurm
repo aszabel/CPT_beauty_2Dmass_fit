@@ -6,4 +6,5 @@ NRUNS="$2"
 
 source "../setup.sh"
 
+echo "${INSTALL_DIR}/multithreaded/scripts/scan1D.py" -c "$CONFIG" -n "$NRUNS"
 "${INSTALL_DIR}/multithreaded/scripts/scan1D.py" -c "$CONFIG" -n "$NRUNS"

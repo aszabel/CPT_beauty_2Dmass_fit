@@ -48,6 +48,42 @@ void DoubleSidedCrystalballPlusGaussPDF::CalcIntegral(const double *par, double 
 	DSCB.CalcIntegral(par2, min, max);
 }
 
+double DoubleSidedCrystalballPlusExpPDF::EvalPDF(const double *xx, const double *par,
+												   const int component) {
+	double f = abs(par[0]);
+	double par1[1];
+	double par2[6];
+	par1[0] = par[1];  // slope
+	par2[0] = par[2];  // mean CB
+	par2[1] = par[3];  // sigma CB
+	par2[2] = par[4];  // alpha
+	par2[3] = par[5];  // n
+	par2[4] = par[6];  // alpha2
+	par2[5] = par[7];  // n2
+
+	if (component == 0)
+		return (1 - f) * Exp.EvalPDF(xx, par1);
+	else if (component == 1)
+		return f * DSCB.EvalPDF(xx, par2);
+	else
+		return (1 - f) * Exp.EvalPDF(xx, par1) + f * DSCB.EvalPDF(xx, par2);
+}
+
+void DoubleSidedCrystalballPlusExpPDF::CalcIntegral(const double *par, double min, double max) {
+	double par1[1];
+	double par2[6];
+	par1[0] = par[1];  // slope
+	par2[0] = par[2];  // mean CB
+	par2[1] = par[3];  // sigma CB
+	par2[2] = par[4];  // alpha
+	par2[3] = par[5];  // n
+	par2[4] = par[6];  // alpha2
+	par2[5] = par[7];  // n2
+
+	Exp.CalcIntegral(par1, min, max);
+	DSCB.CalcIntegral(par2, min, max);
+}
+
 double JohnsonPlusGaussPDF::EvalPDF(const double *xx, const double *par, const int component) {
 	double f = abs(par[0]);
 	double par1[2];
@@ -78,6 +114,37 @@ void JohnsonPlusGaussPDF::CalcIntegral(const double *par, double min, double max
 	par2[3] = par[6];  // delta
 
 	Gauss.CalcIntegral(par1, min, max);
+	JSU.CalcIntegral(par2, min, max);
+}
+
+double JohnsonPlusExpPDF::EvalPDF(const double *xx, const double *par, const int component) {
+	double f = abs(par[0]);
+	double par1[1];
+	double par2[4];
+	par1[0] = par[1];  // slope
+	par2[0] = par[2];  // xi
+	par2[1] = par[3];  // lambda
+	par2[2] = par[4];  // gamma
+	par2[3] = par[5];  // delta
+
+	if (component == 0)
+		return (1 - f) * Exp.EvalPDF(xx, par1);
+	else if (component == 1)
+		return f * JSU.EvalPDF(xx, par2);
+	else
+		return (1 - f) * Exp.EvalPDF(xx, par1) + f * JSU.EvalPDF(xx, par2);
+}
+
+void JohnsonPlusExpPDF::CalcIntegral(const double *par, double min, double max) {
+	double par1[1];
+	double par2[4];
+	par1[0] = par[1];  // slope
+	par2[0] = par[2];  // xi
+	par2[1] = par[3];  // lambda
+	par2[2] = par[4];  // gamma
+	par2[3] = par[5];  // delta
+
+	Exp.CalcIntegral(par1, min, max);
 	JSU.CalcIntegral(par2, min, max);
 }
 

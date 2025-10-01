@@ -1,5 +1,9 @@
 #include "M_fit_Every.h"
 
+/*
+Fit all D_M contributions. Takes a config file path as a parameter.
+*/
+
 using namespace cpt_b0_analysis;
 void D_M_fit_Every(std::string config_file) {
 	// Load config
