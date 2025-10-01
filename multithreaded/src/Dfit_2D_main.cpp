@@ -39,24 +39,6 @@ std::mutex my_mutex;
 // bool avx = false;
 bool avx = true;
 
-/**
- * @brief Draw the results of a 2D fit
- *
- * @param res
- * @param nevents
- * @param name
- * @param sign
- */
-// At the moment this is not used
-// void Draw(const double *res, double nevents, TString name[], int sign);
-
-/**
- * @brief A 2D fitter for ..
- *
- * @param argc
- * @param argv
- * @return int
- */
 std::function<double(const double*)> wrap_chi2(
 	const std::vector<std::shared_ptr<PDFInterface>>& D_PDFs_get,
 	const std::vector<std::shared_ptr<PDFInterface>>& B_PDFs_get,
@@ -65,6 +47,13 @@ std::function<double(const double*)> wrap_chi2(
 	const std::vector<std::vector<double>>& dMC_MB,
 	const std::vector<std::pair<int, int>>& replaceIndexVect, int int_choose_fit, TH2D hist2D);
 
+/**
+ * @brief A 2D fitter for B and D mass distributions
+ *
+ * @param argc
+ * @param argv - takes a single argument - path to a config file
+ * @return int
+ */
 int main(int argc, char* argv[]) {
 	// The first, fundamental operation to be performed in order to make ROOT
 	// thread-aware.
@@ -73,6 +62,7 @@ int main(int argc, char* argv[]) {
 	// Increase printout precision
 	// std::cout<<std::setprecision(40);
 
+	// Load config
 	try {
 		if (argc != 2) {
 			std::cerr << "Usage: fit2D_mass config.json" << std::endl;
@@ -87,6 +77,7 @@ int main(int argc, char* argv[]) {
 		std::cerr << "Error: " << ex.what() << std::endl;
 		return 1;
 	}
+	// Limit number of events to read
 	int nentries = Config::nentries;
 
 	// Load data set
@@ -95,7 +86,7 @@ int main(int argc, char* argv[]) {
 	double D_M, mu_PT, mu_P, mu_eta, K_PT, B_M, missPT, Tau;
 	double B_MMcorr;
 	bool charge;
-	int frac_index = 100;
+	int frac_index = 100; // TODO_DOCS - what is this ??
 	const int nbins = 40;
 	TH2D hist2D("hist2D", "", nbins, Config::minDM, Config::maxDM, nbins, Config::minBMcorr,
 				Config::maxBMcorr);
@@ -128,6 +119,7 @@ int main(int argc, char* argv[]) {
 	std::cout << nentries << " number of entries read" << std::endl;
 	for (int i = 0; i < nentries; ++i) {
 		ch.GetEntry(i);
+		// Apply cuts
 		if (!Config::isMC) {
 			if (mu_PT < Config::muPTmin || mu_P < Config::muPmin || mu_eta < Config::eta_min ||
 				mu_eta > Config::eta_max)
@@ -144,6 +136,7 @@ int main(int argc, char* argv[]) {
 		vect_2D.push_back(std::make_pair(D_M, B_MMcorr));
 		hist2D.Fill(D_M, B_MMcorr);
 
+		// TODO_DOCS count number of entries for given contribution ????
 		if (Config::isMC) frac_indeces[frac_index]++;
 	}
 	std::cout << "++++++++++++++++++++++++++++++++++++++++++++\n";
@@ -153,6 +146,9 @@ int main(int argc, char* argv[]) {
 
 	// Define Minuit fit variables for M_D
 	const int n_all = Config::nvar_all_md + Config::nvar_all_mb;
+	// Get index of the sidebands contribution
+	const int sb_idx = std::distance(Config::contrName.begin(), std::find(
+		Config::contrName.begin(), Config::contrName.end(), "sidebands"));
 	bool previous_fit = false;
 	double starting_point[n_all];
 	std::string minName = "Minuit2";
@@ -160,6 +156,7 @@ int main(int argc, char* argv[]) {
 	int itry = 1;
 	bool goodfit = false;
 	int last_fit = -1;
+	// Repeat fits until a good one is achieved
 	while ((itry <= Config::ntries || !goodfit) && itry <= 100) {
 		bool start_scratch = true;
 		int loop_count = 0;
@@ -174,30 +171,25 @@ int main(int argc, char* argv[]) {
 			min->SetPrintLevel(Config::printLevel);
 			// min->SetStrategy(2);
 
+			// Define M_D PDF parameters
 			for (int i = 0; i < Config::ncontr; i++) {
 				for (int ivar = 0; ivar < Config::nvar_md[i]; ivar++) {
+					// Set initial values from 1D fit best value
+					// Set step size based on the 1D fit uncertainty
 					min->SetVariable(Config::nvar_offset_md[i] + ivar,
 									 (TString::Format("%s_%s", Config::contrName[i].c_str(),
 													  Config::varname_md[i][ivar].c_str()))
 										 .Data(),
 									 Config::MC_MD[i][ivar], Config::dMC_MD[i][ivar] + 1.0e-11);
+					// For BM nad frac fits fix all D_M PDF params
 					if (((int_choose_fit == dictionaryChooseFit.at("BM") ||
 						  int_choose_fit == dictionaryChooseFit.at("frac")) &&
 						 i != -1)) {
 						min->FixVariable(Config::nvar_offset_md[i] + ivar);
-					}  // else{
-					//	if (ivar>4)
-					//			min->FixVariable(i * Config::nvar_md + ivar);
-					//}
+					}
+					// Store initial values for "from scratch" fit
 					if (start_scratch)
 						starting_point[Config::nvar_offset_md[i] + ivar] = Config::MC_MD[i][ivar];
-
-					/*if (ivar==3)
-					{
-						min->SetVariableValue(i * Config::nvar_md + ivar, 0.0);
-						min->FixVariable(i * Config::nvar_md + ivar);
-						starting_point[i * Config::nvar_md + ivar] = 0.0;
-					}*/
 				}
 			}
 
@@ -205,23 +197,27 @@ int main(int argc, char* argv[]) {
 
 			for (int i = 0; i < Config::ncontr; i++) {
 				for (int ivar = 0; ivar < Config::nvar_mb[i]; ivar++) {
+					// Set initial values from 1D fit best value
+					// Set step size based on the 1D fit uncertainty
 					min->SetVariable(Config::nvar_all_md + Config::nvar_offset_mb[i] + ivar,
 									 (TString::Format("%s_%s", Config::contrName[i].c_str(),
 													  Config::varname_mb[i][ivar].c_str()))
 										 .Data(),
 									 Config::MC_MB[i][ivar], Config::dMC_MB[i][ivar] + 1.0e-11);
+					// For DM+BMfixed and frac fits fix all B_M PDF parameters
 					if (int_choose_fit == dictionaryChooseFit.at("DM+BMfixed") ||
 						int_choose_fit == dictionaryChooseFit.at("frac")) {
 						min->FixVariable(Config::nvar_all_md + Config::nvar_offset_mb[i] +
 										 ivar);
 					}
+					// Store initial values for "from scratch" fit
 					if (start_scratch)
 						starting_point[Config::nvar_all_md + Config::nvar_offset_mb[i] +
 									   ivar] = Config::MC_MB[i][ivar];
 				}
 			}
 
-			// Set Limits on variables
+			// Set Limits on variables from the config file
 			for (auto it = Config::varLimitsMap.begin(); it != Config::varLimitsMap.end(); ++it) {
 				int index_var = min->VariableIndex(it->first);
 				if (index_var == -1) {
@@ -233,17 +229,21 @@ int main(int argc, char* argv[]) {
 				min->SetVariableLimits(index_var, pairlims.first, pairlims.second);
 			}
 
+			// Load sideband fraction from fit results
+			double frac_sidebands = abs(Config::MC_MD[sb_idx][Config::nvar_md[sb_idx]]);
+			Config::fracInit[sb_idx] = frac_sidebands;
+			// Define contribution fractions
 			for (int i = 0; i < Config::ncontr; i++) {
+				// Load initial fractions from config
 				min->SetVariable(Config::nvar_all_md + Config::nvar_all_mb + i,
 								 (TString::Format("par_frac%d", i)).Data(), Config::fracInit[i],
 								 0.001);
-				min->FixVariable(Config::nvar_all_md + Config::nvar_all_mb + 1);
-				// min->SetVariableLimits((Config::nvar_md + Config::nvar_mb) * Config::ncontr + i,
-				// -1.0, 1.0);
 				if (start_scratch)
 					starting_point[Config::nvar_all_md + Config::nvar_all_mb + i] =
 						Config::fracInit[i];
 			}
+			// Fix the last fraction. It will be calculated on the fly from normalisation to 1.
+			min->FixVariable(Config::nvar_all_md + Config::nvar_all_mb + Config::ncontr - 1);
 
 			// Define the error setimation parameter in minuit for 1 sigma and ncontr -1 free
 			// parameters
@@ -254,6 +254,7 @@ int main(int argc, char* argv[]) {
 				Config::ncontr - 1));  // ncontr-1 free fraction parameters, other parameters have
 									   // gaussian contraints base on MC fits.
 
+			// Load D_M PDFs
 			const auto& D_PDFs = Config::getVectorPDFs("Dmass");
 			if (int(D_PDFs.size()) != Config::ncontr) {
 				std::cout << " NO D_PDFs \n";
@@ -268,6 +269,7 @@ int main(int argc, char* argv[]) {
 				}
 			}
 
+			// Load B_M PDFs
 			const auto& B_PDFs = Config::getVectorPDFs("Bmass");
 			if (int(B_PDFs.size()) != Config::ncontr) {
 				std::cout << " NO B_PDFs \n";
@@ -280,19 +282,23 @@ int main(int argc, char* argv[]) {
 					return 1;
 				}
 			}
-			// list of fixed variables form config
+
+			// Fix variables form config
 			for (const auto& fix : Config::fixVect) {
 				min->FixVariable(min->VariableIndex(fix));
 				// std::cout << fix << "  " << min->VariableIndex(fix) << std::endl;
 			}
+
+			// Set random seed
 			TRandom rand;
 			if (Config::randSeed > -1) rand.SetSeed(itry);
-			// staring point for stability checks
+
+			// Randomly smear staring point for stability checks
+			// Only for fit "all" with defined randSeed and not the first fit
 			double frac_st[Config::ncontr];
 			for (int ivar = 0;
 				 ivar < Config::nvar_all_md + Config::nvar_all_mb + Config::ncontr;
 				 ivar++) {
-				// for (int ivar=0; ivar<(nvar_md+nvar_mb)*ncontr+ncontr; ivar++){
 				double random = 0.0;
 				if (Config::randSeed > -1 && !min->IsFixedVariable(ivar) &&
 					int_choose_fit == dictionaryChooseFit.at("all") && itry != 1)
@@ -301,6 +307,12 @@ int main(int argc, char* argv[]) {
 				min->SetVariableValue(ivar, starting_point[ivar] * (1.0 + 0.01 * random));
 			}
 
+			// TODO_DOCS why this is hardcoded and only read from files for "frac" and "all" ???
+			// TODO why not use teh Config::MD_MC ???
+			// For other fits this is not set at all ???
+
+			// TODO this is not needed if we have supprort to per component PDFs
+			/* KK
 			double frac_sidebands = -0.270922;
 			if (int_choose_fit == dictionaryChooseFit.at("frac") ||
 				int_choose_fit == dictionaryChooseFit.at("all")) {
@@ -308,44 +320,43 @@ int main(int argc, char* argv[]) {
 				double a1 = -0.00102346;
 				double a2 = 1.32508e-07;
 				double dD = 0.0;
-				sideband_input >> dD >> dD;
+				sideband_input >> dD >> dD; // Fit status
 				sideband_input >> a1 >> dD;
 				sideband_input >> a2 >> dD;
 				sideband_input >> frac_sidebands >> dD;
 				std::cout << "========================================\n read data " << a1 << "  "
 						  << a2 << "  " << frac_sidebands << std::endl;
 				double a_pair[] = {a1, a2};
-				// TODO WHY WE USED `4 * nvar_md + ivar`  ??
 				for (int ivar = 0; ivar < Config::n_sideband; ivar++)
-					min->SetVariableValue(Config::nvar_offset_md[4] + ivar, a_pair[ivar]);
-				min->SetVariableValue(Config::nvar_all_md + Config::nvar_all_mb + 4,
+					min->SetVariableValue(Config::nvar_offset_md[sb_idx] + ivar, a_pair[ivar]);
+				min->SetVariableValue(Config::nvar_all_md + Config::nvar_all_mb + sb_idx,
 									  frac_sidebands);
 			}
-			double sumc = abs(frac_sidebands);
+			*/
+
+			double sumc = frac_sidebands;
+			// TODO rewrite add randomFix config param
 			for (int icontr = 0; icontr < Config::ncontr; icontr++) {
 				frac_st[icontr] =
 					starting_point[Config::nvar_all_md + Config::nvar_all_mb + icontr];
+
+				if (icontr == sb_idx) continue;
 
 				if (Config::randSeed > -1 &&
 					!min->IsFixedVariable(Config::nvar_all_md + Config::nvar_all_mb +
 										  icontr) &&
 					start_scratch && !Config::start_from_previous && itry != 1) {
+				
+					if (icontr == Config::ncontr - 1) {
+						frac_st[icontr] = 1 - sumc;
+						continue;
+					}
 					double random = rand.Uniform(0.0, 1.0 - sumc);
 					frac_st[icontr] = random;
-					if (icontr < 4) sumc += abs(frac_st[icontr]);
+
+					sumc += abs(frac_st[icontr]);
 				}
 			}
-			if (Config::randSeed > -1 &&
-				!min->IsFixedVariable(Config::nvar_all_md + Config::nvar_all_mb + 5) &&
-				int_choose_fit == dictionaryChooseFit.at("frac")) {
-				frac_st[4] = abs(frac_sidebands);
-				frac_st[5] = 1.0 - sumc;
-			}
-			// frac_st[0] = 0.5;
-			// frac_st[1] = 0.06;
-			// frac_st[2] = 0.027;
-			// frac_st[3] = 0.06;
-			// frac_st[4] = 0.24;
 
 			double
 				result0[Config::nvar_all_md + Config::nvar_all_mb + 2 * Config::ncontr];
@@ -374,6 +385,7 @@ int main(int argc, char* argv[]) {
 			for (int icontr = 0; icontr < Config::ncontr; icontr++)
 				std::cout << frac_st[icontr] << "  <===frac" << icontr << std::endl;
 
+			// Fix small contributions
 			double sum_contr = 0.0;
 			for (int ic = 0; ic < Config::ncontr; ic++) {
 				sum_contr += abs(frac_st[ic]);
@@ -389,15 +401,18 @@ int main(int argc, char* argv[]) {
 				}
 			}
 
+			// Make sure that fractions are normalized ...
 			for (int ic = 0; ic < Config::ncontr; ic++) {
 				min->SetVariableValue(Config::nvar_all_md + Config::nvar_all_mb + ic,
 									  frac_st[ic] / sum_contr);
+				// Fix fractions for shape fits
 				if (int_choose_fit == dictionaryChooseFit.at("shapes") ||
 					int_choose_fit == dictionaryChooseFit.at("DM+BMfixed") ||
 					int_choose_fit == dictionaryChooseFit.at("BM"))
 					min->FixVariable(Config::nvar_all_md + Config::nvar_all_mb + ic);
 			}
 
+			// Generate variable substitution rules
 			std::vector<std::pair<int, int>> replaceIndexVect = {};
 			for (const auto& rep_var : Config::replace_var) {
 				int index_replaced = min->VariableIndex(rep_var.first);
@@ -425,6 +440,7 @@ int main(int argc, char* argv[]) {
 			min->SetFunction(f);
 			min->Minimize();
 
+			// TODO get output path from config
 			// Print the fit results
 			TString path, path1;
 			if (Config::binned) {
@@ -451,22 +467,22 @@ int main(int argc, char* argv[]) {
 				previous_fit = true;
 				start_scratch = false;
 			}
-			for (int i = 0; i < n_all; i++) {
-				if (i != Config::nvar_all_md + Config::nvar_all_mb + 1) {
+			for (int i = 0; i < n_all-1; i++) {
+				// TODO should we write status and chi2 to be consistent with 1D
 					results << min->X()[i] << "  " << min->Errors()[i] << std::endl;
 					if (previous_fit) starting_point[i] = min->X()[i];
-				} else {  // case of frac1 which is fixed
-					double sumfrac = 0.0;
-					for (int j = 0; j < Config::ncontr; j++) {
-						if (j == 1) continue;
-						sumfrac +=
-							abs(min->X()[Config::nvar_all_md + Config::nvar_all_mb + j]);
-					}
-					double frac1 = 1.0 - sumfrac;
-					results << frac1 << "  " << 0.0 << std::endl;
-					if (previous_fit) starting_point[i] = frac1;
-				}
 			}
+			const double* pa = &min->X()[Config::nvar_all_md + Config::nvar_all_mb];
+			double frac_res[Config::ncontr];
+			double sumfrac = 0.0;
+			for (int i = 0; i < Config::ncontr-1; i++) {
+				frac_res[i] = abs(pa[i]);
+				sumfrac += frac_res[i];
+			}
+			double frac_last = 1.0 - sumfrac;
+			frac_res[Config::ncontr - 1] = frac_last;
+			results << frac_last << "  " << 0.0 << std::endl;
+			if (previous_fit) starting_point[Config::nvar_all_md + Config::nvar_all_mb + Config::ncontr - 1] = frac_last;
 
 			std::string fileWeightsName = "Tree_sWeights";
 			std::string TreeName = "Tree_sWeights";
@@ -478,19 +494,6 @@ int main(int argc, char* argv[]) {
 						<< std::endl;
 
 			results.close();
-			const double* pa = &min->X()[Config::nvar_all_md + Config::nvar_all_mb];
-			// Calculate fractions
-			// Q: Why do we recalculate fractions? What does the minuti minimize - what is stored in
-			// `pa` ??? The parameters pa[] define the fractions, we have 6 fractions but 5
-			// independent parameters. The parametrisation is arbitrary
-			double frac_res[Config::ncontr];
-			double sumfrac = 0.0;
-			for (int i = 0; i < Config::ncontr; i++) {
-				if (i == 1) continue;
-				frac_res[i] = abs(pa[i]);
-				sumfrac += frac_res[i];
-			}
-			frac_res[1] = 1.0 - sumfrac;
 
 			if (min) {
 				delete min;
@@ -564,20 +567,18 @@ std::function<double(const double*)> wrap_chi2(
 		// Get the pointer in parameters array that correspond to fraction defining parameters????
 		const double* pa = &par[Config::nvar_all_md + Config::nvar_all_mb];
 		// Calculate fractions
-		// Q: Why do we recalculate fractions? What does the minuti minimize - what is stored in
-		// `pa` ??? The parameters pa[] define the fractions, we have 6 fractions but 5 independent
+		// The parameters pa[] define the fractions, we have 6 fractions but 5 independent
 		// parameters. The parametrisation is arbitrary
 		double frac[Config::ncontr];
 
 		double chi2 = 0.0;
 		double sum_frac = 0.0;
-		for (int i = 0; i < Config::ncontr; i++) {
-			if (i == 1) continue;
+		for (int i = 0; i < Config::ncontr-1; i++) {
 			frac[i] = abs(pa[i]);
 			sum_frac += frac[i];
 		}
-		frac[1] = abs(1.0 - sum_frac);
-		sum_frac += frac[1];
+		frac[Config::ncontr-1] = abs(1.0 - sum_frac);
+		sum_frac += frac[Config::ncontr-1];
 		double tmp = 1.0e10 * (sum_frac - 1.0) * (sum_frac - 1.0);
 		if (!Config::binned) tmp *= emax;
 		chi2 += tmp;
