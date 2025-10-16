@@ -235,6 +235,17 @@ int Config::load(const std::string& filename) {
 	json config = json::parse(config_file);
 	config_file.close();
 
+	if (config.contains("ncontr")) {
+		ncontr = config["ncontr"];
+		if (printLevel < 0) {
+			std::cerr << "Invalid config file: 'ncontr' must be a positive integer" << std::endl;
+			return 1;
+		}
+	} else {
+		std::cerr << "Invalid config file: missing 'ncontr' key." << std::endl;
+		return 1;
+	}
+
 	if (config.contains("sign")) {
 		if (config["sign"].template get<std::string>() == std::string("muplus"))
 			sign = 1;

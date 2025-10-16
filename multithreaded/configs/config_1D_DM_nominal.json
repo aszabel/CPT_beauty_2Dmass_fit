@@ -68,7 +68,52 @@
     "BsDsMunu_slope":[0.0001, 0.01]
   },
 
-  "scanLimitsVect":{},
+  "scanLimitsVect":{
+    "signal_sigma":  [1,    50  ],
+    "signal_mean":   [1800, 1940],
+    "signal_alpha":  [0.1,  5.0 ],
+    "signal_n":      [1,    1   ],
+    "signal_alpha2": [0.1,  5.0 ],
+    "signal_n2":     [1,    1   ],
+    "signal_xi":     [1800, 1940],
+    "signal_delta":  [0,    5   ],
+    "signal_gamma":  [-4,   4   ],
+    "signal_lambda": [1,    50  ],
+    "signal_f12":    [-1.0, 1.0 ],
+
+    "BuDmunu_sigma":   [1,    50  ],
+    "BuDmunu_mean":    [1800, 1940],
+    "BuDmunu_alpha":   [0.1,  5.0 ],
+    "BuDmunu_n":       [1,    1   ],
+    "BuDmunu_alpha_h": [0.1,  5.0 ],
+    "BuDmunu_n2":      [1,    1   ],
+    "BuDmunu_sigmaCB": [1,    50  ],
+    "BuDmunu_meanCB":  [1870, 1870],
+    "BuDmunu_f12":     [-1.0, 1.0 ],
+
+    "BsDsMunu_slope":  [0.0001, 0.01   ],
+    "BsDsMunu_xi":     [1800, 1940],
+    "BsDsMunu_lambda": [1,    50  ],
+    "BsDsMunu_gamma":  [-4,   4   ],
+    "BsDsMunu_delta":  [0,    5   ],
+    "BsDsMunu_f12":    [-1.0, 1.0 ],
+
+    "B02DpDsm_sigma":  [1,    50  ],
+    "B02DpDsm_mean":   [1800, 1940],
+    "B02DpDsm_xi":     [1800, 1940],
+    "B02DpDsm_lambda": [1,    50  ],
+    "B02DpDsm_gamma":  [-4,   4   ],
+    "B02DpDsm_delta":  [0,    5   ],
+    "B02DpDsm_f12":    [-1.0, 1.0 ],
+
+    "Bu2D0Dsm_sigma":  [1,    50  ],
+    "Bu2D0Dsm_mean":   [1800, 1940],
+    "Bu2D0Dsm_xi":     [1800, 1940],
+    "Bu2D0Dsm_lambda": [1,    50  ],
+    "Bu2D0Dsm_gamma":  [-4,   4   ],
+    "Bu2D0Dsm_delta":  [0,    5   ],
+    "Bu2D0Dsm_f12":    [-1.0, 1.0 ]
+  },
 
   "__KEYS_BELOW_ARE_NOT_USED__": "",
 

@@ -364,8 +364,7 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 		// Store results in a simple txt file
 		ofstream outfile(Form("%s/res_%s_%d.txt", path_results.Data(),
 							  Config::contrName[choice].c_str(), Config::sign));
-		outfile << min->Status() << endl;
-		outfile << min->MinValue() << endl;
+		outfile << min->Status() << "  " << min->MinValue() << std::endl;
 		for (int i = 0; i < nvar; i++) {
 			outfile << min->X()[i] << "  " << min->Errors()[i] << endl;
 		}

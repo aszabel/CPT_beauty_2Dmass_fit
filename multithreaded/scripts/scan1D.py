@@ -42,7 +42,7 @@ elif config["category"] == "1D_DM":
 else:
     raise(Exception("Unknown fit category: " + config["category"]))
 
-scan_path = (Path("scans") / ("scan_" + config_path.stem + "_binned" if config["binned"] else "_unbinned")).absolute()
+scan_path = (Path("scans") / ("scan_" + config_path.stem + ("_binned" if config["binned"] else "_unbinned"))).absolute()
 scan_path.mkdir(parents=True, exist_ok=True)
 
 if args.input:
@@ -86,29 +86,29 @@ for n in range(N):
     with open("err.log", "wb") as f:
         f.write(errs)
 
-    result_path = Path("results") / (config[directory] + "_binned" if config["binned"] else "_unbinned")
+    result_path = Path("results") / (config[directory] + ("_binned" if config["binned"] else "_unbinned"))
     if not result_path.exists():
         print("Missing results directory - FIT FAILED")
         continue
     for fname in result_path.iterdir():
         with fname.open() as f:
             data = f.readlines()
-            print(f"{fname.stem} : Status={data[0].strip()}, Chi2={data[1].strip()}")
+            print(f"{fname.stem} : Status={data[0].strip().split()[0]}, Chi2={data[0].strip().split()[1]}")
 
 results = {}
 for run in scan_path.iterdir():
     if run.name == "results":
         continue
-    result_path = run / "results" / (config[directory] + "_binned" if config["binned"] else "_unbinned")
+    result_path = run / "results" / (config[directory] + ("_binned" if config["binned"] else "_unbinned"))
     if not result_path.exists():
         continue
     for fname in result_path.iterdir():
         with fname.open() as f:
             data = f.readlines()
-            status = int(data[0].strip())
+            status = int(data[0].strip().split()[0])
             if status <= 1:
                 if fname.stem in results:
-                    v = float(data[1].strip())
+                    v = float(data[0].strip().split()[1])
                     if v < results[fname.stem]["best_value"]:
                         results[fname.stem]["best_run"] = run.stem
                         results[fname.stem]["best_value"] = v
@@ -118,9 +118,9 @@ for run in scan_path.iterdir():
                 else:
                     results[fname.stem] = {
                         "best_run": run.stem,
-                        "best_value": float(data[1].strip()),
+                        "best_value": float(data[0].strip().split()[1]),
                         "good_run": run.stem,
-                        "good_value": float(data[1].strip())
+                        "good_value": float(data[0].strip().split()[1])
                     }
 
 output_path = scan_path / "results"
@@ -130,7 +130,7 @@ for fit, data in results.items():
     best_fit_path = output_path / fit / "best"
     best_fit_path.mkdir(parents=True, exist_ok=True)
     best_run_path = scan_path / data["best_run"]
-    best_result_path = best_run_path / "results" / (config[directory] + "_binned" if config["binned"] else "_unbinned")
+    best_result_path = best_run_path / "results" / (config[directory] + ("_binned" if config["binned"] else "_unbinned"))
     best_figures_path = best_run_path / "results" / (config[directory] + ("_binned" if config["binned"] else "_unbinned") + "_figures")
     for f in best_run_path.iterdir():
         if not f.is_dir():
@@ -141,7 +141,7 @@ for fit, data in results.items():
     good_fit_path = output_path / fit / "good"
     good_fit_path.mkdir(parents=True, exist_ok=True)
     good_run_path = scan_path / data["good_run"]
-    good_result_path = good_run_path / "results" / (config[directory] + "_binned" if config["binned"] else "_unbinned")
+    good_result_path = good_run_path / "results" / (config[directory] + ("_binned" if config["binned"] else "_unbinned"))
     good_figures_path = good_run_path / "results" / (config[directory] + ("_binned" if config["binned"] else "_unbinned") + "_figures")
     for f in good_run_path.iterdir():
         if not f.is_dir():

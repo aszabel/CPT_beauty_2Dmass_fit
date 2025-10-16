@@ -1,5 +1,5 @@
 {
-  "category": "2D",
+  "category": "1D_DM",
   "start_from_previous": false, 
   "isMC": false,	
   "massVariable": "B_Mcorr",
@@ -16,11 +16,11 @@
   "chainNameMC": "toyMCtime",
   "chainNameBS": "BStree",
 
-  "Fits": ["BM"],
+  "Fits": ["sidebands"],
   "tolerance": [1.0e-3], 
   "tol": [0.1],
   
-  "MC_directory_MD": "scans/scan_config_1D_DM_nominal_binned",
+  "MC_directory_MD": "DM_results_sidebands",
 
   "nentries": -1,
   "ntries": 1,
@@ -37,39 +37,33 @@
   	"_GLOBAL": "Here glonal bariables are set",
    "DM_range": [1800, 1940],
    "BMcorr_range": [3000, 8000],
-   "ncontr": 6,
+   "ncontr": 1,
    "n_sideband": 2,
 
-   "contrName": ["signal", "BsDsMunu", "B02DpDsm", "sidebands", "Bu2D0Dsm", "BuDmunu"],
+   "contrName": ["sidebands"],
    "varname_md": [
-    ["f12", "xi", "lambda", "gamma", "delta", "mean", "sigma", "alpha", "n", "alpha2", "n2"],
-    ["f12", "slope", "xi", "lambda", "gamma", "delta"],
-    ["f12", "mean", "sigma", "xi", "lambda", "gamma", "delta"],
-    ["a1", "a2"],
-    ["f12", "mean", "sigma", "xi", "lambda", "gamma", "delta"],
-    ["f12", "mean", "sigma", "meanCB", "sigmaCB", "alpha", "n", "alpha_h", "n2"]
+    ["a1", "a2"]
    ], 
    "varname_mb": [[]], 
-   "DMshapes": ["JSUplusDSCB", "JSUplusExp", "JSUplusGaus", "Chebyshev", "JSUplusGaus", "DCBplusGaus"],
-   "BMshapes": ["RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus", "RCplusGaus"],
+   "DMshapes": ["Chebyshev"],
+   "BMshapes": ["Gauss"],
 
    "fixVect" : [],
 
-   "replace_var": {
-			"BuDmunu_mean": "signal_mean", 
-			"B02DpDsm_mean": "signal_mean", 
-			"Bu2D0Dsm_mean": "signal_mean"
-		},
+   "replace_var": {},
 
-   "varLimitsVect":{
-      "signal_f12":   [-1.0, 1.0],
-      "Bu2D0Dsm_f12": [-1.0, 1.0],
-			"BuDmunu_f12":  [-1.0, 1.0], 
-			"BsDsMunu_f12": [-1.0, 1.0], 
-			"B02DpDsm_f12": [-1.0, 1.0] 
-		},
+   "varLimitsVect":{},
+   
+   "init_values": [
+    [-0.001, 0.0000001]
+   ],
 
-   "fracInit": [0.0, 0.0, 0.0, 0.3, 0.0, 0.0],
+    "scanLimitsVect":{
+      "sidebands_a1":   [-10, 10 ],
+      "sidebands_a2":   [-10, 10 ]
+    },
+
+   "fracInit": [0.3],
 
    "MC_directory_MB": ""
 }

@@ -87,7 +87,8 @@ int main(int argc, char* argv[]) {
 	double B_MMcorr;
 	bool charge;
 	int frac_index = 100;  // TODO_DOCS - what is this ??
-	const int nbins = 40;
+	const int nbins = 100;
+	// TODO_KK 2x1D version
 	TH2D hist2D("hist2D", "", nbins, Config::minDM, Config::maxDM, nbins, Config::minBMcorr,
 				Config::maxBMcorr);
 
@@ -145,17 +146,20 @@ int main(int argc, char* argv[]) {
 	// Initial fit parameter values taken from 1D fits to MC and Side Bands
 
 	// Define Minuit fit variables for M_D
-	const int n_all = Config::nvar_all_md + Config::nvar_all_mb;
+	const int n_all = Config::nvar_all_md + Config::nvar_all_mb + Config::ncontr;
 	// Get index of the sidebands contribution
 	const int sb_idx =
 		std::distance(Config::contrName.begin(),
 					  std::find(Config::contrName.begin(), Config::contrName.end(), "sidebands"));
+	// Indicates that the previous try was a good fit
 	bool previous_fit = false;
 	double starting_point[n_all];
 	std::string minName = "Minuit2";
 	std::string algoName = "";
 	int itry = 1;
+	// Indicates that at least one fit converged
 	bool goodfit = false;
+	// Currently selected fit ID from "Fits" config attibute
 	int last_fit = -1;
 	// Repeat fits until a good one is achieved
 	while ((itry <= Config::ntries || !goodfit) && itry <= 100) {
@@ -178,11 +182,11 @@ int main(int argc, char* argv[]) {
 					// Set initial values from 1D fit best value
 					// Set step size based on the 1D fit uncertainty
 					min->SetVariable(Config::nvar_offset_md[i] + ivar,
-									 (TString::Format("%s_%s", Config::contrName[i].c_str(),
+									 (TString::Format("md_%s_%s", Config::contrName[i].c_str(),
 													  Config::varname_md[i][ivar].c_str()))
 										 .Data(),
 									 Config::MC_MD[i][ivar], Config::dMC_MD[i][ivar] + 1.0e-11);
-					// For BM nad frac fits fix all D_M PDF params
+					// For BM and frac fits fix all D_M PDF params
 					if (((int_choose_fit == dictionaryChooseFit.at("BM") ||
 						  int_choose_fit == dictionaryChooseFit.at("frac")) &&
 						 i != -1)) {
@@ -201,7 +205,7 @@ int main(int argc, char* argv[]) {
 					// Set initial values from 1D fit best value
 					// Set step size based on the 1D fit uncertainty
 					min->SetVariable(Config::nvar_all_md + Config::nvar_offset_mb[i] + ivar,
-									 (TString::Format("%s_%s", Config::contrName[i].c_str(),
+									 (TString::Format("mb_%s_%s", Config::contrName[i].c_str(),
 													  Config::varname_mb[i][ivar].c_str()))
 										 .Data(),
 									 Config::MC_MB[i][ivar], Config::dMC_MB[i][ivar] + 1.0e-11);
@@ -247,12 +251,15 @@ int main(int argc, char* argv[]) {
 
 			// Define the error setimation parameter in minuit for 1 sigma and ncontr -1 free
 			// parameters
+			// TODO_KK - make it configurable via config
 			double CL_normal =
 				ROOT::Math::normal_cdf(1) - ROOT::Math::normal_cdf(-1);	 // 1 sigma ~68%
 			min->SetErrorDef(TMath::ChisquareQuantile(
 				CL_normal,
 				Config::ncontr - 1));  // ncontr-1 free fraction parameters, other parameters have
 									   // gaussian contraints base on MC fits.
+			
+						
 
 			// Load D_M PDFs
 			const auto& D_PDFs = Config::getVectorPDFs("Dmass");
@@ -359,6 +366,7 @@ int main(int argc, char* argv[]) {
 			if (Config::start_from_previous) {
 				double x, dx;
 				std::ifstream res0(Config::previous_result_file.c_str());
+				// Read fit status and chi2/NLL value
 				res0 >> x >> dx;
 				int count = 0;
 				while (res0 >> x >> dx) {
@@ -444,8 +452,8 @@ int main(int argc, char* argv[]) {
 				path1 = "results_unbinned100kMU_2";
 				path = TString::Format("results_unbinned100kMU_2/fit2D_%d", itry);
 			}
-			gSystem->Exec(TString::Format("mkdir %s", path1.Data()).Data());
-			gSystem->Exec(TString::Format("mkdir %s", path.Data()).Data());
+			gSystem->Exec(TString::Format("mkdir -p %s", path1.Data()).Data());
+			gSystem->Exec(TString::Format("mkdir -p %s", path.Data()).Data());
 			std::ofstream results(
 				TString::Format("%s/results_%d_%d.txt", path.Data(), Config::sign, int_choose_fit));
 			std::cout << std::setprecision(25);
@@ -462,7 +470,6 @@ int main(int argc, char* argv[]) {
 				start_scratch = false;
 			}
 			for (int i = 0; i < n_all - 1; i++) {
-				// TODO should we write status and chi2 to be consistent with 1D
 				results << min->X()[i] << "  " << min->Errors()[i] << std::endl;
 				if (previous_fit) starting_point[i] = min->X()[i];
 			}
@@ -482,9 +489,11 @@ int main(int argc, char* argv[]) {
 
 			std::string fileWeightsName = "Tree_sWeights";
 			std::string TreeName = "Tree_sWeights";
-			sWeights sW(Config::input_files[0].c_str(), fileWeightsName.c_str(), TreeName.c_str());
-			sW.get_sWeigths(min->X(), Config::sign == 1);
+			// TODO_KK fix sWeights
+			//sWeights sW(Config::input_files[0].c_str(), fileWeightsName.c_str(), TreeName.c_str());
+			//sW.get_sWeigths(min->X(), Config::sign == 1);
 
+			// TODO_DOCS What is this ?? Why are we storing this value (effectively read from flags from ROOT) and not the fit results? 
 			for (int i = 0; i < Config::ncontr; i++)
 				results << double(frac_indeces[i]) / double(vect_2D.size()) << "  " << 0.0
 						<< std::endl;

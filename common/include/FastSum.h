@@ -1,6 +1,7 @@
 #include <bitset>
 #include <cstddef>
 #include <cstdint>
+#include <iostream>
 #if defined(_MSC_VER)
 #include <intrin.h>
 #elif defined(__GNUC__)
