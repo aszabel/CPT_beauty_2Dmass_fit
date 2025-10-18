@@ -38,7 +38,8 @@ const std::unordered_map<std::string, const int> dictionaryBMcorr = {{"RCplusGau
 																	 {"SNplusCBplusDGaus", 13},
 																	 {"JSUplusDSCB", 14},
 																	 {"JSUplusExp", 15},
-																	 {"DCBplusExp", 16}};
+																	 {"DCBplusExp", 16},
+																	 {"Sidebands", 17}};
 const std::unordered_map<std::string, const int> dictionaryChooseCategory = {
 	{"2D", 0},
 	{"1D_DM", 1},

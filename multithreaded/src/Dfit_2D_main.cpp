@@ -47,6 +47,14 @@ std::function<double(const double*)> wrap_chi2(
 	const std::vector<std::vector<double>>& dMC_MB,
 	const std::vector<std::pair<int, int>>& replaceIndexVect, int int_choose_fit, TH2D hist2D);
 
+std::function<double(const double*)> wrap_chi2_simultanous(
+	const std::vector<std::shared_ptr<PDFInterface>>& D_PDFs_get,
+	const std::vector<std::shared_ptr<PDFInterface>>& B_PDFs_get,
+	std::vector<std::pair<double, double>> vect_2D, const std::vector<std::vector<double>>& MC_MD,
+	const std::vector<std::vector<double>>& dMC_MD, const std::vector<std::vector<double>>& MC_MB,
+	const std::vector<std::vector<double>>& dMC_MB,
+	const std::vector<std::pair<int, int>>& replaceIndexVect, int int_choose_fit, TH1D hist_MD, TH1D hist_MB);
+
 /**
  * @brief A 2D fitter for B and D mass distributions
  *
@@ -91,6 +99,8 @@ int main(int argc, char* argv[]) {
 	// TODO_KK 2x1D version
 	TH2D hist2D("hist2D", "", nbins, Config::minDM, Config::maxDM, nbins, Config::minBMcorr,
 				Config::maxBMcorr);
+	TH1D hist_MD("hist_MD", "", nbins, Config::minDM, Config::maxDM);
+	TH1D hist_MB("hist_MB", "", nbins, Config::minBMcorr, Config::maxBMcorr);
 
 	std::vector<std::pair<double, double>> vect_2D = {};
 	if (!Config::isMC) {
@@ -136,6 +146,8 @@ int main(int argc, char* argv[]) {
 
 		vect_2D.push_back(std::make_pair(D_M, B_MMcorr));
 		hist2D.Fill(D_M, B_MMcorr);
+		hist_MD.Fill(D_M);
+		hist_MB.Fill(B_MMcorr);
 
 		// TODO_DOCS count number of entries for given contribution ????
 		if (Config::isMC) frac_indeces[frac_index]++;
@@ -434,9 +446,17 @@ int main(int argc, char* argv[]) {
 
 			// Start the minimization
 			// Define a fit function for Minuit
-			auto fchi2 =
-				wrap_chi2(D_PDFs, B_PDFs, vect_2D, Config::MC_MD, Config::dMC_MD, Config::MC_MB,
-						  Config::dMC_MB, replaceIndexVect, int_choose_fit, hist2D);
+			bool simulatnous = true;
+			std::function<double(const double*)> fchi2;
+			if (simulatnous) {
+				fchi2 =
+					wrap_chi2_simultanous(D_PDFs, B_PDFs, vect_2D, Config::MC_MD, Config::dMC_MD, Config::MC_MB,
+							Config::dMC_MB, replaceIndexVect, int_choose_fit, hist_MD, hist_MB);
+			} else {
+				fchi2 =
+					wrap_chi2(D_PDFs, B_PDFs, vect_2D, Config::MC_MD, Config::dMC_MD, Config::MC_MB,
+							  Config::dMC_MB, replaceIndexVect, int_choose_fit, hist2D);
+			}
 			ROOT::Math::Functor f(fchi2, n_all);
 			// ROOT::Math::Functor f(fchi2, (nvar_md + nvar_mb) * ncontr + ncontr);
 			min->SetFunction(f);
@@ -742,6 +762,230 @@ std::function<double(const double*)> wrap_chi2(
 		// std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 		// std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds>
 		// (end - begin).count() << "[ns]" << std::endl;
+		if (!Config::binned) chi2 += log(double(emax));	 // Extended ML
+
+		return chi2;
+	};
+	return fchi2;
+}
+
+std::function<double(const double*)> wrap_chi2_simultanous(
+	const std::vector<std::shared_ptr<PDFInterface>>& D_PDFs_get,
+	const std::vector<std::shared_ptr<PDFInterface>>& B_PDFs_get,
+	std::vector<std::pair<double, double>> vect_2D, const std::vector<std::vector<double>>& MC_MD,
+	const std::vector<std::vector<double>>& dMC_MD, const std::vector<std::vector<double>>& MC_MB,
+	const std::vector<std::vector<double>>& dMC_MB,
+	const std::vector<std::pair<int, int>>& replaceIndexVect, int int_choose_fit, TH1D hist_MD, TH1D hist_MB) {
+	long int emax = vect_2D.size();
+	std::cout << emax << " yield of the sample \n";
+	auto fchi2 = [D_PDFs_get, B_PDFs_get, vect_2D, MC_MD, dMC_MD, MC_MB, dMC_MB, emax,
+				  replaceIndexVect, int_choose_fit, hist_MD, hist_MB](const double* par) -> double {
+		// Caclulate chi2
+		// Get the pointer in parameters array that correspond to fraction defining parameters????
+		const double* pa = &par[Config::nvar_all_md + Config::nvar_all_mb];
+		// Calculate fractions
+		// The parameters pa[] define the fractions, we have 6 fractions but 5 independent
+		// parameters. The parametrisation is arbitrary
+		double frac[Config::ncontr];
+
+		double chi2 = 0.0;
+		double sum_frac = 0.0;
+		for (int i = 0; i < Config::ncontr - 1; i++) {
+			frac[i] = abs(pa[i]);
+			sum_frac += frac[i];
+		}
+		frac[Config::ncontr - 1] = abs(1.0 - sum_frac);
+		sum_frac += frac[Config::ncontr - 1];
+		double tmp = 1.0e10 * (sum_frac - 1.0) * (sum_frac - 1.0);
+		if (!Config::binned) tmp *= emax;
+		chi2 += tmp;
+
+		// Extract the parameters and add some constraints
+		double param[Config::nvar_all_md + Config::nvar_all_mb];
+		for (int ivar = 0; ivar < (Config::nvar_all_md + Config::nvar_all_mb); ivar++) {
+			param[ivar] = par[ivar];
+		}
+		for (const auto& irep_var : replaceIndexVect) {
+			param[irep_var.first] = par[irep_var.second];
+		}
+
+		// Calculate normalisation integrals
+		for (int i = 0; i < Config::ncontr; i++) {
+			D_PDFs_get[i]->CalcIntegral(&param[Config::nvar_offset_md[i]], Config::minDM,
+										Config::maxDM);
+			B_PDFs_get[i]->CalcIntegral(&param[Config::nvar_all_md + Config::nvar_offset_mb[i]],
+										Config::minBMcorr, Config::maxBMcorr);
+		}
+
+		int nbins_md = hist_MD.GetNbinsX();
+		int nbins_mb = hist_MB.GetNbinsY();
+		if (int_choose_fit !=
+			dictionaryChooseFit.at("frac")) {  // don't calculate if only fractions fit
+			for (int i = 0; i < Config::ncontr; i++) {
+				// TODO set dxx for D comb background to 0 and remove this
+				for (int ivar = 0; ivar < Config::nvar_md[i]; ivar++) {
+					// Skip the constrain for chebyshev background: {"Chebyshev", 1}
+					// if (Config::intshapesDM[i] == 1 || ivar == 1) continue;
+					if (dMC_MD[i][ivar] != 0) {
+						double tmp = (MC_MD[i][ivar] - param[Config::nvar_offset_md[i] + ivar]) *
+									 (MC_MD[i][ivar] - param[Config::nvar_offset_md[i] + ivar]) /
+									 (2.0 * (dMC_MD[i][ivar] *
+											 dMC_MD[i][ivar]));	 // use the results of MC fits
+						double scale = 1.0;
+						chi2 += scale * tmp;
+					}
+				}
+			}
+		}
+		if (int_choose_fit !=
+			dictionaryChooseFit.at("frac")) {  // don't calculate if only fractions fit
+			for (int i = 0; i < Config::ncontr; i++) {
+				for (int ivar = 0; ivar < Config::nvar_mb[i]; ivar++) {
+					if (dMC_MB[i][ivar] != 0) {
+						double tmp =
+							(MC_MB[i][ivar] -
+							 param[Config::nvar_all_md + Config::nvar_offset_mb[i] + ivar]) *
+							(MC_MB[i][ivar] -
+							 param[Config::nvar_all_md + Config::nvar_offset_mb[i] + ivar]) /
+							(2.0 *
+							 (dMC_MB[i][ivar] * dMC_MB[i][ivar]));	// use the results of MC fits
+
+						double scale = 1.0;
+						// if(int_choose_fit == dictionaryChooseFit.at("BM"))
+						//	scale = 10000.0;
+						chi2 += scale * tmp;
+					}
+				}
+			}
+		}
+
+		double* vect_chi2_md =
+			new double[vect_2D.size()];	 // Per event results - required to efficiently calculate a
+										 // Kahan compensated sum
+		double* vect_chi2_mb =
+			new double[vect_2D.size()];	 // Per event results - required to efficiently calculate a
+										 // Kahan compensated sum
+		for (int jj = 0; jj < int(vect_2D.size()); jj++) vect_chi2_md[jj] = 0.0;
+		for (int jj = 0; jj < int(vect_2D.size()); jj++) vect_chi2_mb[jj] = 0.0;
+		if (Config::binned) {
+			double bin_width_mb = (Config::maxBMcorr - Config::minBMcorr) / double(nbins_mb);
+			double bin_width_md = (Config::maxDM - Config::minDM) / double(nbins_md);
+			double histev_md = hist_MD.Integral();
+			double histev_mb = hist_MB.Integral();
+#pragma omp parallel for
+			for (int bin_md = 1; bin_md <= nbins_md; bin_md++) {
+				double sum_contr = 0.0;
+				for (int i = 0; i < Config::ncontr; i++) {
+					double mdass = hist_MD.GetXaxis()->GetBinCenter(bin_md);
+					double md_val =
+						D_PDFs_get[i]->EvalPDF(&mdass, &param[Config::nvar_offset_md[i]]);
+					sum_contr +=
+						histev_md * bin_width_md * frac[i] * md_val;
+					// std::cout << sum_contr << "  sumcontr  " << frac[i] << "  " << md_val <<
+					// "  " << mb_val << std::endl;
+					if (frac[i] < 0.0 || frac[i] > 1.0) {
+						chi2 += 1e15;
+						continue;
+					}
+				}
+				double cont = (double)hist_MD.GetBinContent(bin_md);
+				double err = (double)hist_MD.GetBinError(bin_md);
+				if (err != 0.0) {
+					vect_chi2_md[bin_md - 1] +=
+						0.5 * (sum_contr - cont) * (sum_contr - cont) / err / err;
+				}
+			}
+#pragma omp parallel for
+			for (int bin_mb = 1; bin_mb <= nbins_mb; bin_mb++) {
+				double sum_contr = 0.0;
+				for (int i = 0; i < Config::ncontr; i++) {
+					double mcorr = hist_MB.GetYaxis()->GetBinCenter(bin_mb);
+					double mb_val = B_PDFs_get[i]->EvalPDF(
+						&mcorr, &param[Config::nvar_all_md + Config::nvar_offset_mb[i]]);
+					sum_contr +=
+						histev_mb * bin_width_mb * frac[i] * mb_val;
+					// std::cout << sum_contr << "  sumcontr  " << frac[i] << "  " << md_val <<
+					// "  " << mb_val << std::endl;
+					if (frac[i] < 0.0 || frac[i] > 1.0) {
+						chi2 += 1e15;
+						continue;
+					}
+				}
+				double cont = (double)hist_MB.GetBinContent(bin_mb);
+				double err = (double)hist_MB.GetBinError(bin_mb);
+				if (err != 0.0) {
+					vect_chi2_mb[bin_mb - 1] +=
+						0.5 * (sum_contr - cont) * (sum_contr - cont) / err / err;
+				}
+			}
+		} else {
+
+			// Main loop that calculates the chi2
+// Main loop that calculates the chi2 - run in parallel using OpenMP
+#pragma omp parallel for
+			for (long int e = 0; e < emax; e++) {
+				double mdass = std::get<0>(vect_2D[e]);
+				double mcorr = std::get<1>(vect_2D[e]);
+				double like_event_md = 0.0;
+				double like_event_mb = 0.0;
+				for (int i = 0; i < Config::ncontr; i++) {
+					double md_like, mb_like;
+					md_like = D_PDFs_get[i]->EvalPDF(&mdass, &param[Config::nvar_offset_md[i]]);
+					mb_like = B_PDFs_get[i]->EvalPDF(
+						&mcorr, &param[Config::nvar_all_md + Config::nvar_offset_mb[i]]);
+					if (mb_like < 0.0 || mb_like > 1.0 || md_like < 0.0 || md_like > 1.0 ||
+						frac[i] < 0.0 || frac[i] > 1.0) {
+						chi2 += 1e15;
+						continue;
+					}
+					like_event_md += md_like * frac[i];
+					like_event_mb += mb_like * frac[i];
+				}
+				vect_chi2_md[e] = -TMath::Log(like_event_md);
+				vect_chi2_mb[e] = -TMath::Log(like_event_mb);
+				/*
+				{
+					std::lock_guard<std::mutex> guard(my_mutex);
+					std::cout<<"Chi2: "<<likelihood<<std::flush<<std::endl;
+				}
+				*/
+			}
+		}
+
+		// std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+		double chi2_threads = 0.0;
+		if (avx) {
+			size_t vecsize_md;
+			size_t vecsize_mb;
+			if (Config::binned) {
+				vecsize_md = size_t(hist_MD.GetNbinsX());
+				vecsize_mb = size_t(hist_MB.GetNbinsX());
+			} else {
+				vecsize_md = (size_t)vect_2D.size();
+				vecsize_mb = (size_t)vect_2D.size();
+			}
+			chi2_threads = fastAccurate<Method::Kahan, 4>(vect_chi2_md, vecsize_md);
+			chi2_threads += fastAccurate<Method::Kahan, 4>(vect_chi2_mb, vecsize_mb);
+		} else {
+			double sum = 0, c = 0;
+			for (long unsigned int i = 0; i < vect_2D.size(); i++) {
+				ksum(sum, c, vect_chi2_md[i]);
+			}
+			chi2_threads = sum + c;
+			sum = c = 0;
+			for (long unsigned int i = 0; i < vect_2D.size(); i++) {
+				ksum(sum, c, vect_chi2_mb[i]);
+			}
+			chi2_threads += sum + c;
+		}
+		delete[] vect_chi2_md;
+		delete[] vect_chi2_mb;
+		chi2 += chi2_threads;
+		// std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+		// std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds>
+		// (end - begin).count() << "[ns]" << std::endl;
+
+		// TODO is this now correct ?? Should it be 2 x emax ??
 		if (!Config::binned) chi2 += log(double(emax));	 // Extended ML
 
 		return chi2;

@@ -1,0 +1,128 @@
+{
+  "category": "1D_BM",
+  "isMC": false,
+  "massVariable": "B_Mcorr",
+  "MC_directory_MB": "B_M_results_Sidebands",
+  "BMshapes": ["Sidebands"],
+  "binned": true,
+  "sign":"muplus",
+  "chainName": "BlindedTree",
+  "nentries": -1,
+  "__TOLERANCE__": "Set tolerance per sample choice: MCsignal, BuDmunu, ...",
+  "contrName": ["sidebands"],
+  "Fits": ["sidebands"],
+  "tolerance": [1.0e0], 
+  "printLevel": 1,
+  "functionCalls": 1e7,
+  "randSeed": -1,
+  "muPTmin": 500.0,
+  "muPmin": 5000.0,
+  "eta_cut": [2.0, 4.5],
+  "t_cut": [1.0, 15.0],
+  "input_files": [
+    "/mnt/home/share/lhcb/CPT_beauty/data2016/selected_sidebands/selected_sideband2016MagDown.root"
+  ],
+
+  "__GLOBAL__": "Here global variables are set",
+  "DM_range": [1800, 1940],
+  "BMcorr_range": [3000.0, 8000.0],
+
+  "varname_mb": [
+    [
+      "f12",
+      
+      "l_f_gaus",
+      "l_f12",
+      "l_xi",
+      "l_lambda",
+      "l_gamma",
+      "l_delta",
+      "l_mean",
+      "l_sigma",
+      "l_alpha",
+      "l_n",
+      "l_f12_gaus",
+      "l_mean_g1",
+      "l_sigma_g1",
+      "l_mean_g2",
+      "l_sigma_g2",
+
+      "r_f_gaus",
+      "r_f12",
+      "r_xi",
+      "r_lambda",
+      "r_gamma",
+      "r_delta",
+      "r_mean",
+      "r_sigma",
+      "r_alpha",
+      "r_n",
+      "r_f12_gaus",
+      "r_mean_g1",
+      "r_sigma_g1",
+      "r_mean_g2",
+      "r_sigma_g2"
+    ]
+  ],
+  "fixVect" : [
+      "sidebands_l_f_gaus",
+      "sidebands_l_f12",
+      "sidebands_l_xi",
+      "sidebands_l_lambda",
+      "sidebands_l_gamma",
+      "sidebands_l_delta",
+      "sidebands_l_mean",
+      "sidebands_l_sigma",
+      "sidebands_l_alpha",
+      "sidebands_l_n",
+      "sidebands_l_f12_gaus",
+      "sidebands_l_mean_g1",
+      "sidebands_l_sigma_g1",
+      "sidebands_l_mean_g2",
+      "sidebands_l_sigma_g2",
+
+      "sidebands_r_f_gaus",
+      "sidebands_r_f12",
+      "sidebands_r_xi",
+      "sidebands_r_lambda",
+      "sidebands_r_gamma",
+      "sidebands_r_delta",
+      "sidebands_r_mean",
+      "sidebands_r_sigma",
+      "sidebands_r_alpha",
+      "sidebands_r_n",
+      "sidebands_r_f12_gaus",
+      "sidebands_r_mean_g1",
+      "sidebands_r_sigma_g1",
+      "sidebands_r_mean_g2",
+      "sidebands_r_sigma_g2"
+  ],
+
+  "ncontr": 1,
+  "n_sideband": 2,
+  "init_values": [
+    [
+      0.5,
+      0.304, 0.887, 5023, 10.67, -10.31, 1.97, 5455, 664.7, 1.84, 1, 1.0, 3000, 300.0, 4185, 713.38,
+      0.334, 0.901, 4984, 35.10, -9.74, 2.08, 5518, 707.8, 1.69, 1, 1.0, 3000, 300.0, 4156, 685.0
+    ]
+  ],
+
+  "varLimitsVect":{
+    "sidebands_f12":  [-1.0, 1.0]
+  },
+
+  "scanLimitsVect":{},
+
+  "__KEYS_BELOW_ARE_NOT_USED__": "",
+
+  "start_from_previous": false,
+  "previous_result_file": "",
+  
+  "MC_directory_MD": "D_M_results_JSUplusGaus",
+  "DMshapes": ["DCBplusGaus"],
+  "varname_md": [[]],
+
+  "fracInit": [1.0]
+
+}

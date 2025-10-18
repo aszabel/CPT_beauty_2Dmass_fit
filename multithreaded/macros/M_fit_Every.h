@@ -47,6 +47,7 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 		TRandom rand;
 		if (Config::randSeed > -1) rand.SetSeed(Config::randSeed);
 
+		// TODO_KK move to config
 		// min->SetStrategy(2);
 		// min->SetPrecision(0.00001);
 		const int ncontr = Config::ncontr;
@@ -124,6 +125,7 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 		// Load PDF instancess for all contributions
 		const auto& PDFs = Config::getVectorPDFs(fit_type.Data());
 
+		std::cout << "Define variables ..." << std::endl;
 		// Define fit variables
 		double step = 0.1;
 		for (int ivar = 0; ivar < nvar; ivar++) {
@@ -142,6 +144,7 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 			// min -> FixVariable(ivar);
 		}
 
+		std::cout << "Set limits" << std::endl;
 		// Set Limits on variables
 		for (auto it = Config::varLimitsMap.begin(); it != Config::varLimitsMap.end(); ++it) {
 			if (it->first.rfind(Config::Fits[fit_id], 0) != 0) continue;
@@ -154,6 +157,7 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 			min->SetVariableLimits(index_var, pairlims.first, pairlims.second);
 		}
 
+		std::cout << "Fix variables" << std::endl;
 		// list of fixed variables form config
 		for (const auto& fix : Config::fixVect) {
 			if (min->VariableIndex(fix) >= 0) {
@@ -162,6 +166,7 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 			}
 		}
 
+		std::cout << "Generate substitution rules" << std::endl;
 		// Generate a vactor of value substitution rules for the variables
 		// Can be used for example to have two PDFs with a common mean
 		std::vector<std::pair<int, int>> replaceIndexVect = {};
@@ -241,22 +246,49 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 		else
 			min->SetFunction(f);
 
-		double CL_normal = ROOT::Math::normal_cdf(1) - ROOT::Math::normal_cdf(-1);
+		// TODO_KK This has to be corrected - default gives more stable fits and smaller errors
+		//double CL_normal = ROOT::Math::normal_cdf(1) - ROOT::Math::normal_cdf(-1);
+		//min->SetErrorDef(ROOT::Math::chisquared_quantile(CL_normal, min->NFree()));
 
-		min->SetErrorDef(ROOT::Math::chisquared_quantile(CL_normal, min->NFree()));
+		std::cout << "Run fit ..." << std::endl;
 		min->Minimize();
 		min->Hesse();
 		// double err_up, err_down;
 		// min->GetMinosError(1, err_up, err_down);
 		// cout << "Minos mean " << err_up << "  " << err_down << endl;
 
-		/*
-		Contour
+		TCanvas* c = new TCanvas("c", "", 500, 500);
+		// Perform Scan around minimum
+		for(int ivar=0; ivar<min->NDim(); ivar++) {
+			unsigned int n = 50;
+			TGraph* gr = new TGraph(n);
+			gr->SetTitle(min->VariableName(ivar).c_str());
+			if (min->IsFixedVariable(ivar)) continue;
+			if (! min->Scan(ivar, n, gr->GetX(), gr->GetY())) continue;
+			gr->Draw("AC*");
+			c->SaveAs(Form("%s_figures/%s_%s_%d_%s.pdf", path_results.Data(), fit_type.Data(),
+					Config::contrName[choice].c_str(), Config::sign, min->VariableName(ivar).c_str()));
+			delete(gr);
+		}
+			/*
+			for(int ivar=0; ivar<min->NDim(); ivar++) {
+				if (min->IsFixedVariable(ivar)) continue;
+				for(int jvar=0; jvar<ivar; jvar++) {
+					if (min->IsFixedVariable(jvar)) continue;
 
-		TGraph g(n);
-		minimizer->Contour(ipar, jpar, n, g.GetX(), g.GetY() );
-		g.Draw("AC");
-		*/
+					unsigned int n = 50;
+					TGraph* gr = new TGraph(n);
+					gr->SetTitle(Form("%s vs %s",
+						min->VariableName(ivar).c_str(),
+						min->VariableName(jvar).c_str()
+					));
+					if (!  min->Contour(ivar, jvar, n, gr->GetX(), gr->GetY())) continue;
+					gr->Draw("AC*");
+					c->SaveAs(Form("%s_figures/%s_%s_%d_%s_vs_%s.pdf", path_results.Data(), fit_type.Data(),
+							Config::contrName[choice].c_str(), Config::sign, min->VariableName(ivar).c_str(), min->VariableName(jvar).c_str()));
+					delete(gr);
+				}
+			}*/
 
 		// Print correlation matrix
 		cout << "Correlation matrix:" << endl;
@@ -289,7 +321,6 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 		cout << endl;
 
 		// Draw results
-		TCanvas* c = new TCanvas("c", "", 500, 500);
 		TPad* pad1 = new TPad("pad1", "", 0.0, 0.3, 1.0, 1.0);
 		pad1->SetLogy();
 		pad1->Draw();

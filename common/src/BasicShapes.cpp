@@ -44,7 +44,7 @@ void RaisedCosinePDF::CalcIntegral(const double *par, double min, double max) {
 
 double GaussPDF::EvalPDF(const double *xx, const double *par, const int component) {
 	const double m_rec = xx[0];
-	double mean = abs(par[0]);
+	double mean = par[0];
 	double sigma = abs(par[1]);
 	double gaus = ROOT::Math::gaussian_pdf(m_rec, sigma, mean);
 	if (IntGaus != 0.0) {
@@ -55,7 +55,7 @@ double GaussPDF::EvalPDF(const double *xx, const double *par, const int componen
 }
 
 void GaussPDF::CalcIntegral(const double *par, double min, double max) {
-	double mean = abs(par[0]);
+	double mean = par[0];
 	double sigma = abs(par[1]);
 
 	IntGaus = ROOT::Math::normal_cdf(max, sigma, mean) - ROOT::Math::normal_cdf(min, sigma, mean);
@@ -190,9 +190,10 @@ void SkewNormalPDF::CalcIntegral(const double *par, double min, double max) {
 double CrystalBallPDF::EvalPDF(const double *xx, const double *par, const int component) {
 	double m_rec = xx[0];
 	double mean = par[0];
-	double sigma = par[1];
-	double alpha = abs(par[2]) + 1.0e-6;
+	double sigma = abs(par[1]);
+	double alpha = abs(par[2]) + 1.0e-10;
 	double n = par[3];
+	
 	double CB = ROOT::Math::crystalball_function(2.0 * mean - m_rec, alpha, n, sigma, mean);
 	if (IntCB != 0.0) CB /= IntCB;
 	return CB;
@@ -200,8 +201,8 @@ double CrystalBallPDF::EvalPDF(const double *xx, const double *par, const int co
 
 void CrystalBallPDF::CalcIntegral(const double *par, double min, double max) {
 	double mean = par[0];
-	double sigma = par[1];
-	double alpha = abs(par[2] + 1.0e-6);
+	double sigma = abs(par[1]);
+	double alpha = abs(par[2]) + 1.0e-10;
 	double n = par[3];
 
 	IntCB = TMath::Abs(-ROOT::Math::crystalball_integral(2.0 * mean - min, alpha, n, sigma, mean) +
@@ -231,7 +232,7 @@ void JohnsonPDF::CalcIntegral(const double *par, double min, double max) {
 	double xi = par[0];
 	double lambda = abs(par[1]);
 	double gamma = par[2];
-	double delta = par[3];
+	double delta = abs(par[3]);
 	double argmax = gamma + delta * TMath::ASinH((max - xi) / lambda);
 	double argmin = gamma + delta * TMath::ASinH((min - xi) / lambda);
 	IntJSU =

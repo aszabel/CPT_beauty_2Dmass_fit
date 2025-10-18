@@ -26,8 +26,8 @@
   "start_from_previous": false,
   "previous_result_file": "best_results_unbinned/fit2D_best/results_0_0.txt",
   
-  "MC_directory_MD": "../../../scans/scan_config_1D_DM_nominal_binned_manual",
-  "MC_directory_MB": "../../../scans/scan_config_1D_BM_nominal_binned_manual",
+  "MC_directory_MD": "../../../../scans/scan_config_1D_DM_nominal_binned_manual",
+  "MC_directory_MB": "../../../../scans/scan_config_1D_BM_nominal_binned_manual",
 
   "nentries": -1,
 
@@ -105,10 +105,18 @@
         "mb_signal_f_gaus":  [-1.0, 1.0],
         "mb_sidebands_f_gaus":  [-1.0, 1.0]
     },
+   
+  "scanLimitsVect": {
+    "fracInit_signal": [0.0, 1.0],
+    "fracInit_BuDmunu": [0.0, 1.0],
+    "fracInit_BsDsMunu": [0.0, 1.0],
+    "fracInit_B02DpDsm": [0.0, 1.0],
+    "fracInit_Bu2D0Dsm": [0.0, 1.0]
+  },
 
    "__old__fracInit": [0.531364, 0.123454, 0.00900857, 0.0171418, 0.317511],
    "__org__fracInit": [0.544221, 0.128957, 0.0182142, 0.0354018, 0.238786],
    "__MC__fracInit": [0.5, 0.06, 0.027, 0.06, 0.24],
-   "fracInit": [0.2, 0.15, 0.15, 0.15, 0.15, 0.15]
+   "fracInit": [0.19, 0.15, 0.15, 0.10, 0.31, 0.10]
 
 }

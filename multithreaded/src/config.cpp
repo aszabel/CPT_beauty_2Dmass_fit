@@ -176,6 +176,9 @@ std::vector<std::shared_ptr<PDFInterface>> Config::getVectorPDFs(const std::stri
 				case 16:
 					vPDFs.push_back(std::make_shared<DoubleSidedCrystalballPlusExpPDF>());
 					break;
+				case 17:
+					vPDFs.push_back(std::make_shared<SidebandsPDF>());
+					break;
 				default:
 					std::cerr << "Error while BM_pdf dynamic declaration. "
 								 "Check if shapes from config file refer to "
@@ -487,6 +490,18 @@ int Config::load(const std::string& filename) {
 		return 1;
 	}
 
+	if (config.contains("contrName")) {
+		contrName = config["contrName"].template get<std::vector<std::string>>();
+		if (int(contrName.size()) != ncontr) {
+			std::cerr << "Invalid config file: vector 'contrName' should have " << ncontr
+					  << " elements.";
+			return 1;
+		}
+	} else {
+		std::cerr << "Invalid config file: missing 'contrName' key." << std::endl;
+		return 1;
+	}
+
 	if (config.contains("Fits")) {
 		Fits = config["Fits"].template get<std::vector<std::string>>();
 		if (int(Fits.size()) == 0) {
@@ -509,8 +524,10 @@ int Config::load(const std::string& filename) {
 				return 1;
 			}
 		} else {
-			if (dictionaryChooseFit1D.find(fit) != dictionaryChooseFit1D.end()) {
-				int_choose_fits.push_back(dictionaryChooseFit1D.at(fit));
+			ptrdiff_t pos = std::distance(contrName.begin(), std::find(contrName.begin(), contrName.end(), fit));
+
+			if (pos < contrName.size()) {
+				int_choose_fits.push_back(pos);
 			} else {
 				std::cerr << "Fit '" << fit
 						  << "' not found. Chose 'signal', 'BuDmunu', "
@@ -639,18 +656,6 @@ int Config::load(const std::string& filename) {
 		}
 	} else {
 		std::cerr << "Invalid config file: missing 'fracInit' key." << std::endl;
-		return 1;
-	}
-
-	if (config.contains("contrName")) {
-		contrName = config["contrName"].template get<std::vector<std::string>>();
-		if (int(contrName.size()) != ncontr) {
-			std::cerr << "Invalid config file: vector 'contrName' should have " << ncontr
-					  << " elements.";
-			return 1;
-		}
-	} else {
-		std::cerr << "Invalid config file: missing 'contrName' key." << std::endl;
 		return 1;
 	}
 

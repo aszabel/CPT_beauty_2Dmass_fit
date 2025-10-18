@@ -94,6 +94,23 @@ private:
 	CrystalBallPDF CB;
 	DoubleGaussPDF Gauss;
 };
+
+class SidebandsPDF : public PDFInterface {
+public:
+	SidebandsPDF() {};
+	SidebandsPDF(const SidebandsPDF &other) = default;
+	SidebandsPDF(SidebandsPDF &&) = default;
+	~SidebandsPDF() {};
+
+	void CalcIntegral(const double *par, double min, double max);
+	double getIntegral() { return 0.0; };
+	int getComponentCount() { return 2; };	// 2 x JohnsonPlusCBPlusDoubleGaussPDF
+	double EvalPDF(const double *xx, const double *par, const int component = -1);
+
+private:
+	JohnsonPlusCBPlusDoubleGaussPDF Left;
+	JohnsonPlusCBPlusDoubleGaussPDF Right;
+};
 }  // namespace cpt_b0_analysis
 
 #endif

@@ -19,6 +19,8 @@ parser = argparse.ArgumentParser(
 parser.add_argument('-c', '--config', type=str, required=True, help="Config file")
 parser.add_argument('-n', '--tries', type=int, default=100, help="Number of random search tries")
 parser.add_argument('-i', '--input', type=str, help="Path with fit result txt files to use as random search range")
+parser.add_argument('-f', '--fit', type=str, help="Select a single fit to run: signal, BuDmunu, BsDsMunu, B02DpDsm, sidebands, Bu2D0Dsm")
+parser.add_argument('-s', '--sigma', type=float, default=1.0, help="Number of sigmas to use for random search bases in the inut fit results")
 
 args = parser.parse_args()
 
@@ -42,7 +44,11 @@ elif config["category"] == "1D_DM":
 else:
     raise(Exception("Unknown fit category: " + config["category"]))
 
-scan_path = (Path("scans") / ("scan_" + config_path.stem + ("_binned" if config["binned"] else "_unbinned"))).absolute()
+scan_name = "scan_" + config_path.stem + ("_binned" if config["binned"] else "_unbinned")
+if args.fit:
+    print("Limit only to {args.fit}")
+    scan_name += "_" + args.fit
+scan_path = (Path("scans") / scan_name).absolute()
 scan_path.mkdir(parents=True, exist_ok=True)
 
 if args.input:
@@ -56,10 +62,14 @@ if args.input:
         with results_path.open() as results:
             data = results.readlines()
             for j, var in enumerate(config[varname][idx]):
-                mean, sigma = (float(v) for v in data[j+2].strip().split())
+                mean, sigma = (float(v) for v in data[j+1].strip().split())
                 config["scanLimitsVect"][f"{fit}_{var}"] = [
-                    mean - sigma, mean + sigma
+                    mean - args.sigma * sigma, mean + args.sigma * sigma
                 ]
+
+if args.fit:
+    config["Fits"] = [args.fit]
+    config["tolerance"] = [config["tolerance"][config["contrName"].index(args.fit)]]
 
 for n in range(N):
     for i, fit in enumerate(config["contrName"]):
