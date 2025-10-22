@@ -54,6 +54,7 @@ int Config::nvar_all_mb = 0;
 int Config::ncontr = 6;
 int Config::n_sideband = 2;
 int Config::ntries = 1;
+double Config::random_sigma = 0.01;
 
 std::vector<int> Config::int_choose_fits = {};
 std::vector<int> Config::intshapesDM = {};
@@ -111,6 +112,9 @@ std::vector<std::shared_ptr<PDFInterface>> Config::getVectorPDFs(const std::stri
 					break;
 				case 9:
 					vPDFs.push_back(std::make_shared<DoubleSidedCrystalballPlusExpPDF>());
+					break;
+				case 10:
+					vPDFs.push_back(std::make_shared<GaussPDF>());
 					break;
 
 				default:
@@ -179,6 +183,9 @@ std::vector<std::shared_ptr<PDFInterface>> Config::getVectorPDFs(const std::stri
 				case 17:
 					vPDFs.push_back(std::make_shared<SidebandsPDF>());
 					break;
+				case 18:
+					vPDFs.push_back(std::make_shared<ChebyshevPDF>());
+					break;
 				default:
 					std::cerr << "Error while BM_pdf dynamic declaration. "
 								 "Check if shapes from config file refer to "
@@ -208,7 +215,7 @@ void Config::read_MC(std::vector<std::vector<double>>& xx, std::vector<std::vect
 	xx.reserve(ncontr);
 	dxx.reserve(ncontr);
 	for (int ifile = 0; ifile < ncontr; ifile++) {
-		const int nbuffer = 100;
+		const int nbuffer = 512;
 		char name[nbuffer];
 		snprintf(name, nbuffer, "%s/res_%s_%d.txt", MC_directory.c_str(), contrName[ifile].c_str(),
 				 sign);
@@ -228,7 +235,7 @@ void Config::read_MC(std::vector<std::vector<double>>& xx, std::vector<std::vect
 		dxx.emplace_back(std::move(tmp_dx));
 		if (int(xx[ifile].size()) != nvar[ifile] || int(dxx[ifile].size()) != nvar[ifile]) {
 			std::cerr << " Wrong number of parameters for component " << ifile
-					  << " in the MC result file " << name << std::endl;
+					  << " in the MC result file:\n" << name << std::endl;
 		}
 	}
 }
@@ -383,6 +390,17 @@ int Config::load(const std::string& filename) {
 		return 1;
 	}
 
+	if (config.contains("muPTmin")) {
+		muPTmin = config["muPTmin"];
+		if (muPTmin < 0) {
+			std::cerr << "Invalid config file: 'muPTmin' must be positive." << std::endl;
+			return 1;
+		}
+	} else {
+		std::cerr << "Invalid config file: missing 'muPTmin' key." << std::endl;
+		return 1;
+	}
+	
 	if (config.contains("muPmin")) {
 		muPmin = config["muPmin"];
 		if (muPmin < 0) {
@@ -425,6 +443,10 @@ int Config::load(const std::string& filename) {
 	} else if (is2D) {
 		std::cerr << "Invalid config file: missing 'nentries' key." << std::endl;
 		return 1;
+	}
+
+	if (config.contains("random_sigma")) {
+		random_sigma = config["random_sigma"];
 	}
 
 	if (config.contains("input_files")) {
@@ -524,7 +546,8 @@ int Config::load(const std::string& filename) {
 				return 1;
 			}
 		} else {
-			ptrdiff_t pos = std::distance(contrName.begin(), std::find(contrName.begin(), contrName.end(), fit));
+			ptrdiff_t pos = std::distance(contrName.begin(),
+										  std::find(contrName.begin(), contrName.end(), fit));
 
 			if (pos < contrName.size()) {
 				int_choose_fits.push_back(pos);
@@ -649,8 +672,8 @@ int Config::load(const std::string& filename) {
 
 	if (config.contains("fracInit")) {
 		fracInit = config["fracInit"].template get<std::vector<double>>();
-		if (int(fracInit.size()) != ncontr) {
-			std::cerr << "Invalid config file: vector 'fracInit' should have " << ncontr
+		if (int(fracInit.size()) != ncontr - 1) {
+			std::cerr << "Invalid config file: vector 'fracInit' should have " << ncontr - 1
 					  << " elements.";
 			return 1;
 		}

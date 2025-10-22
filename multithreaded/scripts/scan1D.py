@@ -46,7 +46,7 @@ else:
 
 scan_name = "scan_" + config_path.stem + ("_binned" if config["binned"] else "_unbinned")
 if args.fit:
-    print("Limit only to {args.fit}")
+    print(f"Limit only to {args.fit}")
     scan_name += "_" + args.fit
 scan_path = (Path("scans") / scan_name).absolute()
 scan_path.mkdir(parents=True, exist_ok=True)
@@ -106,6 +106,7 @@ for n in range(N):
             print(f"{fname.stem} : Status={data[0].strip().split()[0]}, Chi2={data[0].strip().split()[1]}")
 
 results = {}
+chi2 = []
 for run in scan_path.iterdir():
     if run.name == "results":
         continue
@@ -132,9 +133,13 @@ for run in scan_path.iterdir():
                         "good_run": run.stem,
                         "good_value": float(data[0].strip().split()[1])
                     }
+                chi2.append(v)
 
 output_path = scan_path / "results"
 output_path.mkdir(parents=True, exist_ok=True)
+with (output_path / "chi2.json").open("w") as f:
+    json.dump(chi2, f)
+
 for fit, data in results.items():
     fig = fit.replace("res", fig_prefix)
     best_fit_path = output_path / fit / "best"
@@ -146,7 +151,8 @@ for fit, data in results.items():
         if not f.is_dir():
             shutil.copy(f, best_fit_path / f.name)
     shutil.copy(best_result_path / (fit + ".txt"), best_fit_path / (fit + ".txt"))
-    shutil.copy(best_figures_path / (fig + ".pdf"), best_fit_path / (fig + ".pdf"))
+    for pdf in best_figures_path.glob(f"{fig}*.pdf"):
+        shutil.copy(pdf, best_fit_path / pdf.name)
 
     good_fit_path = output_path / fit / "good"
     good_fit_path.mkdir(parents=True, exist_ok=True)
@@ -157,7 +163,8 @@ for fit, data in results.items():
         if not f.is_dir():
             shutil.copy(f, good_fit_path / f.name)
     shutil.copy(good_result_path / (fit + ".txt"), good_fit_path / (fit + ".txt"))
-    shutil.copy(good_figures_path / (fig + ".pdf"), good_fit_path / (fig + ".pdf"))
+    for pdf in good_figures_path.glob(f"{fig}*.pdf"):
+        shutil.copy(pdf, good_fit_path / pdf.name)
 
 for run in scan_path.iterdir():
     if run.name == "results":

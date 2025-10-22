@@ -53,9 +53,9 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 		const int ncontr = Config::ncontr;
 
 		// Load DATA
-		std::cout << "Load data: " << Config::input_files[fit_id] << std::endl;
+		std::cout << "Load data: " << Config::input_files[choice] << std::endl;
 		TChain ch(Config::chainName.c_str());
-		ch.Add(Config::input_files[fit_id].c_str());
+		ch.Add(Config::input_files[choice].c_str());
 		double B_M, missPT, D_M, mu_PT, mu_P, mu_eta, K_PT;
 		bool charge;
 		ch.SetBranchAddress("B_M", &B_M);
@@ -247,8 +247,8 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 			min->SetFunction(f);
 
 		// TODO_KK This has to be corrected - default gives more stable fits and smaller errors
-		//double CL_normal = ROOT::Math::normal_cdf(1) - ROOT::Math::normal_cdf(-1);
-		//min->SetErrorDef(ROOT::Math::chisquared_quantile(CL_normal, min->NFree()));
+		// double CL_normal = ROOT::Math::normal_cdf(1) - ROOT::Math::normal_cdf(-1);
+		// min->SetErrorDef(ROOT::Math::chisquared_quantile(CL_normal, min->NFree()));
 
 		std::cout << "Run fit ..." << std::endl;
 		min->Minimize();
@@ -259,36 +259,37 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 
 		TCanvas* c = new TCanvas("c", "", 500, 500);
 		// Perform Scan around minimum
-		for(int ivar=0; ivar<min->NDim(); ivar++) {
+		for (int ivar = 0; ivar < min->NDim(); ivar++) {
 			unsigned int n = 50;
 			TGraph* gr = new TGraph(n);
 			gr->SetTitle(min->VariableName(ivar).c_str());
 			if (min->IsFixedVariable(ivar)) continue;
-			if (! min->Scan(ivar, n, gr->GetX(), gr->GetY())) continue;
+			if (!min->Scan(ivar, n, gr->GetX(), gr->GetY())) continue;
 			gr->Draw("AC*");
 			c->SaveAs(Form("%s_figures/%s_%s_%d_%s.pdf", path_results.Data(), fit_type.Data(),
-					Config::contrName[choice].c_str(), Config::sign, min->VariableName(ivar).c_str()));
-			delete(gr);
+						   Config::contrName[choice].c_str(), Config::sign,
+						   min->VariableName(ivar).c_str()));
+			delete (gr);
 		}
-			/*
-			for(int ivar=0; ivar<min->NDim(); ivar++) {
-				if (min->IsFixedVariable(ivar)) continue;
-				for(int jvar=0; jvar<ivar; jvar++) {
-					if (min->IsFixedVariable(jvar)) continue;
+		/*
+		for(int ivar=0; ivar<min->NDim(); ivar++) {
+			if (min->IsFixedVariable(ivar)) continue;
+			for(int jvar=0; jvar<ivar; jvar++) {
+				if (min->IsFixedVariable(jvar)) continue;
 
-					unsigned int n = 50;
-					TGraph* gr = new TGraph(n);
-					gr->SetTitle(Form("%s vs %s",
-						min->VariableName(ivar).c_str(),
-						min->VariableName(jvar).c_str()
-					));
-					if (!  min->Contour(ivar, jvar, n, gr->GetX(), gr->GetY())) continue;
-					gr->Draw("AC*");
-					c->SaveAs(Form("%s_figures/%s_%s_%d_%s_vs_%s.pdf", path_results.Data(), fit_type.Data(),
-							Config::contrName[choice].c_str(), Config::sign, min->VariableName(ivar).c_str(), min->VariableName(jvar).c_str()));
-					delete(gr);
-				}
-			}*/
+				unsigned int n = 50;
+				TGraph* gr = new TGraph(n);
+				gr->SetTitle(Form("%s vs %s",
+					min->VariableName(ivar).c_str(),
+					min->VariableName(jvar).c_str()
+				));
+				if (!  min->Contour(ivar, jvar, n, gr->GetX(), gr->GetY())) continue;
+				gr->Draw("AC*");
+				c->SaveAs(Form("%s_figures/%s_%s_%d_%s_vs_%s.pdf", path_results.Data(),
+		fit_type.Data(), Config::contrName[choice].c_str(), Config::sign,
+		min->VariableName(ivar).c_str(), min->VariableName(jvar).c_str())); delete(gr);
+			}
+		}*/
 
 		// Print correlation matrix
 		cout << "Correlation matrix:" << endl;

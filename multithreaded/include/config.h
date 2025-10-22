@@ -20,7 +20,7 @@ using namespace cpt_b0_analysis;
 const std::unordered_map<std::string, const int> dictionaryDM = {
 	{"DCBplusGaus", 0}, {"Chebyshev", 1},	{"JSUplusGaus", 2}, {"Exponent", 3},
 	{"JSUplusCB", 4},	{"JSUplusDSCB", 5}, {"Johnson", 6},		{"DoubleSidedCrystalBall", 7},
-	{"JSUplusExp", 8},	{"DCBplusExp", 9}};
+	{"JSUplusExp", 8},	{"DCBplusExp", 9}, {"Gauss", 10}};
 
 const std::unordered_map<std::string, const int> dictionaryBMcorr = {{"RCplusGaus", 0},
 																	 {"SNplusCB", 1},
@@ -39,7 +39,8 @@ const std::unordered_map<std::string, const int> dictionaryBMcorr = {{"RCplusGau
 																	 {"JSUplusDSCB", 14},
 																	 {"JSUplusExp", 15},
 																	 {"DCBplusExp", 16},
-																	 {"Sidebands", 17}};
+																	 {"Sidebands", 17},
+																	 {"Chebyshev", 18}};
 const std::unordered_map<std::string, const int> dictionaryChooseCategory = {
 	{"2D", 0},
 	{"1D_DM", 1},
@@ -104,6 +105,7 @@ public:
 	static int ncontr;
 	static int n_sideband;
 	static int ntries;
+	static double random_sigma;
 
 	static std::vector<std::string> Fits;
 	static std::vector<std::string> DMshapes;

@@ -16,18 +16,19 @@
   "chainNameMC": "toyMCtime",
   "chainNameBS": "BStree",
 
-  "Fits": ["frac"],
+  "Fits": ["all"],
   "__All_Fits": ["all"],
   "__Fixed__Fits": ["DM+BMfixed", "all"],
-  "tolerance": [0.1], 
+  "tolerance": [1.0e1], 
   "__Fixed__tolerance": [5.0e2, 1.0e5],
-  "ntries": 1,
+  "ntries": 3,
+  "random_sigma": 0.1,
 
   "start_from_previous": false,
-  "previous_result_file": "best_results_unbinned/fit2D_best/results_0_0.txt",
+  "previous_result_file": "/mnt/home/kklimaszewski/LHCb/CPT/CPT_beauty_2Dmass_fit/multithreaded/scans2D/scan_config_2D_nominal_fractions_binned/fit2D_10/muminus/best_results_binned/fit2D_best/results_0_0.txt",
   
-  "MC_directory_MD": "../../../../scans/scan_config_1D_DM_nominal_binned_final",
-  "MC_directory_MB": "../../../../scans/scan_config_1D_BM_nominal_binned_final",
+  "MC_directory_MD": "../../../scans/scan_config_1D_DM_nominal_binned_constrained",
+  "MC_directory_MB": "../../../scans/scan_config_1D_BM_nominal_binned_constrained",
 
   "nentries": -1,
 
@@ -104,50 +105,45 @@
 
   "fixVect" : [
     "md_signal_n", "md_signal_n2",
-    "md_BuDmunu_n", "md_BuDmunu_n2", "md_BuDmunu_meanCB",
+    "md_BuDmunu_meanCB", "md_BuDmunu_n", "md_BuDmunu_n2",
 
-    "mb_signal_n", "mb_BsDsMunu_n",
-    "mb_signal_f12_gaus",
-    "mb_signal_mean_g1",
-    "mb_signal_sigma_g1"
+    "mb_signal_n", "mb_signal_f12_gaus", "mb_signal_mean_g1", "mb_signal_sigma_g1",
+    "mb_BsDsMunu_n",
+    "mb_sidebands_l_n", "mb_sidebands_l_f12_gaus", "mb_sidebands_l_mean_g1", "mb_sidebands_l_sigma_g1", "mb_sidebands_r_n", "mb_sidebands_r_f12_gaus", "mb_sidebands_r_mean_g1", "mb_sidebands_r_sigma_g1"
   ],
 
-   "replace_var": {},
+   "replace_var": {
+    "md_BuDmunu_meanCB": "md_BuDmunu_mean"
+   },
 
    "varLimitsVect":{
-        "md_signal_f12":  [-1.0, 1.0],
-        "md_BuDmunu_f12": [-1.0, 1.0],
-        "md_BsDsMunu_f12":[-1.0, 1.0],
-        "md_B02DpDsm_f12":[-1.0, 1.0],
-        "md_Bu2D0Dsm_f12":[-1.0, 1.0],
+        "md_signal_f12":  [0.0, 1.0],
+        "md_BuDmunu_f12": [0.0, 1.0],
+        "md_BsDsMunu_f12":[0.0, 1.0],
+        "md_B02DpDsm_f12":[0.0, 1.0],
+        "md_Bu2D0Dsm_f12":[0.0, 1.0],
         "md_BsDsMunu_slope":[0.0001, 0.01],
 
-        "mb_signal_f12":  [-1.0, 1.0],
-        "mb_BuDmunu_f12": [-1.0, 1.0],
-        "mb_BsDsMunu_f12":[-1.0, 1.0],
-        "mb_B02DpDsm_f12":[-1.0, 1.0],
-        "mb_Bu2D0Dsm_f12":[-1.0, 1.0],
-        "mb_signal_f12_gaus":  [-1.0, 1.0],
-        "mb_signal_f_gaus":  [-1.0, 1.0],
+        "mb_signal_f12":  [0.0, 1.0],
+        "mb_BuDmunu_f12": [0.0, 1.0],
+        "mb_BsDsMunu_f12":[0.0, 1.0],
+        "mb_B02DpDsm_f12":[0.0, 1.0],
+        "mb_Bu2D0Dsm_f12":[0.0, 1.0],
+        "mb_signal_f12_gaus":  [0.0, 1.0],
+        "mb_signal_f_gaus":  [0.0, 1.0],
         
-        "mb_sidebands_f12":  [-1.0, 1.0],
-        "mb_sidebands_l_f12_gaus":  [-1.0, 1.0],
-        "mb_sidebands_l_f_gaus":  [-1.0, 1.0],
-        "mb_sidebands_r_f12_gaus":  [-1.0, 1.0],
-        "mb_sidebands_r_f_gaus":  [-1.0, 1.0]
+        "mb_sidebands_f12":  [0.0, 1.0],
+        "mb_sidebands_l_f12_gaus":  [0.0, 1.0],
+        "mb_sidebands_l_f_gaus":  [0.0, 1.0],
+        "mb_sidebands_r_f12_gaus":  [0.0, 1.0],
+        "mb_sidebands_r_f_gaus":  [0.0, 1.0]
     },
    
-  "scanLimitsVect": {
-    "fracInit_signal": [0.0, 1.0],
-    "fracInit_BuDmunu": [0.0, 1.0],
-    "fracInit_BsDsMunu": [0.0, 1.0],
-    "fracInit_B02DpDsm": [0.0, 1.0],
-    "fracInit_Bu2D0Dsm": [0.0, 1.0]
-  },
+  "scanLimitsVect": {},
 
    "__old__fracInit": [0.531364, 0.123454, 0.00900857, 0.0171418, 0.317511],
    "__org__fracInit": [0.544221, 0.128957, 0.0182142, 0.0354018, 0.238786],
    "__MC__fracInit": [0.5, 0.06, 0.027, 0.06, 0.24],
-   "fracInit": [0.19, 0.15, 0.15, 0.10, 0.31, 0.10]
+   "fracInit": [0.2, 0.2, 0.2, 0.2, 0.733]
 
 }

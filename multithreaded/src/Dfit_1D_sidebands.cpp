@@ -90,7 +90,7 @@ int main(int argc, char* argv[]) {
 	// Increase printout precision
 	// std::cout<<std::setprecision(40);
 
-	std::cout<<"Start ..."<<std::endl;
+	std::cout << "Start ..." << std::endl;
 	// Load config
 	try {
 		if (argc != 2) {
@@ -106,7 +106,7 @@ int main(int argc, char* argv[]) {
 		std::cerr << "Error: " << ex.what() << std::endl;
 		return 1;
 	}
-	std::cout<<"Config loaded ..."<<std::endl;
+	std::cout << "Config loaded ..." << std::endl;
 	int nentries = Config::nentries;
 
 	// Load data set - only single data set is used
@@ -185,7 +185,7 @@ int main(int argc, char* argv[]) {
 	std::string algoName = "";
 	int loop_count = 0;
 	for (auto& int_choose_fit : Config::int_choose_fits) {
-		std::cout<<"Configure Fit ..."<<std::endl;
+		std::cout << "Configure Fit ..." << std::endl;
 		ROOT::Math::Minimizer* min = ROOT::Math::Factory::CreateMinimizer(minName, algoName);
 
 		// Set tolerance , etc...
@@ -193,9 +193,9 @@ int main(int argc, char* argv[]) {
 		min->SetTolerance(Config::tolerance[loop_count]);
 		loop_count++;
 		min->SetPrintLevel(Config::printLevel);
-		//min->SetStrategy(2);
+		// min->SetStrategy(2);
 
-		std::cout<<"Define variables ..."<<std::endl;
+		std::cout << "Define variables ..." << std::endl;
 		double step = 0.1;
 		// Define Minuit fit variables for M_D
 		for (int i = 0; i < Config::ncontr; i++) {
@@ -207,8 +207,8 @@ int main(int argc, char* argv[]) {
 								 (TString::Format("%s_%s", Config::contrName[i].c_str(),
 												  Config::varname_md[i][ivar].c_str()))
 									 .Data(),
-								Config::init_values[i][ivar], step);
-								 //Config::MC_MD[i][ivar], Config::dMC_MD[i][ivar] + 1.0e-11);
+								 Config::init_values[i][ivar], step);
+				// Config::MC_MD[i][ivar], Config::dMC_MD[i][ivar] + 1.0e-11);
 				if (i != sb_idx) {
 					// Fix parameters for all contributions besides sidebands
 					min->FixVariable(Config::nvar_offset_md[i] + ivar);
@@ -219,11 +219,11 @@ int main(int argc, char* argv[]) {
 				// Read initial value from 1D fit for "from scratch" fit
 				if (start_scratch)
 					starting_point[Config::nvar_offset_md[i] + ivar] = Config::init_values[i][ivar];
-					//starting_point[Config::nvar_offset_md[i] + ivar] = Config::MC_MD[i][ivar];
+				// starting_point[Config::nvar_offset_md[i] + ivar] = Config::MC_MD[i][ivar];
 			}
 		}
 
-		std::cout<<"Set limits ..."<<std::endl;
+		std::cout << "Set limits ..." << std::endl;
 		// Set Limits on variables from config file
 		for (auto it = Config::varLimitsMap.begin(); it != Config::varLimitsMap.end(); ++it) {
 			int index_var = min->VariableIndex(it->first);
@@ -235,7 +235,7 @@ int main(int argc, char* argv[]) {
 			min->SetVariableLimits(index_var, pairlims.first, pairlims.second);
 		}
 
-		std::cout<<"Set fractions ..."<<std::endl;
+		std::cout << "Set fractions ..." << std::endl;
 		for (int i = 0; i < Config::ncontr; i++) {
 			// TODO if this is 1D M_D fit why are we setting fractions after M_B params ???
 			min->SetVariable(Config::nvar_all_md + i, (TString::Format("par_frac%d", i)).Data(),
@@ -247,15 +247,17 @@ int main(int argc, char* argv[]) {
 			if (start_scratch) starting_point[Config::nvar_all_md + i] = Config::fracInit[i];
 		}
 
-		// TODO_DOCS - This overries tolerance, leads to very small limit on EDM below machine precision
+		// TODO_DOCS - This overries tolerance, leads to very small limit on EDM below machine
+		// precision
 		// TODO_DOCS - Causes the fit not not calculate errors on parameters
 		// Define the error setimation parameter in minuit for 1 sigma and ncontr -1 free parameters
 		double CL_normal = ROOT::Math::normal_cdf(1) - ROOT::Math::normal_cdf(-1);	// 1 sigma ~68%
 		min->SetErrorDef(TMath::ChisquareQuantile(
-			CL_normal, Config::nvar_all_md));  // ncontr-1 free fraction parameters, other parameters
-											  // have gaussian contraints base on MC fits.
+			CL_normal,
+			Config::nvar_all_md));	// ncontr-1 free fraction parameters, other parameters
+									// have gaussian contraints base on MC fits.
 
-		std::cout<<"Get PDFs ..."<<std::endl;
+		std::cout << "Get PDFs ..." << std::endl;
 		const auto& D_PDFs = Config::getVectorPDFs("Dmass");
 		if (int(D_PDFs.size()) != Config::ncontr) {
 			std::cout << " NO D_PDFs \n";
@@ -270,14 +272,14 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
-		std::cout<<"Fix variables ..."<<std::endl;
+		std::cout << "Fix variables ..." << std::endl;
 		// list of fixed variables form config*/
 		for (const auto& fix : Config::fixVect) {
 			min->FixVariable(min->VariableIndex(fix));
 			std::cout << "Fix: " << fix << "  " << min->VariableIndex(fix) << std::endl;
 		}
 
-		std::cout<<"Define replce rules ..."<<std::endl;
+		std::cout << "Define replce rules ..." << std::endl;
 		std::vector<std::pair<int, int>> replaceIndexVect = {};
 		for (const auto& rep_var : Config::replace_var) {
 			int index_replaced = min->VariableIndex(rep_var.first);
@@ -295,7 +297,7 @@ int main(int argc, char* argv[]) {
 			replaceIndexVect.push_back(std::make_pair(index_replaced, index_substitute));
 		}
 
-		std::cout<<"Run Fit ..."<<std::endl;
+		std::cout << "Run Fit ..." << std::endl;
 		// Start the minimization
 		// Define a fit function for Minuit
 		auto fchi2 = wrap_chi2(D_PDFs, data, Config::MC_MD, Config::dMC_MD, replaceIndexVect,
@@ -306,8 +308,7 @@ int main(int argc, char* argv[]) {
 		min->Hesse();
 
 		// Print the fit results
-		std::ofstream results(
-			TString::Format("res_sidebands_%d.txt", Config::sign));
+		std::ofstream results(TString::Format("res_sidebands_%d.txt", Config::sign));
 		results << min->Status() << "  " << min->MinValue() << std::endl;
 		if (min->Status() != 0) {
 			std::cout << "Bad status of fit " << min->Status() << std::endl;

@@ -152,7 +152,7 @@ void DoubleGaussPDF::CalcIntegral(const double *par, double min, double max) {
 
 double SkewNormalPDF::EvalPDF(const double *xx, const double *par, const int component) {
 	double xm = xx[0] - par[0];	 // mean
-	double sigma = par[1];
+	double sigma = abs(par[1]);
 	double skew = par[2];
 	double sn = 0.0;
 
@@ -172,7 +172,7 @@ double SkewNormalPDF::EvalPDF(const double *xx, const double *par, const int com
 void SkewNormalPDF::CalcIntegral(const double *par, double min, double max) {
 	double xmin = min - par[0];
 	double xmax = max - par[0];
-	double sigma_sk = par[1];
+	double sigma_sk = abs(par[1]);
 	double skew = par[2];
 
 	double zmin = xmin / sigma_sk;
@@ -193,7 +193,7 @@ double CrystalBallPDF::EvalPDF(const double *xx, const double *par, const int co
 	double sigma = abs(par[1]);
 	double alpha = abs(par[2]) + 1.0e-10;
 	double n = par[3];
-	
+
 	double CB = ROOT::Math::crystalball_function(2.0 * mean - m_rec, alpha, n, sigma, mean);
 	if (IntCB != 0.0) CB /= IntCB;
 	return CB;
@@ -242,7 +242,7 @@ void JohnsonPDF::CalcIntegral(const double *par, double min, double max) {
 double DoubleSidedCrystalBallPDF::EvalPDF(const double *xx, const double *par,
 										  const int component) {
 	double mean = par[0];
-	double sigma = par[1];
+	double sigma = abs(par[1]);
 	double alpha = abs(par[2]);
 	double n = par[3];
 	double alpha_h = abs(par[4]);
@@ -264,7 +264,7 @@ void DoubleSidedCrystalBallPDF::CalcIntegral(const double *par, double min, doub
 	double alpha = par[2];
 	double n = par[3];
 	double mean = par[0];
-	double sigma = par[1];
+	double sigma = abs(par[1]);
 	double alpha_h = abs(par[4]);
 	double n2 = par[5];
 

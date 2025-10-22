@@ -13,13 +13,18 @@ void Draw_pull(TCanvas *c, TH1D *hist, TF1 *func[], TF1 *tf1_sum);
 double LikelihoodRatioTest(TH1 *h_data, TH1 *h_mc);
 
 using namespace cpt_b0_analysis;
-void Draw_details(std::string config_file) {
+void Draw_details(std::string config_file, std::string output_dir) {
 	// Load config
 	std::cout << config_file << endl;
 	if (Config::load(config_file)) {
 		std::cerr << " Bad config file! " << std::endl;
 		return;
 	}
+
+	// TODO_KK Where do we want to store the results ??
+	// Are we drawing this for every toy ??
+	// Maybe we should pass the output directory as a parameter ??
+	gSystem->Exec(Form("mkdir -p %s", output_dir.c_str()));
 
 	TH2D *hist2D = new TH2D("h2D", "", nbins, Config::minDM, Config::maxDM, nbins,
 							Config::minBMcorr, Config::maxBMcorr);
@@ -59,6 +64,7 @@ void Draw_details(std::string config_file) {
 	}
 	double nevents = double(hist2D->Integral());
 
+	/*
 	TH1D *h_tau_signal_sweighted =
 		new TH1D("h_tau_sw", "time signal MC vs sweighted", nbins, Config::tMin, Config::tMax);
 	TH1D *h_MC_signal =
@@ -89,6 +95,7 @@ void Draw_details(std::string config_file) {
 	for (int e = 0; e < int(vec_Tau_ptr->size()); e++) {
 		h_tau_signal_sweighted->Fill(vec_Tau[e], vec_sWeights[e]);
 	}
+
 	TChain chMC(Config::chainName.c_str());
 	chMC.Add(
 		"/mnt/home/share/lhcb/CPT_beauty/MC2016/selected/"
@@ -168,10 +175,14 @@ void Draw_details(std::string config_file) {
 
 	c_mc->SaveAs("../results/swtau_signalMC.pdf");
 	c_mc->SaveAs("../results/swtau_signalMC.C");
+	*/
 
-	double res[Config::nvar_all_md + Config::nvar_all_mb + Config::ncontr];
-	TString resname = Form("../toy_res/toy_%d/best_results_unbinned/fit2D_best/results_%d_3.txt",
-						   Config::randSeed, Config::sign);
+	double res[Config::nvar_all_md + Config::nvar_all_mb + Config::ncontr - 1];
+	// TODO_KK this has to be automatic
+	// binned vs unbinned
+	// fit ID
+	// What about toys ??
+	TString resname = Form("best_results_binned/fit2D_best/results_%d_3.txt", Config::sign);
 	cout << resname << endl;
 	ifstream input(resname.Data());
 	double x, dx;
@@ -190,12 +201,12 @@ void Draw_details(std::string config_file) {
 	double frac[Config::ncontr];
 	double *pa = &res[Config::nvar_all_md + Config::nvar_all_mb];
 
-	double sum_frac = 0.0;
+	double base_frac = 1.0;
 	for (int i = 0; i < Config::ncontr - 1; i++) {
-		frac[i] = abs(pa[i]);
-		sum_frac += frac[i];
+		frac[i] = base_frac * pa[i];
+		base_frac *= (1.0 - pa[i]);
 	}
-	frac[Config::ncontr - 1] = abs(1.0 - sum_frac);
+	frac[Config::ncontr - 1] = base_frac;
 
 	const int nall = Config::nvar_all_md + Config::nvar_all_mb;
 
@@ -203,7 +214,7 @@ void Draw_details(std::string config_file) {
 	for (int i = 0; i < Config::ncontr; i++) {
 		for (int ivar = 0; ivar < Config::nvar_md[i]; ivar++) {
 			param[Config::nvar_offset_md[i] + ivar] = res[Config::nvar_offset_md[i] + ivar];
-			if (ivar == 1 && i != 2 && i != 4) param[Config::nvar_offset_md[i] + ivar] = res[1];
+			// if (ivar == 1 && i != 2 && i != 4) param[Config::nvar_offset_md[i] + ivar] = res[1];
 		}
 		for (int ivar = 0; ivar < Config::nvar_mb[i]; ivar++) {
 			param[Config::nvar_all_md + Config::nvar_offset_mb[i] + ivar] =
@@ -212,7 +223,7 @@ void Draw_details(std::string config_file) {
 	}
 
 	for (int i = 0; i < Config::ncontr; i++) {
-		cout << i << "  " << frac[i] << endl;
+		cout << "Frac_" << i << "  " << frac[i] << endl;
 	}
 
 	auto D_PDFs = Config::getVectorPDFs("Dmass");
@@ -345,8 +356,8 @@ void Draw_details(std::string config_file) {
 
 	c2D->cd();
 	c2D->Update();
-	c2D->SaveAs("../results/fit2D.pdf");
-	c2D->SaveAs("../results/fit2D.C");
+	c2D->SaveAs(Form("%s/fit2D.pdf", output_dir.c_str()));
+	c2D->SaveAs(Form("%s/fit2D.C", output_dir.c_str()));
 	/*
 			   double nrot = 100.;
 			for (int i=0; i<nrot; ++i){
@@ -374,21 +385,21 @@ void Draw_details(std::string config_file) {
 	hpull1D->SetFillColor(kYellow);
 	hpull1D->Draw("hist");
 
-	cpull1D->SaveAs("../results/pull1D.pdf");
-	cpull1D->SaveAs("../results/pull1D.C");
+	cpull1D->SaveAs(Form("%s/pull1D.pdf", output_dir.c_str()));
+	cpull1D->SaveAs(Form("%s/pull1D.C", output_dir.c_str()));
 
 	TCanvas *c = new TCanvas("c", "", 500, 500);
 	Draw_pull(c, histMD, funcMD, tf1_sumMD);
 
-	c->SaveAs("../results/fitMD.pdf");
-	c->SaveAs("../results/fitMD.C");
+	c->SaveAs(Form("%s/fitMD.pdf", output_dir.c_str()));
+	c->SaveAs(Form("%s/fitMD.C", output_dir.c_str()));
 
 	TCanvas *c_mb = new TCanvas("c_mb", "", 500, 500);
 	Draw_pull(c_mb, histMB, funcMB, tf1_sumMB);
-	c_mb->SaveAs("../results/fitMB.pdf");
-	c_mb->SaveAs("../results/fitMB.C");
+	c_mb->SaveAs(Form("%s/fitMB.pdf", output_dir.c_str()));
+	c_mb->SaveAs(Form("%s/fitMB.C", output_dir.c_str()));
 
-	TFile *histout = new TFile("../results/output_hists.root", "recreate");
+	TFile *histout = new TFile(Form("%s/output_hists.root", output_dir.c_str()), "recreate");
 	hpull1D->Write();
 	histMD->Write();
 	histMB->Write();
@@ -401,8 +412,8 @@ void Draw_details(std::string config_file) {
 	tf2_sum2D->Write();
 	tf1_sumMD->Write();
 	tf1_sumMB->Write();
-	h_tau_signal_sweighted->Write();
-	h_MC_signal->Write();
+	// h_tau_signal_sweighted->Write();
+	// h_MC_signal->Write();
 	histout->Close();
 }
 

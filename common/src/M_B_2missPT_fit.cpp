@@ -235,86 +235,84 @@ void JohnsonPlusCBPlusDoubleGaussPDF::CalcIntegral(const double *par, double min
 	Gauss.CalcIntegral(par3, min, max);
 }
 
-double SidebandsPDF::EvalPDF(const double *xx, const double *par,
-												const int component) {
+double SidebandsPDF::EvalPDF(const double *xx, const double *par, const int component) {
 	double f_12 = abs(par[0]);
 	double par1[15];
 	double par2[15];
-	par1[0] = par[1];	// f_gauss
-	par1[1] = par[2];	// f12
-	par1[2] = par[3];	// xi
-	par1[3] = par[4];	// lambda
-	par1[4] = par[5];	// gamma
-	par1[5] = par[6];	// delta
-	par1[6] = par[7];	// mean
-	par1[7] = par[8];	// sigma
-	par1[8] = par[9];	// alpha
-	par1[9] = par[10];	// n
-	par1[10] = par[11];	// f gauss12
-	par1[11] = par[12];	// mean gauss 1
-	par1[12] = par[13];	// sigma gauss 1
-	par1[13] = par[14];	// mean gauss 2
-	par1[14] = par[15];	// sigma gauss 2
+	par1[0] = par[1];	 // f_gauss
+	par1[1] = par[2];	 // f12
+	par1[2] = par[3];	 // xi
+	par1[3] = par[4];	 // lambda
+	par1[4] = par[5];	 // gamma
+	par1[5] = par[6];	 // delta
+	par1[6] = par[7];	 // mean
+	par1[7] = par[8];	 // sigma
+	par1[8] = par[9];	 // alpha
+	par1[9] = par[10];	 // n
+	par1[10] = par[11];	 // f gauss12
+	par1[11] = par[12];	 // mean gauss 1
+	par1[12] = par[13];	 // sigma gauss 1
+	par1[13] = par[14];	 // mean gauss 2
+	par1[14] = par[15];	 // sigma gauss 2
 
-	par2[0] = par[16];	// f_gauss
-	par2[1] = par[17];	// f12
-	par2[2] = par[18];	// xi
-	par2[3] = par[19];	// lambda
-	par2[4] = par[20];	// gamma
-	par2[5] = par[21];	// delta
-	par2[6] = par[22];	// mean
-	par2[7] = par[23];	// sigma
-	par2[8] = par[24];	// alpha
-	par2[9] = par[25];	// n
-	par2[10] = par[26];	// f gauss12
-	par2[11] = par[27];	// mean gauss 1
-	par2[12] = par[28];	// sigma gauss 1
-	par2[13] = par[29];	// mean gauss 2
-	par2[14] = par[30];	// sigma gauss 2
+	par2[0] = par[16];	 // f_gauss
+	par2[1] = par[17];	 // f12
+	par2[2] = par[18];	 // xi
+	par2[3] = par[19];	 // lambda
+	par2[4] = par[20];	 // gamma
+	par2[5] = par[21];	 // delta
+	par2[6] = par[22];	 // mean
+	par2[7] = par[23];	 // sigma
+	par2[8] = par[24];	 // alpha
+	par2[9] = par[25];	 // n
+	par2[10] = par[26];	 // f gauss12
+	par2[11] = par[27];	 // mean gauss 1
+	par2[12] = par[28];	 // sigma gauss 1
+	par2[13] = par[29];	 // mean gauss 2
+	par2[14] = par[30];	 // sigma gauss 2
 
 	if (component == 0)
 		return (1.0 - f_12) * Left.EvalPDF(xx, par1);
 	else if (component == 1)
 		return f_12 * Right.EvalPDF(xx, par2);
 	else
-		return (1.0 - f_12) * Left.EvalPDF(xx, par1) +
-			   f_12 * Right.EvalPDF(xx, par2);
+		return (1.0 - f_12) * Left.EvalPDF(xx, par1) + f_12 * Right.EvalPDF(xx, par2);
 }
 
 void SidebandsPDF::CalcIntegral(const double *par, double min, double max) {
 	double par1[15];
 	double par2[15];
-	par1[0] = par[1];	// f_gauss
-	par1[1] = par[2];	// f12
-	par1[2] = par[3];	// xi
-	par1[3] = par[4];	// lambda
-	par1[4] = par[5];	// gamma
-	par1[5] = par[6];	// delta
-	par1[6] = par[7];	// mean
-	par1[7] = par[8];	// sigma
-	par1[8] = par[9];	// alpha
-	par1[9] = par[10];	// n
-	par1[10] = par[11];	// f gauss12
-	par1[11] = par[12];	// mean gauss 1
-	par1[12] = par[13];	// sigma gauss 1
-	par1[13] = par[14];	// mean gauss 2
-	par1[14] = par[15];	// sigma gauss 2
+	par1[0] = par[1];	 // f_gauss
+	par1[1] = par[2];	 // f12
+	par1[2] = par[3];	 // xi
+	par1[3] = par[4];	 // lambda
+	par1[4] = par[5];	 // gamma
+	par1[5] = par[6];	 // delta
+	par1[6] = par[7];	 // mean
+	par1[7] = par[8];	 // sigma
+	par1[8] = par[9];	 // alpha
+	par1[9] = par[10];	 // n
+	par1[10] = par[11];	 // f gauss12
+	par1[11] = par[12];	 // mean gauss 1
+	par1[12] = par[13];	 // sigma gauss 1
+	par1[13] = par[14];	 // mean gauss 2
+	par1[14] = par[15];	 // sigma gauss 2
 
-	par2[0] = par[16];	// f_gauss
-	par2[1] = par[17];	// f12
-	par2[2] = par[18];	// xi
-	par2[3] = par[19];	// lambda
-	par2[4] = par[20];	// gamma
-	par2[5] = par[21];	// delta
-	par2[6] = par[22];	// mean
-	par2[7] = par[23];	// sigma
-	par2[8] = par[24];	// alpha
-	par2[9] = par[25];	// n
-	par2[10] = par[26];	// f gauss12
-	par2[11] = par[27];	// mean gauss 1
-	par2[12] = par[28];	// sigma gauss 1
-	par2[13] = par[29];	// mean gauss 2
-	par2[14] = par[30];	// sigma gauss 2
+	par2[0] = par[16];	 // f_gauss
+	par2[1] = par[17];	 // f12
+	par2[2] = par[18];	 // xi
+	par2[3] = par[19];	 // lambda
+	par2[4] = par[20];	 // gamma
+	par2[5] = par[21];	 // delta
+	par2[6] = par[22];	 // mean
+	par2[7] = par[23];	 // sigma
+	par2[8] = par[24];	 // alpha
+	par2[9] = par[25];	 // n
+	par2[10] = par[26];	 // f gauss12
+	par2[11] = par[27];	 // mean gauss 1
+	par2[12] = par[28];	 // sigma gauss 1
+	par2[13] = par[29];	 // mean gauss 2
+	par2[14] = par[30];	 // sigma gauss 2
 
 	Left.CalcIntegral(par1, min, max);
 	Right.CalcIntegral(par2, min, max);

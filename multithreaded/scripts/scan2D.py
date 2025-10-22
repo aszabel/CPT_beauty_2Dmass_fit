@@ -36,12 +36,6 @@ scan_path.mkdir(parents=True, exist_ok=True)
 
 for n in range(START, N+1):
     for sign in ["muminus", "muplus"]:
-        frac_sum = 0.0
-        frac_count = 0
-        for i, contr in enumerate(config["contrName"]):
-            if f"fracInit_{contr}" not in config["scanLimitsVect"]:
-                frac_sum += config["fracInit"][i]
-                frac_count += 1
         for i, fit in enumerate(config["contrName"]):
             for j, var in enumerate(config["varname_md"][i]):
                 if f"md_{fit}_{var}" in config["scanLimitsVect"]:
@@ -53,22 +47,15 @@ for n in range(START, N+1):
                     limits = config["scanLimitsVect"][f"mb_{fit}_{var}"]
                     v = random.uniform(limits[0], limits[1])
                     config["init_values"][i][j] = v
-            if f"fracInit_{fit}" in config["scanLimitsVect"]:
-                limits = config["scanLimitsVect"][f"fracInit_{fit}"]
-                v = random.uniform(limits[0], min(limits[1], 1.0 - frac_sum))
-                frac_sum += v
-                config["fracInit"][i] = v
-            if frac_count != config["ncontr"]:
-                config["fracInit"][-1] = 1.0 - frac_sum
         config["randSeed"] = n
         config["sign"] = sign
 
-        out_path = scan_path / f"fit2D_{n}" / sign
+        out_path = scan_path / f"fit2D_{n}"
         out_path.mkdir(parents=True, exist_ok=True)
         out_log_path = out_path / "logs"
         if not out_log_path.exists():
             out_log_path.symlink_to(logs_path)
-        out_name = out_path / (config_path.stem + ".json")
+        out_name = out_path / (config_path.stem + ".json." + sign)
         with out_name.open("w") as f:
             json.dump(config, f, indent=2)
 
