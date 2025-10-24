@@ -123,6 +123,6 @@
   "DMshapes": ["DCBplusGaus"],
   "varname_md": [[]],
 
-  "fracInit": [1.0]
+  "fracInit": []
 
 }

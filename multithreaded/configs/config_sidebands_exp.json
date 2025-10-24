@@ -62,7 +62,7 @@
       "sidebands_slope":   [0.0000000001, 0.1 ]
     },
 
-   "fracInit": [0.3],
+   "fracInit": [],
   
   "MC_directory_MB": "../../results/B_M_results_CBplusSkewNorm_unbinned"
 }

@@ -115,6 +115,6 @@
   "varname_md": [[]],
   "MC_directory_MD": "D_M_results_JSUplusGaus",
 
-  "fracInit": [0.2, 0.15, 0.15, 0.15, 0.15, 0.15]
+  "fracInit": [0.2, 0.15, 0.15, 0.15, 0.15]
 
 }

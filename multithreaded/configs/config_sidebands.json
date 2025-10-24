@@ -63,7 +63,7 @@
       "sidebands_a2":   [-10, 10 ]
     },
 
-   "fracInit": [0.3],
+   "fracInit": [],
 
    "MC_directory_MB": ""
 }

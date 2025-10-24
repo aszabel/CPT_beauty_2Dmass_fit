@@ -166,9 +166,10 @@ for fit, data in results.items():
     for pdf in good_figures_path.glob(f"{fig}*.pdf"):
         shutil.copy(pdf, good_fit_path / pdf.name)
 
-for run in scan_path.iterdir():
-    if run.name == "results":
-        continue
-    shutil.rmtree(run)
+if len(chi2) > 5:
+    for run in scan_path.iterdir():
+        if run.name == "results":
+            continue
+        shutil.rmtree(run)
 
 pprint(results)

@@ -125,6 +125,6 @@
   "DMshapes": ["DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "DCBplusGaus", "Chebyshev", "DCBplusGaus"],
   "varname_md": [[]],
 
-  "fracInit": [0.2, 0.15, 0.15, 0.15, 0.15, 0.15]
+  "fracInit": [0.2, 0.15, 0.15, 0.15, 0.15]
 
 }
