@@ -48,8 +48,12 @@ double Config::minBMcorr = 2700.;
 double Config::maxBMcorr = 8300.;
 int Config::Nbins = 250;
 int Config::nlogBins = 50;
-int Config::nvar_md = 7;
-int Config::nvar_mb = 7;
+std::vector<int> Config::nvar_md = {};
+std::vector<int> Config::nvar_mb = {};
+std::vector<int> Config::nvar_offset_md = {};
+std::vector<int> Config::nvar_offset_mb = {};
+int Config::nvar_all_md = 0;
+int Config::nvar_all_mb = 0;
 int Config::ncontr = 6;
 std::vector<int> Config::ntries = {};
 
@@ -61,8 +65,10 @@ std::vector<std::string> Config::BMshapes = {};
 
 std::vector<std::vector<std::string>> Config::fixVect = {};
 
-std::vector<std::pair<std::string, double>> Config::varname;
 int Config::nvar_time = 10;
+std::vector<std::string> Config::contrName = {};
+std::vector<std::vector<std::string>> Config::varname_md = {};
+std::vector<std::vector<std::string>> Config::varname_mb = {};
 std::map<std::string, std::string> Config::replace_var;
 std::map<std::string, std::pair<double, double>> Config::varLimitsMap;
 
@@ -305,29 +311,36 @@ int Config::load(const std::string& filename) {
 		return 1;
 	}
 
-	if (config.contains("nvar_md")) {
-		nvar_md = config["nvar_md"];
-		if (nvar_md < 0) {
-			std::cerr << "Invalid config file: 'nvar_md' must be positive." << std::endl;
-			return 1;
+	if (config.contains("varname_md")) {
+		varname_md = config["varname_md"].template get<std::vector<std::vector<std::string>>>();
+		int sum = 0;
+		for (auto& v : varname_md) {
+			nvar_md.push_back(v.size());
+			nvar_offset_md.push_back(sum);
+			sum += v.size();
 		}
+		nvar_all_md = sum;
 	} else {
-		std::cerr << "Invalid config file: missing 'nvar_md' key." << std::endl;
+		std::cerr << "Invalid config file: missing 'varname_md' key." << std::endl;
 		return 1;
 	}
-	if (config.contains("nvar_mb")) {
-		nvar_mb = config["nvar_mb"];
-		if (nvar_mb < 0) {
-			std::cerr << "Invalid config file: 'nvar_mb' must be positive." << std::endl;
-			return 1;
+	if (config.contains("varname_mb")) {
+		varname_mb = config["varname_mb"].template get<std::vector<std::vector<std::string>>>();
+		int sum = 0;
+		for (auto& v : varname_mb) {
+			nvar_mb.push_back(v.size());
+			nvar_offset_mb.push_back(sum);
+			sum += v.size();
 		}
+		nvar_all_mb = sum;
 	} else {
-		std::cerr << "Invalid config file: missing 'nvar_mb' key." << std::endl;
+		std::cerr << "Invalid config file: missing 'varname_mb' key." << std::endl;
 		return 1;
 	}
+
 	if (config.contains("nvar_time")) {
 		nvar_time = config["nvar_time"];
-		if (nvar_mb < 0) {
+		if (nvar_time < 0) {
 			std::cerr << "Invalid config file: 'nvar_time' must be positive." << std::endl;
 			return 1;
 		}
@@ -343,6 +356,18 @@ int Config::load(const std::string& filename) {
 		}
 	} else {
 		std::cerr << "Invalid config file: missing 'ntries' key." << std::endl;
+		return 1;
+	}
+
+	if (config.contains("contrName")) {
+		contrName = config["contrName"].template get<std::vector<std::string>>();
+		if (int(contrName.size()) != ncontr) {
+			std::cerr << "Invalid config file: vector 'contrName' should have " << ncontr
+					  << " elements.";
+			return 1;
+		}
+	} else {
+		std::cerr << "Invalid config file: missing 'contrName' key." << std::endl;
 		return 1;
 	}
 
@@ -395,22 +420,37 @@ int Config::load(const std::string& filename) {
 		}
 	}
 
+	if (config.contains("varname_md")) {
+		varname_md = config["varname_md"].template get<std::vector<std::vector<std::string>>>();
+		int sum = 0;
+		for (auto& v : varname_md) {
+			nvar_md.push_back(v.size());
+			nvar_offset_md.push_back(sum);
+			sum += v.size();
+		}
+		nvar_all_md = sum;
+	} else {
+		std::cerr << "Invalid config file: missing 'varname_md' key." << std::endl;
+		return 1;
+	}
+	if (config.contains("varname_mb")) {
+		varname_mb = config["varname_mb"].template get<std::vector<std::vector<std::string>>>();
+		int sum = 0;
+		for (auto& v : varname_mb) {
+			nvar_mb.push_back(v.size());
+			nvar_offset_mb.push_back(sum);
+			sum += v.size();
+		}
+		nvar_all_mb = sum;
+	} else {
+		std::cerr << "Invalid config file: missing 'varname_mb' key." << std::endl;
+		return 1;
+	}
+
 	if (config.contains("fixVect")) {
 		fixVect = config["fixVect"].template get<std::vector<std::vector<std::string>>>();
 	} else {
 		std::cerr << "Invalid config file: missing 'fixVect' key." << std::endl;
-		return 1;
-	}
-
-	if (config.contains("varname")) {
-		varname = config["varname"].template get<std::vector<std::pair<std::string, double>>>();
-		// for (auto it = entry.begin(); it!=entry.end();++it){
-		// double target = it.value().template get<double>();
-		// varname[it.key()] = target;
-		// varname.insert(*it);
-		//}
-	} else {
-		std::cerr << "Invalid config file: missing 'varname' key." << std::endl;
 		return 1;
 	}
 

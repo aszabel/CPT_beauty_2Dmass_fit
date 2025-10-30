@@ -1,5 +1,21 @@
 #include "config.h"
 
+#include <iostream>
+#include <fstream>
+
+#include "TROOT.h"
+#include "TString.h"
+#include "TSystem.h"
+#include "TRandom.h"
+#include "TChain.h"
+#include "TH1D.h"
+#include "TCanvas.h"
+#include "TGraph.h"
+#include "TF1.h"
+#include <Math/Minimizer.h>
+#include <Math/Factory.h>
+#include <Math/Functor.h>
+
 /**
  *
  * Fit all 1D mass distributions for all contributions defined in a config file.
@@ -36,7 +52,7 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 		// choice defines contribution ID
 
 		int nvar = nvars[choice];
-		std::cout << "##### Running fit: " << Config::Fits[fit_id] << endl;
+		std::cout << "##### Running fit: " << Config::Fits[fit_id] << std::endl;
 
 		// set tolerance , etc...
 		ROOT::Math::Minimizer* min = ROOT::Math::Factory::CreateMinimizer(minName, algoName);
@@ -151,7 +167,7 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 			int index_var = min->VariableIndex(it->first);
 			if (index_var == -1) {
 				std::cerr << "Error in limiting parameters: param " << it->first << " not found.\n";
-				return 1;
+				return;
 			}
 			auto pairlims = it->second;
 			min->SetVariableLimits(index_var, pairlims.first, pairlims.second);
@@ -177,12 +193,12 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 			if (index_replaced == -1) {
 				std::cerr << "Error in substituting parameters param " << rep_var.first
 						  << " not found.\n";
-				return 1;
+				return;
 			}
 			if (index_substitute == -1) {
 				std::cerr << "Error in substituting parameters param " << rep_var.second
 						  << " not found.\n";
-				return 1;
+				return;
 			}
 			replaceIndexVect.push_back(std::make_pair(index_replaced, index_substitute));
 		}
@@ -292,7 +308,7 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 		}*/
 
 		// Print correlation matrix
-		cout << "Correlation matrix:" << endl;
+		std::cout << "Correlation matrix:" << std::endl;
 		size_t headerWidths[nvar];
 		size_t max_header = 0;
 		for (int i = 0; i < nvar; i++) {
@@ -302,24 +318,24 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 		}
 		for (int i = 0; i < nvar; i++) {
 			if (i == 0) {
-				cout << std::setw(max_header) << " " << std::setw(0);
+				std::cout << std::setw(max_header) << " " << std::setw(0);
 				for (int j = 0; j < nvar; j++) {
-					cout << " | " << std::setw(headerWidths[j]) << varnames[choice][j];
+					std::cout << " | " << std::setw(headerWidths[j]) << varnames[choice][j];
 				}
-				cout << endl;
+				std::cout << std::endl;
 			}
-			cout << std::setw(max_header) << varnames[choice][i];
+			std::cout << std::setw(max_header) << varnames[choice][i];
 			for (int j = 0; j < nvar; j++) {
-				cout << std::setw(0) << " | " << std::setw(headerWidths[j]) << std::setprecision(3)
+				std::cout << std::setw(0) << " | " << std::setw(headerWidths[j]) << std::setprecision(3)
 					 << min->Correlation(i, j);
 			}
-			cout << endl;
+			std::cout << std::endl;
 		}
 
 		for (int i = 0; i < nvar; i++) {
-			cout << min->X()[i] << ", ";
+			std::cout << min->X()[i] << ", ";
 		}
-		cout << endl;
+		std::cout << std::endl;
 
 		// Draw results
 		TPad* pad1 = new TPad("pad1", "", 0.0, 0.3, 1.0, 1.0);
@@ -394,11 +410,11 @@ void M_fit_Every(const TString& path_results, const std::vector<int>& nvars, con
 					   Config::contrName[choice].c_str(), Config::sign));
 
 		// Store results in a simple txt file
-		ofstream outfile(Form("%s/res_%s_%d.txt", path_results.Data(),
+		std::ofstream outfile(Form("%s/res_%s_%d.txt", path_results.Data(),
 							  Config::contrName[choice].c_str(), Config::sign));
 		outfile << min->Status() << "  " << min->MinValue() << std::endl;
 		for (int i = 0; i < nvar; i++) {
-			outfile << min->X()[i] << "  " << min->Errors()[i] << endl;
+			outfile << min->X()[i] << "  " << min->Errors()[i] << std::endl;
 		}
 		outfile.close();
 

@@ -338,6 +338,8 @@ int main(int argc, char *argv[]) {
 				ROOT::Math::normal_cdf(1) - ROOT::Math::normal_cdf(-1);	 // 1 sigma ~68%
 
 			int ivar = 0;
+			// TODO_KK correct to new config
+			/*
 			for (const auto &pair : Config::varname) {
 				double drawvar = 1.0;
 				if (ivar >= 3 && ivar <= 6)
@@ -345,6 +347,7 @@ int main(int argc, char *argv[]) {
 				min->SetVariable(ivar, pair.first.c_str(), drawvar * (pair.second), 0.0001);
 				ivar++;
 			}
+			*/
 
 			if (ii == 1) {
 				for (int i = 0; i < Config::nvar_time; i++) min->SetVariableValue(i, minoutput[i]);

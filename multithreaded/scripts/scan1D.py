@@ -54,6 +54,8 @@ scan_path.mkdir(parents=True, exist_ok=True)
 if args.input:
     input_path = Path(args.input)
     for results_path in input_path.iterdir():
+        if results_path.is_dir():
+            continue
         tags = results_path.stem.split("_")
         fit = tags[1]
         pdf = tags[2]
@@ -166,10 +168,10 @@ for fit, data in results.items():
     for pdf in good_figures_path.glob(f"{fig}*.pdf"):
         shutil.copy(pdf, good_fit_path / pdf.name)
 
-if len(chi2) > 5:
-    for run in scan_path.iterdir():
-        if run.name == "results":
-            continue
-        shutil.rmtree(run)
+#if len(chi2) > 5:
+#    for run in scan_path.iterdir():
+#        if run.name == "results":
+#            continue
+#        shutil.rmtree(run)
 
 pprint(results)

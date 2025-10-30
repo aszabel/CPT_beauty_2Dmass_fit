@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 
+#include "BasicShapes.h"
 #include "ChebyshevPDF.h"
 #include "D_M_fit_shape.h"
 #include "M_B_2missPT_fit.h"
@@ -14,10 +15,32 @@
 
 using namespace cpt_b0_analysis;
 
-const std::unordered_map<std::string, const int> dictionaryDM = {{"DCBplusGaus", 0},
-																 {"Chebyshev", 1}};
+// mapping string values of shape vector onto integer values to use switch
+// afterwards
+const std::unordered_map<std::string, const int> dictionaryDM = {
+	{"DCBplusGaus", 0}, {"Chebyshev", 1},	{"JSUplusGaus", 2}, {"Exponent", 3},
+	{"JSUplusCB", 4},	{"JSUplusDSCB", 5}, {"Johnson", 6},		{"DoubleSidedCrystalBall", 7},
+	{"JSUplusExp", 8},	{"DCBplusExp", 9}, {"Gauss", 10}};
 
-const std::unordered_map<std::string, const int> dictionaryBMcorr = {{"RCplusGaus", 0}};
+const std::unordered_map<std::string, const int> dictionaryBMcorr = {{"RCplusGaus", 0},
+																	 {"SNplusCB", 1},
+																	 {"Gauss", 2},
+																	 {"DoubleGauss", 3},
+																	 {"CrystalBall", 4},
+																	 {"SkewNormal", 5},
+																	 {"RaisedCosine", 6},
+																	 {"Johnson", 7},
+																	 {"DoubleSidedCrystalBall", 8},
+																	 {"JSUplusCB", 9},
+																	 {"DCBplusGaus", 10},
+																	 {"JSUplusGaus", 11},
+																	 {"JSUplusCBplusDGaus", 12},
+																	 {"SNplusCBplusDGaus", 13},
+																	 {"JSUplusDSCB", 14},
+																	 {"JSUplusExp", 15},
+																	 {"DCBplusExp", 16},
+																	 {"Sidebands", 17},
+																	 {"Chebyshev", 18}};
 const std::unordered_map<std::string, const int> dictionaryChooseFit = {
 	{"frac", 0}, {"BM", 1}, {"DM+BMfixed", 2}, {"all", 3}, {"shapes", 4}};
 
@@ -64,15 +87,21 @@ public:
 	static double maxBMcorr;
 	static int Nbins;
 	static int nlogBins;
-	static int nvar_md;
-	static int nvar_mb;
+	static std::vector<int> nvar_md;
+	static std::vector<int> nvar_mb;
+	static std::vector<int> nvar_offset_md;
+	static std::vector<int> nvar_offset_mb;
+	static int nvar_all_md;
+	static int nvar_all_mb;
 	static int nvar_time;
 	static int ncontr;
 	static std::vector<int> ntries;
 
 	static std::vector<std::vector<std::string>> fixVect;
 
-	static std::vector<std::pair<std::string, double>> varname;
+	static std::vector<std::string> contrName;
+	static std::vector<std::vector<std::string>> varname_md;
+	static std::vector<std::vector<std::string>> varname_mb;
 	static std::map<std::string, std::string> replace_var;
 	static std::map<std::string, std::pair<double, double>> varLimitsMap;
 
