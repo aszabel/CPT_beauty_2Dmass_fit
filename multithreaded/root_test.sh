@@ -1,17 +1,21 @@
 #!/bin/bash
-spack load root
+#. setup.sh
 
 t=$(($1-1))
 START=${PWD}
+sign=$2
 for k in `seq 1 1`
 do
         m=$(($t*1+$k))
 
 	mkdir -p toy_res/toy_$m
-	JSON_FILE="configs/config_inter.json"
-	JSON_FILE2="configs/config_unbinned.json"
-	JSON_SIDE="configs/config_sidebands.json"
-	cp -r root.sh fit2D_mass fit1D_dmass $JSON_FILE $JSON_FILE2 $JSON_SIDE root_test.sh D_M_results B_M_results macros/check_toys.C toy_res/toy_$m
+	JSON_FILE="config_inter.json"
+	JSON_FILE2="config_unbinned.json"
+	JSON_SIDE="config_sidebands.json"
+	#JSON_FILE="config_inter_alt.json"
+	#JSON_FILE2="config_unbinned_alt.json"
+	#JSON_SIDE="config_sidebands_exp.json"
+	cp -r root.sh fit2D_mass fit1D_mass configs/$JSON_FILE configs/$JSON_FILE2 configs/$JSON_SIDE root_test.sh  macros/check_toys.C macros/check_toys_final.C toy_res/toy_$m
 	cd toy_res/toy_$m
 
 
@@ -27,13 +31,22 @@ do
 	sed -i "s/$OLD_VALUE/$NEW_VALUE/" "$JSON_FILE2"
 	sed -i "s/$OLD_VALUE/$NEW_VALUE/" "$JSON_SIDE"
 
+	if [ $sign == 1 ] 
+	then 
+		SIGN="muplus"
+	else
+		SIGN="muminus"
+	fi
+ 	echo $SIGN	
+        sed -i "s/\"sign\": *\"[^\"]*\"/\"sign\":\"$SIGN\"/" "$JSON_FILE"
+        sed -i "s/\"sign\": *\"[^\"]*\"/\"sign\":\"$SIGN\"/" "$JSON_FILE2"
+        sed -i "s/\"sign\": *\"[^\"]*\"/\"sign\":\"$SIGN\"/" "$JSON_SIDE"
 	
-	./fit1D_dmass ${JSON_SIDE}	
+	./fit1D_mass ${JSON_SIDE}	
 
 
-	JSON_FILE_UNBINNED="config_unbinned.json"
-	JSON_FILE=("config_inter.json" "config_unbinned_best.json")
-	cp $JSON_FILE_UNBINNED ${JSON_FILE[1]} 
+	JSON_FILE_ARRAY=($JSON_FILE "config_unbinned_best.json")
+	cp $JSON_FILE2 ${JSON_FILE_ARRAY[1]} 
 	HOME=${PWD}
 	RESULTS=("results_binned100kMU_2" "results_unbinned100kMU_2")
 	Nfits=(30 5)
@@ -41,13 +54,13 @@ do
 	for j in `seq 0 1`
 	do	
 		cd $HOME
-		best1=$(eval root -b -q -l 'check_toys.C\(\"${RESULTS[0]}\"\)')
-		best=$(echo $best1| awk '{print $NF}')
-		OLD_value="fit2D_xxxx"
-		NEW_value="fit2D_"$best
-		echo TUUUUU
-		echo $NEW_value
-		sed -i "s/$OLD_value/${NEW_value}/" "${JSON_FILE[$j]}"
+		#best1=$(root -b -q -l "check_toys.C(\"${RESULTS[0]}\", ${sign})" | tail -n 1)
+
+		#best=$(echo $best1| awk '{print $NF}')
+		#OLD_value="fit2D_xxxx"
+		#NEW_value="fit2D_"$best
+		#echo $NEW_value
+		#sed -i "s/$OLD_value/${NEW_value}/" "${JSON_FILE[$j]}"
 		#for i in `seq 1 ${Nfits[$j]}`
 		#do
 		#	cd $HOME
@@ -63,14 +76,15 @@ do
 
 
 			# Use sed to replace the old value with the new value
-			sed -i "s/\"$KEY\": $OLD_VALUE/\"$KEY\": $NEW_VALUE/" "${JSON_FILE[$j]}"
+			sed -i "s/\"$KEY\": $OLD_VALUE/\"$KEY\": $NEW_VALUE/" "${JSON_FILE_ARRAY[$j]}"
 
-  			time ./fit2D_mass ${JSON_FILE[$j]}
+  			time ./fit2D_mass ${JSON_FILE_ARRAY[$j]}
 			#sbatch -p INTEL_HASWELL --time=10:00:00 --cpus-per-task=40 --nodes=1 --job-name="fit2Dfull"  --output="outputs/fit2D_${m}_,${i}.log" root.sh ${JSON_FILE[$j]} 
 		#done
 	done
 	cd $HOME
-	best1=$(eval root -b -q -l 'check_toys_final.C\(\"${RESULTS[1]}\"\)')
+	#best1=$(eval root -b -q -l 'check_toys_final.C\(\"${RESULTS[1]}\", $sign\)')
+	best1=$(root -b -q -l "check_toys_final.C(\"${RESULTS[1]}\", ${sign})" | tail -n 1)
 	best=$(echo $best1| awk '{print $NF}')
 	echo "TO TU---->"
 	echo $best

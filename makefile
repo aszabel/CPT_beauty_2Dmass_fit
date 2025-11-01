@@ -1,6 +1,6 @@
 SUBDIRS := fit_lifetime/. multithreaded/.
 
-TARGETS := all clean  # whatever else, but must not contain '/'
+TARGETS := all clean format # whatever else, but must not contain '/'
 
 # foo/.all bar/.all foo/.clean bar/.clean
 SUBDIRS_TARGETS := \

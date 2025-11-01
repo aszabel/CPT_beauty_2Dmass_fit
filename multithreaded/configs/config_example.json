@@ -1,7 +1,8 @@
 {
+  "category": "2D",
   "sign":"muminus",
-  "input_file": "/mnt/home/share/lhcb/CPT_beauty/data2016/selected/selected_data2016MagDown.root",
-  "local_input_file": "/home/szabelskia/LHCb/data2016/tree_missPT_D_M_MagDown25102023_nomassDmuCut/selected_data2016MagDown.root",
+  "input_files": ["/mnt/home/share/lhcb/CPT_beauty/data2016/selected/selected_data2016MagDown.root"],
+  "__Local_input_files": ["/home/szabelskia/LHCb/data2016/tree_missPT_D_M_MagDown25102023_nomassDmuCut/selected_data2016MagDown.root"],
   "chainName": "BlindedTree",
 
   "MC_directory_MD": "D_M_results",
@@ -24,6 +25,7 @@
    "nvar_md": 7,
    "nvar_mb": 7,
    "ncontr": 6,
+   "n_sideband": 2,
 
    "contrName": ["signal", "BuDmunu", "BsDsMunu", "B02DpDsm", "sidebands", "Bu2D0Dsm"],
    "varname_md": ["sigma", "mean", "sigmaCB", "f12", "alpha", "n", "alpha_h"], 

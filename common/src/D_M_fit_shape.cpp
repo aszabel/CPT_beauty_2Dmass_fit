@@ -1,80 +1,194 @@
 #include "D_M_fit_shape.h"
-#include "TMath.h"
+
+#include "Math/GaussIntegrator.h"
 #include "Math/Math.h"
 #include "Math/PdfFuncMathCore.h"
 #include "Math/ProbFuncMathCore.h"
-#include "TF1.h"
 #include "Math/WrappedTF1.h"
-#include "Math/GaussIntegrator.h"
+#include "TF1.h"
+#include "TMath.h"
 
-namespace cpt_b0_analysis
-{
+namespace cpt_b0_analysis {
 
-	DoubleSidedCrystalballPlusGaussPDF::DoubleSidedCrystalballPlusGaussPDF()
-	{
-		IntGaus = 1.0;
-		IntDCB = 1.0;
-	}
-	double DoubleSidedCrystalballPlusGaussPDF::EvalPDF(const double *xx, const double *_par)
-	{
-		auto gausPDF = [this](const double *x, const double *par) -> double
-		{
-			double m_rec = x[0];
-			double sigma = par[0];
-			double mean = par[1];
-			double f12 = abs(par[3]);
-			double gaus = ROOT::Math::gaussian_pdf(m_rec, sigma, mean);
-			//cout<<"Gaus: "<<gaus<<endl;
-			//cout<<"IntGaus: "<<IntGaus<<endl;
-			if (IntGaus != 0)
-				gaus /= IntGaus;
+double DoubleSidedCrystalballPlusGaussPDF::EvalPDF(const double *xx, const double *par,
+												   const int component) {
+	double f = abs(par[0]);
+	double par1[2];
+	double par2[6];
+	par1[0] = par[1];  // mean
+	par1[1] = par[2];  // sigma
+	par2[0] = par[3];  // mean CB
+	par2[1] = par[4];  // sigma CB
+	par2[2] = par[5];  // alpha
+	par2[3] = par[6];  // n
+	par2[4] = par[7];  // alpha2
+	par2[5] = par[8];  // n2
 
-			return f12 * gaus;
-		};
-
-		auto DoubleSidedCrystalballFunction = [this](const double *x, const double *par) -> double
-		{
-			double alpha = par[4];
-			double n = par[5];
-			double mean = par[1];
-			double sigma = par[2];
-			double f12 = abs(par[3]);
-			double alpha_h = abs(par[6]);
-			double m_rec = x[0];
-			double result;
-
-			if (m_rec < mean)
-			{
-				result = ROOT::Math::crystalball_function(m_rec, alpha, n, sigma, mean);
-			}
-			else
-			{
-				result = ROOT::Math::crystalball_function(2. * mean - m_rec, alpha_h, n, sigma, mean);
-			}
-
-			//cout<<"DCB: "<<result<<endl;
-			//cout<<"IntDCB: "<<IntDCB<<endl;
-			if (IntDCB != 0)
-				result /= IntDCB;
-			return (1.0 - f12) * result;
-		};
-
-		return gausPDF(xx, _par) + DoubleSidedCrystalballFunction(xx, _par);
-	}
-	void DoubleSidedCrystalballPlusGaussPDF::CalcIntegral(const double *par, double min, double max)
-	{
-		double sigma = par[0];
-		double mean = par[1];
-
-		IntGaus = ROOT::Math::normal_cdf(max, sigma, mean) - ROOT::Math::normal_cdf(min, sigma, mean);
-
-		double alpha = par[4];
-		double n = par[5];
-		mean = par[1];
-		sigma = par[2];
-		double alpha_h = abs(par[6]);
-
-		IntDCB = TMath::Abs(-ROOT::Math::crystalball_integral(min, alpha, n, sigma, mean) + ROOT::Math::crystalball_integral(mean, alpha, n, sigma, mean)) + TMath::Abs(-ROOT::Math::crystalball_integral(2. * mean - max, alpha_h, n, sigma, mean) + ROOT::Math::crystalball_integral(mean, alpha_h, n, sigma, mean));
-	}
-
+	if (component == 0)
+		return (1 - f) * Gauss.EvalPDF(xx, par1);
+	else if (component == 1)
+		return f * DSCB.EvalPDF(xx, par2);
+	else
+		return (1 - f) * Gauss.EvalPDF(xx, par1) + f * DSCB.EvalPDF(xx, par2);
 }
+
+void DoubleSidedCrystalballPlusGaussPDF::CalcIntegral(const double *par, double min, double max) {
+	double par1[2];
+	double par2[6];
+	par1[0] = par[1];  // mean
+	par1[1] = par[2];  // sigma
+	par2[0] = par[3];  // mean CB
+	par2[1] = par[4];  // sigma CB
+	par2[2] = par[5];  // alpha
+	par2[3] = par[6];  // n
+	par2[4] = par[7];  // alpha2
+	par2[5] = par[8];  // n2
+
+	Gauss.CalcIntegral(par1, min, max);
+	DSCB.CalcIntegral(par2, min, max);
+}
+
+double DoubleSidedCrystalballPlusExpPDF::EvalPDF(const double *xx, const double *par,
+												 const int component) {
+	double f = abs(par[0]);
+	double par1[1];
+	double par2[6];
+	par1[0] = par[1];  // slope
+	par2[0] = par[2];  // mean CB
+	par2[1] = par[3];  // sigma CB
+	par2[2] = par[4];  // alpha
+	par2[3] = par[5];  // n
+	par2[4] = par[6];  // alpha2
+	par2[5] = par[7];  // n2
+
+	if (component == 0)
+		return (1 - f) * Exp.EvalPDF(xx, par1);
+	else if (component == 1)
+		return f * DSCB.EvalPDF(xx, par2);
+	else
+		return (1 - f) * Exp.EvalPDF(xx, par1) + f * DSCB.EvalPDF(xx, par2);
+}
+
+void DoubleSidedCrystalballPlusExpPDF::CalcIntegral(const double *par, double min, double max) {
+	double par1[1];
+	double par2[6];
+	par1[0] = par[1];  // slope
+	par2[0] = par[2];  // mean CB
+	par2[1] = par[3];  // sigma CB
+	par2[2] = par[4];  // alpha
+	par2[3] = par[5];  // n
+	par2[4] = par[6];  // alpha2
+	par2[5] = par[7];  // n2
+
+	Exp.CalcIntegral(par1, min, max);
+	DSCB.CalcIntegral(par2, min, max);
+}
+
+double JohnsonPlusGaussPDF::EvalPDF(const double *xx, const double *par, const int component) {
+	double f = abs(par[0]);
+	double par1[2];
+	double par2[4];
+	par1[0] = par[1];  // mean
+	par1[1] = par[2];  // sigma
+	par2[0] = par[3];  // xi
+	par2[1] = par[4];  // lambda
+	par2[2] = par[5];  // gamma
+	par2[3] = par[6];  // delta
+
+	if (component == 0)
+		return (1 - f) * Gauss.EvalPDF(xx, par1);
+	else if (component == 1)
+		return f * JSU.EvalPDF(xx, par2);
+	else
+		return (1 - f) * Gauss.EvalPDF(xx, par1) + f * JSU.EvalPDF(xx, par2);
+}
+
+void JohnsonPlusGaussPDF::CalcIntegral(const double *par, double min, double max) {
+	double par1[2];
+	double par2[4];
+	par1[0] = par[1];  // mean
+	par1[1] = par[2];  // sigma
+	par2[0] = par[3];  // xi
+	par2[1] = par[4];  // lambda
+	par2[2] = par[5];  // gamma
+	par2[3] = par[6];  // delta
+
+	Gauss.CalcIntegral(par1, min, max);
+	JSU.CalcIntegral(par2, min, max);
+}
+
+double JohnsonPlusExpPDF::EvalPDF(const double *xx, const double *par, const int component) {
+	double f = abs(par[0]);
+	double par1[1];
+	double par2[4];
+	par1[0] = par[1];  // slope
+	par2[0] = par[2];  // xi
+	par2[1] = par[3];  // lambda
+	par2[2] = par[4];  // gamma
+	par2[3] = par[5];  // delta
+
+	if (component == 0)
+		return (1 - f) * Exp.EvalPDF(xx, par1);
+	else if (component == 1)
+		return f * JSU.EvalPDF(xx, par2);
+	else
+		return (1 - f) * Exp.EvalPDF(xx, par1) + f * JSU.EvalPDF(xx, par2);
+}
+
+void JohnsonPlusExpPDF::CalcIntegral(const double *par, double min, double max) {
+	double par1[1];
+	double par2[4];
+	par1[0] = par[1];  // slope
+	par2[0] = par[2];  // xi
+	par2[1] = par[3];  // lambda
+	par2[2] = par[4];  // gamma
+	par2[3] = par[5];  // delta
+
+	Exp.CalcIntegral(par1, min, max);
+	JSU.CalcIntegral(par2, min, max);
+}
+
+double JohnsonPlusDoubleSidedCrystalBallPDF::EvalPDF(const double *xx, const double *par,
+													 const int component) {
+	double f = abs(par[0]);
+	double par1[4];
+	double par2[6];
+	par1[0] = par[1];	// xi
+	par1[1] = par[2];	// lambda
+	par1[2] = par[3];	// gamma
+	par1[3] = par[4];	// delta
+	par2[0] = par[5];	// mean CB
+	par2[1] = par[6];	// sigma CB
+	par2[2] = par[7];	// alpha
+	par2[3] = par[8];	// n
+	par2[4] = par[9];	// alpha2
+	par2[5] = par[10];	// n2
+
+	if (component == 0)
+		return (1.0 - f) * JSU.EvalPDF(xx, par1);
+	else if (component == 1)
+		return f * DSCB.EvalPDF(xx, par2);
+	else
+		return (1 - f) * JSU.EvalPDF(xx, par1) + f * DSCB.EvalPDF(xx, par2);
+}
+
+void JohnsonPlusDoubleSidedCrystalBallPDF::CalcIntegral(const double *par, double min, double max) {
+	double par1[4];
+	double par2[6];
+	par1[0] = par[1];	// xi
+	par1[1] = par[2];	// lambda
+	par1[2] = par[3];	// gamma
+	par1[3] = par[4];	// delta
+	par2[0] = par[5];	// mean CB
+	par2[1] = par[6];	// sigma CB
+	par2[2] = par[7];	// alpha
+	par2[3] = par[8];	// n
+	par2[4] = par[9];	// alpha2
+	par2[5] = par[10];	// n2
+
+	JSU.CalcIntegral(par1, min, max);
+	DSCB.CalcIntegral(par2, min, max);
+}
+
+}  // namespace cpt_b0_analysis
+// vim: tabstop=4 softtabstop=0 noexpandtab shiftwidth=4

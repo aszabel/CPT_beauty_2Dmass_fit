@@ -1,0 +1,81 @@
+{
+  "category": "2D",
+  "isMC": false,	
+  "massVariable": "B_Mcorr",
+  "binned": true,	
+  "calc_sWeights": false,	
+  "sign":"muminus",
+  "input_files": ["/mnt/home/kklimaszewski/LHCb/CPT/CPT_beauty_2Dmass_fit/multithreaded/gauss.root"],
+  "__RD_input_files": ["/mnt/home/share/lhcb/CPT_beauty/data2016/selected/selected_data2016MagDown.root"],
+  "__Local_input_files": ["/home/szabelskia/LHCb/data2016/tree_missPT_D_M_MagDown25102023_nomassDmuCut/selected_data2016MagDown.root"],
+  "__MC_input_files": ["/mnt/home/aszabelski/missing_mass_fit/unbinned/fit2D_2missPT/generation_pureMC/gen_change_frac/getTimes/toys2M_plus005_20012025/ToyMC_BM_DM_1.root"],
+  "__MCLocal_input_files": ["/home/szabelskia/LHCb/missing_mass_fit/fitting2D/unbinned/unified_shapes/DM_mcorr_fit_02042024/generation/toys2M/ToyMC_BM_DM_2.root"],
+  "__BS_input_files": ["/mnt/home/aszabelski/missing_mass_fit/unbinned/fit2D_2missPT/bootstrap/bootstrap_data/boot_strap_yyy.root"],
+
+  "chainName": "BlindedTree",
+  "chainNameMC": "toyMCtime",
+  "chainNameBS": "BStree",
+
+  "Fits": ["all"],
+  "__All_Fits": ["all"],
+  "__Fixed__Fits": ["DM+BMfixed", "all"],
+  "tolerance": [0.1], 
+  "__Fixed__tolerance": [5.0e2, 1.0e5],
+  "ntries": 1,
+  "random_sigma": 0.1,
+
+  "start_from_previous": false,
+  "previous_result_file": "/mnt/home/kklimaszewski/LHCb/CPT/CPT_beauty_2Dmass_fit/multithreaded/scans2D/scan_config_2D_nominal_fractions_binned/fit2D_10/muminus/best_results_binned/fit2D_best/results_0_0.txt",
+  
+  "MC_directory_MD": "../../../tests/gauss_DM",
+  "MC_directory_MB": "../../../tests/gauss_BM",
+
+  "nentries": -1,
+
+  "functionCalls": 1e7,
+  "printLevel": 2,
+  "randSeed": 3,
+
+  "muPTmin": 0.0,
+  "muPmin": 0.0,
+  "eta_cut": [0.0, 2.0],
+  "t_cut": [0.0, 2.0],
+
+   "__GLOBAL": "Here global variables are set",
+   "DM_range": [95, 105],
+   "BMcorr_range": [150, 250],
+   "ncontr": 3,
+   "n_sideband": 2,
+
+   "contrName": ["signal", "bad_signal", "sidebands"],
+   "DMshapes": ["Gauss", "Gauss", "Chebyshev"],
+   "BMshapes": ["Gauss", "Gauss", "Chebyshev"],
+
+  "varname_md": [
+    ["mean", "sigma"],
+    ["mean", "sigma"],
+    ["a1", "a2"]
+  ],
+
+  "varname_mb": [
+    ["mean", "sigma"],
+    ["mean", "sigma"],
+    ["a1", "a2"]
+  ],
+
+  "fixVect" : [
+    "md_sidebands_a1", "md_sidebands_a2", "mb_sidebands_a1", "mb_sidebands_a2"
+  ],
+
+   "replace_var": {},
+
+   "varLimitsVect":{},
+   
+  "scanLimitsVect": {},
+
+   "__old__fracInit": [0.531364, 0.123454, 0.00900857, 0.0171418, 0.317511],
+   "__org__fracInit": [0.544221, 0.128957, 0.0182142, 0.0354018, 0.238786],
+   "__MC__fracInit": [0.5, 0.06, 0.027, 0.06, 0.24],
+   "fracInit": [0.1, 0.9]
+
+}

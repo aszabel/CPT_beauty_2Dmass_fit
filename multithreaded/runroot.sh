@@ -14,4 +14,4 @@ NEW_VALUE=$1
 # Use sed to replace the old value with the new value
 sed -i "s/\"$KEY\": $OLD_VALUE/\"$KEY\": $NEW_VALUE/" "$JSON_FILE"
 
-sbatch -p INTEL_CASCADE --time=5:00:00 --cpus-per-task=40 --nodes=1 --job-name="fit2Dfull"  --output="fit2D.log" root.sh $JSON_FILE 
+sbatch -p INTEL_CASCADE --time=5:00:00 --cpus-per-task=40 --nodes=1 --job-name="fit2Dfull"  --output="fit2D.log" root_test.sh $JSON_FILE 

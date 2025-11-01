@@ -1,0 +1,8 @@
+- scan1D.py - randomscan of fit starting point for 1D (Bmass or Dmass)
+- scan1D.slurm - slurm batch script to call scan1D.py
+- scan2D.py - randomscan of fit starting point for 2D - schedules scans via sbatch
+- scan2D.slurm - slurm batch script used by scan2D.py
+- scan-sidebands.py - random scan of fit starting point for the sidebands fit of Dmass
+- scan-sidebands.slurm - slurm batch script to run slurm-sidebands.py
+- runBMall.sh - execute a 1D Bmass fit for all contributions
+- runDMall.sh - execute a 1D Dmass fit for all contributions

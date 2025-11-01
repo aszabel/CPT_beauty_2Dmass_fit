@@ -1,0 +1,68 @@
+{
+  "category": "1D_DM",
+  "start_from_previous": false, 
+  "isMC": false,	
+  "massVariable": "B_Mcorr",
+  "binned": true,	
+  "calc_sWeights": false,	
+  "sign":"muminus",
+  "__RD_input_files": ["/mnt/home/share/lhcb/CPT_beauty/data2016/selected/selected_data2016MagDown.root"],
+  "input_files": ["/mnt/home/share/lhcb/CPT_beauty/data2016/selected/selected_data2016MagDown.root"],
+  "__MC_input_files": ["/mnt/home/aszabelski/missing_mass_fit/unbinned/fit2D_2missPT/generation_pureMC/gen_change_frac/getTimes/toys2M_plus005_2001225/ToyMC_BM_DM_xxx.root"],
+  "__MCLocal_input_files": ["/home/szabelskia/LHCb/missing_mass_fit/fitting2D/unbinned/unified_shapes/DM_mcorr_fit_02042024/generation/toys2M/ToyMC_BM_DM_2.root"],
+  "__BS_input_files": ["/mnt/home/aszabelski/missing_mass_fit/unbinned/fit2D_2missPT/bootstrap/bootstrap_data/boot_strap_yyy.root"],
+
+  "chainName": "BlindedTree",
+  "chainNameMC": "toyMCtime",
+  "chainNameBS": "BStree",
+
+  "Fits": ["sidebands"],
+  "tolerance": [1.0e-3], 
+  "tol": [0.1],
+  
+  "MC_directory_MD": "DM_results_sidebands",
+
+  "nentries": -1,
+  "ntries": 1,
+
+  "functionCalls": 1e7,
+  "printLevel": 2,
+  "randSeed": -1,
+
+  "muPTmin": 500.0,
+  "muPmin": 5000.0,
+  "eta_cut": [2.0, 4.5],
+  "t_cut": [1.0, 15.0],
+
+  	"_GLOBAL": "Here glonal bariables are set",
+   "DM_range": [1800, 1940],
+   "BMcorr_range": [3000, 8000],
+   "ncontr": 1,
+   "n_sideband": 1,
+
+   "contrName": ["sidebands"],
+   "varname_md": [
+    ["slope"]
+   ], 
+   "varname_mb": [[]], 
+   "DMshapes": ["Exponent"],
+   "BMshapes": ["Gauss"],
+
+   "fixVect" : [],
+
+   "replace_var": {},
+
+   "varLimitsVect":{},
+
+   "init_values": [
+    [0.001]
+   ],
+
+    "scanLimitsVect":{
+      "sidebands_slope":   [0.0000000001, 0.1 ]
+    },
+
+   "fracInit": [],
+  
+  "MC_directory_MB": "../../results/B_M_results_CBplusSkewNorm_unbinned"
+}
